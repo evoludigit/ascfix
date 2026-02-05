@@ -96,6 +96,20 @@ const fn is_box_corner(ch: char) -> bool {
     matches!(ch, '┌' | '┐' | '└' | '┘')
 }
 
+/// Complete inventory of detected primitives in a diagram.
+#[derive(Debug, Clone, Default)]
+#[allow(dead_code)]  // Reason: Used by main processing pipeline
+pub struct PrimitiveInventory {
+    /// Detected boxes
+    pub boxes: Vec<Box>,
+    /// Detected horizontal arrows
+    pub horizontal_arrows: Vec<HorizontalArrow>,
+    /// Detected vertical arrows
+    pub vertical_arrows: Vec<VerticalArrow>,
+    /// Text rows (extracted from inside boxes)
+    pub text_rows: Vec<TextRow>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

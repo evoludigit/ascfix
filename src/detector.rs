@@ -126,6 +126,40 @@ pub fn detect_boxes(grid: &Grid) -> Vec<Box> {
     BoxDetector::new(grid).detect()
 }
 
+/// Unified detector that returns all primitives in a diagram.
+///
+/// This is the main entry point for diagram analysis. It orchestrates
+/// detection of all primitive types and returns a complete inventory.
+#[allow(dead_code)]  // Reason: Used by main processing pipeline
+pub fn detect_all_primitives(grid: &Grid) -> crate::primitives::PrimitiveInventory {
+    let boxes = detect_boxes(grid);
+    let horizontal_arrows = detect_horizontal_arrows(grid);
+    let vertical_arrows = detect_vertical_arrows(grid);
+
+    // Extract text rows from inside boxes
+    let mut text_rows = Vec::new();
+    for b in &boxes {
+        for (line_idx, line) in extract_box_content(grid, b).iter().enumerate() {
+            if !line.trim().is_empty() {
+                let interior_row = b.top_left.0 + 1 + line_idx;
+                text_rows.push(crate::primitives::TextRow {
+                    row: interior_row,
+                    start_col: b.top_left.1 + 1,
+                    end_col: b.bottom_right.1 - 1,
+                    content: line.clone(),
+                });
+            }
+        }
+    }
+
+    crate::primitives::PrimitiveInventory {
+        boxes,
+        horizontal_arrows,
+        vertical_arrows,
+        text_rows,
+    }
+}
+
 /// Extract text rows from inside a box.
 ///
 /// Returns the content of interior rows between the top and bottom borders.
@@ -144,6 +178,57 @@ pub fn extract_box_content(grid: &Grid, b: &Box) -> Vec<String> {
     }
 
     content
+}
+
+/// Detect vertical arrows in a grid.
+///
+/// Detects patterns like `↓`, `↑`, and sequences of `│` or `┃`.
+#[allow(dead_code)]  // Reason: Used by main processing pipeline
+pub fn detect_vertical_arrows(grid: &Grid) -> Vec<crate::primitives::VerticalArrow> {
+    let mut arrows = Vec::new();
+
+    for col in 0..grid.width() {
+        let mut row = 0;
+        while row < grid.height() {
+            if let Some(ch) = grid.get(row, col) {
+                if ch == '↓' || ch == '↑' || ch == '│' || ch == '┃' {
+                    let start_row = row;
+                    let mut end_row = row;
+
+                    // Extend through connected arrow characters
+                    while end_row < grid.height() {
+                        if let Some(c) = grid.get(end_row, col) {
+                            if matches!(c, '↓' | '↑' | '│' | '┃') {
+                                end_row += 1;
+                            } else {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+                    end_row -= 1;
+
+                    // Only add if it's more than one character or is an arrow tip
+                    if start_row < end_row || ch == '↓' || ch == '↑' {
+                        arrows.push(crate::primitives::VerticalArrow {
+                            col,
+                            start_row,
+                            end_row,
+                        });
+                    }
+
+                    row = end_row + 1;
+                } else {
+                    row += 1;
+                }
+            } else {
+                row += 1;
+            }
+        }
+    }
+
+    arrows
 }
 
 /// Detect horizontal arrows in a grid.
@@ -369,5 +454,166 @@ mod tests {
         assert_eq!(arrows.len(), 2);
         assert_eq!(arrows[0].row, 0);
         assert_eq!(arrows[1].row, 2);
+    }
+
+    #[test]
+    fn test_detect_simple_vertical_arrow() {
+        let lines = vec!["↓"];
+        let grid = Grid::from_lines(&lines);
+        let arrows = detect_vertical_arrows(&grid);
+        assert_eq!(arrows.len(), 1);
+        assert_eq!(arrows[0].col, 0);
+        assert_eq!(arrows[0].start_row, 0);
+        assert_eq!(arrows[0].end_row, 0);
+    }
+
+    #[test]
+    fn test_detect_vertical_pipes() {
+        let lines = vec!["│", "│", "│", "│"];
+        let grid = Grid::from_lines(&lines);
+        let arrows = detect_vertical_arrows(&grid);
+        assert_eq!(arrows.len(), 1);
+        assert_eq!(arrows[0].col, 0);
+        assert_eq!(arrows[0].start_row, 0);
+        assert_eq!(arrows[0].end_row, 3);
+    }
+
+    #[test]
+    fn test_detect_arrow_with_pipes() {
+        let lines = vec!["│", "│", "↓", "│", "│"];
+        let grid = Grid::from_lines(&lines);
+        let arrows = detect_vertical_arrows(&grid);
+        assert_eq!(arrows.len(), 1);
+        assert_eq!(arrows[0].start_row, 0);
+        assert_eq!(arrows[0].end_row, 4);
+    }
+
+    #[test]
+    fn test_detect_multiple_vertical_arrows() {
+        let lines = vec!["↓ ↑"];
+        let grid = Grid::from_lines(&lines);
+        let arrows = detect_vertical_arrows(&grid);
+        assert_eq!(arrows.len(), 2);
+        assert_eq!(arrows[0].col, 0);
+        assert_eq!(arrows[1].col, 2);
+    }
+
+    #[test]
+    fn test_no_vertical_arrows() {
+        let lines = vec!["a b c"];
+        let grid = Grid::from_lines(&lines);
+        let arrows = detect_vertical_arrows(&grid);
+        assert_eq!(arrows.len(), 0);
+    }
+
+    #[test]
+    fn test_vertical_arrows_in_different_cols() {
+        let lines = vec!["↓     ↑", "│     │", "│     │"];
+        let grid = Grid::from_lines(&lines);
+        let arrows = detect_vertical_arrows(&grid);
+        assert_eq!(arrows.len(), 2);
+        assert_eq!(arrows[0].col, 0);
+        assert_eq!(arrows[1].col, 6);
+    }
+
+    #[test]
+    fn test_detect_thick_vertical_pipes() {
+        let lines = vec!["┃", "┃", "┃"];
+        let grid = Grid::from_lines(&lines);
+        let arrows = detect_vertical_arrows(&grid);
+        assert_eq!(arrows.len(), 1);
+        assert_eq!(arrows[0].start_row, 0);
+        assert_eq!(arrows[0].end_row, 2);
+    }
+
+    #[test]
+    fn test_unified_detector_empty_grid() {
+        let lines: Vec<&str> = vec![];
+        let grid = Grid::from_lines(&lines);
+        let inventory = detect_all_primitives(&grid);
+        assert!(inventory.boxes.is_empty());
+        assert!(inventory.horizontal_arrows.is_empty());
+        assert!(inventory.vertical_arrows.is_empty());
+    }
+
+    #[test]
+    fn test_unified_detector_simple_box() {
+        let lines = vec!["┌─┐", "│a│", "└─┘"];
+        let grid = Grid::from_lines(&lines);
+        let inventory = detect_all_primitives(&grid);
+        assert_eq!(inventory.boxes.len(), 1);
+        assert_eq!(inventory.text_rows.len(), 1);
+        assert_eq!(inventory.horizontal_arrows.len(), 0);
+        assert_eq!(inventory.vertical_arrows.len(), 0);
+    }
+
+    #[test]
+    fn test_unified_detector_box_with_arrows() {
+        let lines = vec!["  ↓  ", "┌─┐", "│x│", "└─┘", "  ↓  "];
+        let grid = Grid::from_lines(&lines);
+        let inventory = detect_all_primitives(&grid);
+        assert_eq!(inventory.boxes.len(), 1);
+        // Two separate ↓ arrows (at row 0 and row 4)
+        assert_eq!(inventory.vertical_arrows.len(), 2);
+        assert_eq!(inventory.text_rows.len(), 1);
+    }
+
+    #[test]
+    fn test_unified_detector_multiple_boxes() {
+        let lines = vec!["┌─┐ ┌─┐", "│a│ │b│", "└─┘ └─┘"];
+        let grid = Grid::from_lines(&lines);
+        let inventory = detect_all_primitives(&grid);
+        assert_eq!(inventory.boxes.len(), 2);
+        assert_eq!(inventory.text_rows.len(), 2);
+    }
+
+    #[test]
+    fn test_unified_detector_complex_diagram() {
+        let lines = vec![
+            "  Input  ",
+            "    ↓    ",
+            "┌───────┐",
+            "│Process│",
+            "└───────┘",
+            "    ↓    ",
+            "  Output ",
+        ];
+        let grid = Grid::from_lines(&lines);
+        let inventory = detect_all_primitives(&grid);
+        assert_eq!(inventory.boxes.len(), 1);
+        // Two separate ↓ arrows (at row 1 and row 5)
+        assert_eq!(inventory.vertical_arrows.len(), 2);
+        assert_eq!(inventory.text_rows.len(), 1);
+    }
+
+    #[test]
+    fn test_unified_detector_text_extraction() {
+        let lines = vec!["┌──────┐", "│Line1 │", "│Line2 │", "└──────┘"];
+        let grid = Grid::from_lines(&lines);
+        let inventory = detect_all_primitives(&grid);
+        assert_eq!(inventory.text_rows.len(), 2);
+        assert!(inventory.text_rows[0].content.contains("Line1"));
+        assert!(inventory.text_rows[1].content.contains("Line2"));
+    }
+
+    #[test]
+    fn test_unified_detector_empty_box_no_text() {
+        let lines = vec!["┌─┐", "│ │", "└─┘"];
+        let grid = Grid::from_lines(&lines);
+        let inventory = detect_all_primitives(&grid);
+        assert_eq!(inventory.boxes.len(), 1);
+        // Empty box produces no text rows (whitespace only)
+        assert_eq!(inventory.text_rows.len(), 0);
+    }
+
+    #[test]
+    fn test_unified_detector_preserves_positions() {
+        let lines = vec!["┌──┐", "│AB│", "└──┘"];
+        let grid = Grid::from_lines(&lines);
+        let inventory = detect_all_primitives(&grid);
+        let text_row = &inventory.text_rows[0];
+        assert_eq!(text_row.row, 1);
+        assert_eq!(text_row.start_col, 1);
+        assert_eq!(text_row.end_col, 2);
     }
 }

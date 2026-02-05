@@ -67,4 +67,4 @@ Identify and classify ASCII diagram primitives: boxes, arrows, and text rows.
 
 ## Status
 
-[~] In Progress (Cycles 1-3 complete, Cycles 4-5 pending)
+[x] Complete
