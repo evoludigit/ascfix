@@ -7,8 +7,10 @@
 
 pub mod grid;
 mod cli;
+mod detector;
 mod io;
 mod parser;
+mod primitives;
 mod processor;
 mod scanner;
 
