@@ -5,9 +5,12 @@
 //! - ASCII boxes and arrows
 //! - Text row formatting
 
+pub mod grid;
 mod cli;
 mod io;
+mod parser;
 mod processor;
+mod scanner;
 
 use anyhow::Result;
 use cli::Args;

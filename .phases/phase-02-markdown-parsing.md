@@ -61,4 +61,4 @@ Implement Markdown parsing to extract diagram blocks and convert them to a 2D gr
 
 ## Status
 
-[ ] Not Started
+[x] Complete
