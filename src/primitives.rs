@@ -388,6 +388,36 @@ const fn is_vertical_arrow_char(ch: char) -> bool {
     matches!(ch, '↓' | '↑' | '⇓' | '⇑' | '⟱' | '⟰')
 }
 
+/// What a label is attached to (for tracking during normalization).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)] // Reason: Used by label detection and normalization
+pub enum LabelAttachment {
+    /// Label attached to a box (by index)
+    Box(usize),
+    /// Label attached to a horizontal arrow (by index)
+    HorizontalArrow(usize),
+    /// Label attached to a vertical arrow (by index)
+    VerticalArrow(usize),
+    /// Label attached to a connection line (by index)
+    ConnectionLine(usize),
+}
+
+/// A label: text positioned near a primitive with tracked attachment.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)] // Reason: Used by main processing pipeline
+pub struct Label {
+    /// Row position of the label
+    pub row: usize,
+    /// Column position of the label
+    pub col: usize,
+    /// Text content of the label
+    pub content: String,
+    /// What this label is attached to
+    pub attached_to: LabelAttachment,
+    /// Offset from the attachment point (delta row, delta col)
+    pub offset: (isize, isize),
+}
+
 /// Complete inventory of detected primitives in a diagram.
 #[derive(Debug, Clone, Default)]
 #[allow(dead_code)] // Reason: Used by main processing pipeline
@@ -402,6 +432,8 @@ pub struct PrimitiveInventory {
     pub text_rows: Vec<TextRow>,
     /// Detected connection lines
     pub connection_lines: Vec<ConnectionLine>,
+    /// Detected labels attached to primitives
+    pub labels: Vec<Label>,
 }
 
 #[cfg(test)]
@@ -868,5 +900,83 @@ mod tests {
         };
         assert_eq!(conn.segments.len(), 1);
         assert_eq!(conn.from_box, Some(0));
+    }
+
+    // Phase 6, Cycle 20: RED - Label primitive tests
+    #[test]
+    fn test_label_attachment_box() {
+        let attachment = LabelAttachment::Box(0);
+        assert_eq!(attachment, LabelAttachment::Box(0));
+    }
+
+    #[test]
+    fn test_label_attachment_horizontal_arrow() {
+        let attachment = LabelAttachment::HorizontalArrow(2);
+        assert_eq!(attachment, LabelAttachment::HorizontalArrow(2));
+    }
+
+    #[test]
+    fn test_label_attachment_vertical_arrow() {
+        let attachment = LabelAttachment::VerticalArrow(1);
+        assert_eq!(attachment, LabelAttachment::VerticalArrow(1));
+    }
+
+    #[test]
+    fn test_label_attachment_connection_line() {
+        let attachment = LabelAttachment::ConnectionLine(3);
+        assert_eq!(attachment, LabelAttachment::ConnectionLine(3));
+    }
+
+    #[test]
+    fn test_label_basic() {
+        let label = Label {
+            row: 5,
+            col: 10,
+            content: "Input".to_string(),
+            attached_to: LabelAttachment::Box(0),
+            offset: (-1, 2),
+        };
+        assert_eq!(label.row, 5);
+        assert_eq!(label.col, 10);
+        assert_eq!(label.content, "Input");
+        assert_eq!(label.offset, (-1, 2));
+    }
+
+    #[test]
+    fn test_label_with_arrow_attachment() {
+        let label = Label {
+            row: 3,
+            col: 8,
+            content: "Process".to_string(),
+            attached_to: LabelAttachment::HorizontalArrow(1),
+            offset: (0, -3),
+        };
+        assert_eq!(label.attached_to, LabelAttachment::HorizontalArrow(1));
+        assert_eq!(label.offset, (0, -3));
+    }
+
+    #[test]
+    fn test_label_negative_offsets() {
+        let label = Label {
+            row: 2,
+            col: 4,
+            content: "Start".to_string(),
+            attached_to: LabelAttachment::Box(1),
+            offset: (-2, -1),
+        };
+        assert!(label.offset.0 < 0);
+        assert!(label.offset.1 < 0);
+    }
+
+    #[test]
+    fn test_label_large_offset() {
+        let label = Label {
+            row: 10,
+            col: 20,
+            content: "Far away".to_string(),
+            attached_to: LabelAttachment::ConnectionLine(2),
+            offset: (5, 8),
+        };
+        assert_eq!(label.offset, (5, 8));
     }
 }

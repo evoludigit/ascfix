@@ -191,6 +191,7 @@ pub fn detect_all_primitives(grid: &Grid) -> crate::primitives::PrimitiveInvento
         vertical_arrows,
         text_rows,
         connection_lines: Vec::new(),
+        labels: Vec::new(),
     }
 }
 
