@@ -16,7 +16,7 @@ jobs:
       # Verify the version in Cargo.toml matches the release tag
       - name: Check version
         run: |
-          VERSION=$(cargo metadata --format-version=1 | jq -r '.packages[0].version')
+          VERSION=$(cargo metadata --format-version=1 | jq -r '.packages[] | select(.name=="ascfix") | .version')
           TAG=${GITHUB_REF#refs/tags/v}
           if [ "$VERSION" != "$TAG" ]; then
             echo "Version mismatch: Cargo.toml has $VERSION but tag is v$TAG"
