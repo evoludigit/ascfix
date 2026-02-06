@@ -24,7 +24,8 @@ use processor::Processor;
 fn main() -> Result<()> {
     let args = Args::parse_args();
     let processor = Processor::new(args);
-    processor.process_all()?;
+    let exit_code = processor.process_all()?;
 
-    Ok(())
+    // Exit with appropriate code (0 for success, 1 for check mode failures)
+    std::process::exit(exit_code);
 }

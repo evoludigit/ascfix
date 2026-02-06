@@ -5,6 +5,12 @@ use crate::io;
 use anyhow::Result;
 use std::path::Path;
 
+/// Exit code for when check mode detects differences.
+pub const CHECK_FAILED_EXIT_CODE: i32 = 1;
+
+/// Exit code for success.
+pub const SUCCESS_EXIT_CODE: i32 = 0;
+
 /// Main processor for handling file transformations.
 pub struct Processor {
     args: Args,
@@ -23,6 +29,7 @@ impl Processor {
     /// # Errors
     ///
     /// Returns an error if file reading/writing fails.
+    #[allow(dead_code)] // Reason: Part of public API for library usage
     pub fn process_file(&self, path: &Path) -> Result<String> {
         let content = io::read_markdown(path)?;
         let processed = crate::modes::process_by_mode(&self.args.mode, &content);
@@ -31,20 +38,46 @@ impl Processor {
 
     /// Process all files specified in arguments.
     ///
+    /// In check mode, returns `CHECK_FAILED_EXIT_CODE` if any file needs fixing.
+    /// In other modes, writes files and returns `SUCCESS_EXIT_CODE`.
+    ///
     /// # Errors
     ///
     /// Returns an error if any file processing fails.
-    pub fn process_all(&self) -> Result<()> {
-        for file_path in &self.args.files {
-            let content = self.process_file(file_path)?;
+    pub fn process_all(&self) -> Result<i32> {
+        let mut any_needs_fixing = false;
 
-            if self.args.in_place {
-                io::write_markdown(file_path, &content)?;
-            } else {
-                println!("{content}");
+        for file_path in &self.args.files {
+            let content = io::read_markdown(file_path)?;
+            let processed = crate::modes::process_by_mode(&self.args.mode, &content);
+
+            // Check if file needs fixing
+            if crate::modes::content_needs_fixing(&content, &processed) {
+                any_needs_fixing = true;
+
+                if self.args.check {
+                    // In check mode, just report without writing
+                    eprintln!("File needs fixing: {}", file_path.display());
+                } else {
+                    // Normal mode: write the file
+                    if self.args.in_place {
+                        io::write_markdown(file_path, &processed)?;
+                    } else {
+                        println!("{processed}");
+                    }
+                }
+            } else if !self.args.check && !self.args.in_place {
+                // File doesn't need fixing and we're in normal output mode
+                println!("{processed}");
             }
         }
-        Ok(())
+
+        // Return appropriate exit code
+        if self.args.check && any_needs_fixing {
+            Ok(CHECK_FAILED_EXIT_CODE)
+        } else {
+            Ok(SUCCESS_EXIT_CODE)
+        }
     }
 }
 
