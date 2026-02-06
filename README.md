@@ -180,141 +180,130 @@ Source Code
 
 ---
 
-### Diagram Mode: Nested Boxes and Hierarchies
+### Diagram Mode: Box Padding and Arrow Alignment
 
-**Before** (misaligned nested structure):
+**Before** (LLM-generated, text cramped against borders, arrows misaligned):
 ```markdown
-┌─────────────────────────────────┐
-│ System                          │
-│ ┌──────────────┐ ┌─────────────┐│
-│ │ Frontend     │ │Backend      ││
-│ └──────────────┘ └─────────────┘│
-│       ↓              ↓          │
-│  ┌─────────────────────────┐   │
-│  │ Database                │   │
-│  └─────────────────────────┘   │
-└─────────────────────────────────┘
+┌───────┐    ┌────────┐
+│Process│    │Database│
+└───────┘    └────────┘
+   ↓          ↓
+┌──────────────────┐
+│ResultProcessor   │
+└──────────────────┘
 ```
 
-**After** (normalized, consistent alignment):
+**After** (proper padding added, arrows aligned to box centers):
 ```markdown
-┌──────────────────────────────────┐
-│ System                           │
-│ ┌────────────────┐ ┌────────────┐│
-│ │ Frontend       │ │ Backend    ││
-│ └────────────────┘ └────────────┘│
-│        ↓                ↓        │
-│ ┌──────────────────────────────┐ │
-│ │ Database                     │ │
-│ └──────────────────────────────┘ │
-└──────────────────────────────────┘
+┌─────────┐    ┌──────────┐
+│ Process │    │ Database │
+└─────────┘    └──────────┘
+     │             │
+┌────────────────────────┐
+│ Result Processor       │
+└────────────────────────┘
 ```
+
+**Changes made:**
+- Expanded boxes to fit content with 1-space padding
+- Aligned arrows to box center columns
+- Normalized interior spacing
 
 **Command:**
 ```bash
-ascfix architecture.md --in-place --mode=diagram
+ascfix workflow.md --in-place --mode=diagram
 ```
 
 ---
 
-### Diagram Mode: Microservices Architecture
+### Diagram Mode: Multi-Step Pipeline with Inconsistent Arrows
 
-**Before** (AI-generated, inconsistent spacing):
+**Before** (arrows at inconsistent positions, no padding):
 ```markdown
-        ┌────────────────┐
-        │ Load Balancer  │
-        └────────────────┘
-          ↓     ↓     ↓
-    ┌──────────┐ ┌──────────┐ ┌──────────┐
-    │Service A │ │Service B │ │Service C │
-    └──────────┘ └──────────┘ └──────────┘
-      ↓   ↓        ↓   ↓        ↓   ↓
- ┌─────────────────────────────────────┐
- │ Shared Cache (Redis)                │
- └─────────────────────────────────────┘
-      ↓
- ┌─────────────────────────────────────┐
- │ Database (PostgreSQL)               │
- └─────────────────────────────────────┘
+Source Code
+  ↓
+┌──────────┐
+│Build     │
+└──────────┘
+    ↓
+┌─────────────┐
+│Test Suite   │
+└─────────────┘
+  ↓
+┌──────┐
+│Deploy│
+└──────┘
 ```
 
-**After** (normalized, properly aligned):
+**After** (arrows normalized to consistent columns, boxes expanded with padding):
 ```markdown
-          ┌────────────────┐
-          │ Load Balancer  │
-          └────────────────┘
-            ↓      ↓      ↓
-    ┌───────────┐ ┌───────────┐ ┌───────────┐
-    │ Service A │ │ Service B │ │ Service C │
-    └───────────┘ └───────────┘ └───────────┘
-      ↓    ↓        ↓    ↓        ↓    ↓
-    ┌────────────────────────────────────────┐
-    │ Shared Cache (Redis)                   │
-    └────────────────────────────────────────┘
-               ↓
-    ┌────────────────────────────────────────┐
-    │ Database (PostgreSQL)                  │
-    └────────────────────────────────────────┘
+Source Code
+      │
+┌──────────────┐
+│ Build        │
+└──────────────┘
+      │
+┌───────────────────┐
+│ Test Suite        │
+└───────────────────┘
+      │
+┌────────────┐
+│ Deploy     │
+└────────────┘
 ```
+
+**Changes made:**
+- Aligned all vertical arrows to consistent column
+- Added interior padding to all boxes (text no longer touching borders)
+- Expanded boxes to fit content with proper spacing
 
 **Command:**
 ```bash
-ascfix architecture.md --in-place --mode=diagram
+ascfix pipeline.md --in-place --mode=diagram
 ```
 
 ---
 
-### Diagram Mode: Complex CI/CD Pipeline
+### Diagram Mode: Horizontal Workflow with Inconsistent Alignment
 
-**Before** (misaligned, cramped):
+**Before** (arrows offset from box edges, inconsistent padding):
 ```markdown
-┌──────────┐
-│ Git Push │
-└──────────┘
-     ↓
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│Lint Check   │→│ Unit Tests   │→│ Build Image  │
-└──────────────┘ └──────────────┘ └──────────────┘
-          ↓
-     ┌───────────────────────────────┐
-     │ Artifact Registry             │
-     └───────────────────────────────┘
-          ↓
-     ┌─────────────────┐     ┌──────────────┐
-     │ Staging Deploy  │────→│ Smoke Tests  │
-     └─────────────────┘     └──────────────┘
-          ↓
-     ┌─────────────────────────────────┐
-     │ Production Deploy               │
-     └─────────────────────────────────┘
+┌──────┐
+│Input │
+└──────┘
+  ──→
+     ┌─────────┐
+     │Processing│
+     └─────────┘
+        ──→
+          ┌──────┐
+          │Output│
+          └──────┘
 ```
 
-**After** (normalized, well-spaced):
+**After** (arrows snapped to box edges, uniform padding):
 ```markdown
-┌──────────┐
-│ Git Push │
-└──────────┘
-     ↓
-┌────────────────┐ ┌────────────────┐ ┌────────────────┐
-│ Lint Check     │→│ Unit Tests     │→│ Build Image    │
-└────────────────┘ └────────────────┘ └────────────────┘
-          ↓
-    ┌────────────────────────────────────┐
-    │ Artifact Registry                  │
-    └────────────────────────────────────┘
-          ↓
-    ┌──────────────────┐ ┌──────────────┐
-    │ Staging Deploy   │→│ Smoke Tests  │
-    └──────────────────┘ └──────────────┘
-          ↓
-    ┌────────────────────────────────────┐
-    │ Production Deploy                  │
-    └────────────────────────────────────┘
+┌────────┐
+│ Input  │
+└────────┘
+     →
+     ┌───────────────┐
+     │ Processing    │
+     └───────────────┘
+          →
+          ┌────────┐
+          │ Output │
+          └────────┘
 ```
+
+**Changes made:**
+- Expanded boxes to fit content with padding
+- Snapped arrow endpoints to box edge columns
+- Made padding uniform (1 space) inside boxes
 
 **Command:**
 ```bash
-ascfix ci-pipeline.md --in-place --mode=diagram
+ascfix workflow.md --in-place --mode=diagram
 ```
 
 ---
