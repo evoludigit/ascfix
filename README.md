@@ -70,6 +70,134 @@ ascfix docs/*.md --in-place --mode=diagram
 | `diagram` | Fix boxes and arrows | For files with ASCII diagrams |
 | `check` | Validate without writing | CI/CD validation |
 
+## Examples
+
+### Safe Mode: Markdown Table Alignment
+
+**Before** (inconsistent column widths):
+```markdown
+| Name | Age | City |
+|------|-----|----------|
+| Alice | 30 | New York |
+| Bob | 25 | Boston |
+| Charlie | 35 | Chicago |
+```
+
+**After** (normalized columns):
+```markdown
+| Name    | Age | City      |
+|---------|-----|-----------|
+| Alice   | 30  | New York  |
+| Bob     | 25  | Boston    |
+| Charlie | 35  | Chicago   |
+```
+
+**Command:**
+```bash
+ascfix table.md --in-place
+```
+
+---
+
+### Diagram Mode: Box and Arrow Alignment
+
+**Before** (misaligned, inconsistent):
+```markdown
+      ↓
+┌──────┐
+│ Step │
+└──────┘
+    ↓
+┌─────────┐
+│ Process  │
+└─────────┘
+```
+
+**After** (normalized):
+```markdown
+     ↓
+┌────────┐
+│ Step   │
+└────────┘
+     ↓
+┌────────┐
+│ Process│
+└────────┘
+```
+
+**Command:**
+```bash
+ascfix workflow.md --in-place --mode=diagram
+```
+
+---
+
+### Diagram Mode: Box Width Normalization
+
+**Before** (text too close to border):
+```markdown
+┌────────┐
+│Process │
+└────────┘
+```
+
+**After** (proper padding):
+```markdown
+┌─────────┐
+│ Process │
+└─────────┘
+```
+
+---
+
+### Diagram Mode: Complex Workflow
+
+**Before** (AI-generated, misaligned):
+```markdown
+Source Code
+    ↓
+┌──────────────────┐
+│ Build & Test     │
+└──────────────────┘
+  ↓
+┌────────┐
+│ Deploy │
+└────────┘
+```
+
+**After** (normalized, consistent):
+```markdown
+Source Code
+     ↓
+┌─────────────────┐
+│ Build & Test    │
+└─────────────────┘
+     ↓
+┌──────────────────┐
+│ Deploy           │
+└──────────────────┘
+```
+
+---
+
+### Check Mode: CI/CD Validation
+
+**Validate without modifying** (useful for pull requests):
+```bash
+# Exit 0 if file is already normalized
+# Exit 1 if file needs fixing
+ascfix docs/*.md --check --mode=diagram
+```
+
+Perfect for GitHub Actions:
+```yaml
+- name: Check diagram alignment
+  run: ascfix docs/*.md --check --mode=diagram
+  # Fails the build if any diagrams need fixing
+```
+
+---
+
 ## Building & Testing
 
 ```bash
