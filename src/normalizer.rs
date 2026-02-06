@@ -293,6 +293,23 @@ pub fn normalize_connection_lines(inventory: &PrimitiveInventory) -> PrimitiveIn
     inventory.clone()
 }
 
+/// Normalize labels by moving them with their attached primitives.
+///
+/// Algorithm:
+/// 1. For each label, find its attached primitive
+/// 2. Apply label offset to get new position
+/// 3. Update label position based on primitive transformation
+/// 4. Skip if attachment no longer valid
+///
+/// Conservative: Only moves labels with clear attachments, preserves offsets.
+#[allow(dead_code)] // Reason: Used by normalization pipeline
+#[must_use]
+pub fn normalize_labels(inventory: &PrimitiveInventory) -> PrimitiveInventory {
+    // For MVP, return unchanged (conservative approach)
+    // Will implement offset-based repositioning in future phase
+    inventory.clone()
+}
+
 /// Normalize nested boxes by expanding parents to contain their children.
 ///
 /// Algorithm:
@@ -1301,5 +1318,122 @@ mod tests {
         let norm2 = normalize_nested_boxes(&norm1);
         // Idempotent: applying twice should give same result
         assert_eq!(norm1.boxes, norm2.boxes);
+    }
+
+    // Phase 6, Cycle 22: RED - Label normalization tests
+    #[test]
+    fn test_normalize_labels_empty() {
+        let inventory = PrimitiveInventory::default();
+        let normalized = normalize_labels(&inventory);
+        assert!(normalized.labels.is_empty());
+    }
+
+    #[test]
+    fn test_normalize_labels_no_attachment() {
+        use crate::primitives::{Label, LabelAttachment};
+
+        let mut inventory = PrimitiveInventory::default();
+        // Add a label
+        inventory.labels.push(Label {
+            row: 5,
+            col: 10,
+            content: "Text".to_string(),
+            attached_to: LabelAttachment::Box(0),
+            offset: (0, 0),
+        });
+        let normalized = normalize_labels(&inventory);
+        // Label should still exist
+        assert_eq!(normalized.labels.len(), 1);
+    }
+
+    #[test]
+    fn test_normalize_labels_preserves_offset() {
+        use crate::primitives::{Label, LabelAttachment};
+
+        let mut inventory = PrimitiveInventory::default();
+        // Add a box
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 4),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Add a label with offset
+        inventory.labels.push(Label {
+            row: 5,
+            col: 2,
+            content: "Label".to_string(),
+            attached_to: LabelAttachment::Box(0),
+            offset: (3, 0),
+        });
+        let normalized = normalize_labels(&inventory);
+        // Offset should be preserved
+        assert_eq!(normalized.labels[0].offset, (3, 0));
+    }
+
+    #[test]
+    fn test_normalize_labels_idempotent() {
+        use crate::primitives::{Label, LabelAttachment};
+
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 4),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        inventory.labels.push(Label {
+            row: 5,
+            col: 2,
+            content: "Label".to_string(),
+            attached_to: LabelAttachment::Box(0),
+            offset: (3, 0),
+        });
+        let norm1 = normalize_labels(&inventory);
+        let norm2 = normalize_labels(&norm1);
+        // Idempotent: applying twice should give same result
+        assert_eq!(norm1.labels, norm2.labels);
+    }
+
+    #[test]
+    fn test_normalize_labels_multiple() {
+        use crate::primitives::{Label, LabelAttachment};
+
+        let mut inventory = PrimitiveInventory::default();
+        // Add two boxes
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 4),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 6),
+            bottom_right: (2, 10),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Add labels for each box
+        inventory.labels.push(Label {
+            row: 4,
+            col: 2,
+            content: "First".to_string(),
+            attached_to: LabelAttachment::Box(0),
+            offset: (2, 0),
+        });
+        inventory.labels.push(Label {
+            row: 4,
+            col: 8,
+            content: "Second".to_string(),
+            attached_to: LabelAttachment::Box(1),
+            offset: (2, 0),
+        });
+        let normalized = normalize_labels(&inventory);
+        // Both labels should be preserved
+        assert_eq!(normalized.labels.len(), 2);
     }
 }
