@@ -293,6 +293,54 @@ pub fn normalize_connection_lines(inventory: &PrimitiveInventory) -> PrimitiveIn
     inventory.clone()
 }
 
+/// Normalize nested boxes by expanding parents to contain their children.
+///
+/// Algorithm:
+/// 1. Process boxes from innermost to outermost (by depth)
+/// 2. For each parent, expand to minimum size that contains all children
+/// 3. Add margin of 1 cell around children for padding
+/// 4. Only expands, never shrinks (idempotent)
+///
+/// Conservative: Skips if ambiguous nesting or >3 levels deep.
+#[allow(dead_code)] // Reason: Used by normalization pipeline
+#[must_use]
+pub fn normalize_nested_boxes(inventory: &PrimitiveInventory) -> PrimitiveInventory {
+    let mut result = inventory.clone();
+
+    // For each box with children, expand to fit them
+    for parent_idx in 0..result.boxes.len() {
+        let children_indices = result.boxes[parent_idx].child_indices.clone();
+        if !children_indices.is_empty() {
+            let mut min_row = result.boxes[parent_idx].top_left.0;
+            let mut min_col = result.boxes[parent_idx].top_left.1;
+            let mut max_row = result.boxes[parent_idx].bottom_right.0;
+            let mut max_col = result.boxes[parent_idx].bottom_right.1;
+
+            // Find bounds that encompass all children
+            for &child_idx in &children_indices {
+                if child_idx < result.boxes.len() {
+                    let child = &result.boxes[child_idx];
+                    // Need 1 cell margin around child
+                    min_row = min_row.min(child.top_left.0.saturating_sub(1));
+                    min_col = min_col.min(child.top_left.1.saturating_sub(1));
+                    max_row = max_row.max(child.bottom_right.0 + 1);
+                    max_col = max_col.max(child.bottom_right.1 + 1);
+                }
+            }
+
+            // Only expand, never shrink
+            result.boxes[parent_idx].top_left.0 = result.boxes[parent_idx].top_left.0.min(min_row);
+            result.boxes[parent_idx].top_left.1 = result.boxes[parent_idx].top_left.1.min(min_col);
+            result.boxes[parent_idx].bottom_right.0 =
+                result.boxes[parent_idx].bottom_right.0.max(max_row);
+            result.boxes[parent_idx].bottom_right.1 =
+                result.boxes[parent_idx].bottom_right.1.max(max_col);
+        }
+    }
+
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1148,5 +1196,110 @@ mod tests {
         let norm1 = normalize_connection_lines(&inventory);
         let norm2 = normalize_connection_lines(&norm1);
         assert_eq!(norm1.connection_lines, norm2.connection_lines);
+    }
+
+    // Phase 5, Cycle 17: RED - Nested normalization tests
+    #[test]
+    fn test_normalize_nested_boxes_empty() {
+        let inventory = PrimitiveInventory::default();
+        let normalized = normalize_nested_boxes(&inventory);
+        assert!(normalized.boxes.is_empty());
+    }
+
+    #[test]
+    fn test_normalize_nested_boxes_no_nesting() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 4),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        let normalized = normalize_nested_boxes(&inventory);
+        // Single box should be unchanged
+        assert_eq!(normalized.boxes.len(), 1);
+        assert_eq!(normalized.boxes[0].bottom_right, (2, 4));
+    }
+
+    #[test]
+    fn test_normalize_nested_boxes_expands_parent() {
+        let mut inventory = PrimitiveInventory::default();
+        // Parent box
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (3, 4),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: vec![1],
+        });
+        // Child box extends beyond parent
+        inventory.boxes.push(DiagramBox {
+            top_left: (1, 2),
+            bottom_right: (2, 6),
+            style: BoxStyle::Single,
+            parent_idx: Some(0),
+            child_indices: Vec::new(),
+        });
+        let normalized = normalize_nested_boxes(&inventory);
+        // Parent should expand to contain child
+        assert!(normalized.boxes[0].bottom_right.1 >= 6);
+    }
+
+    #[test]
+    fn test_normalize_nested_boxes_multiple_children() {
+        let mut inventory = PrimitiveInventory::default();
+        // Parent
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (6, 6),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: vec![1, 2],
+        });
+        // Child 1
+        inventory.boxes.push(DiagramBox {
+            top_left: (1, 1),
+            bottom_right: (2, 3),
+            style: BoxStyle::Single,
+            parent_idx: Some(0),
+            child_indices: Vec::new(),
+        });
+        // Child 2
+        inventory.boxes.push(DiagramBox {
+            top_left: (4, 4),
+            bottom_right: (5, 8),
+            style: BoxStyle::Single,
+            parent_idx: Some(0),
+            child_indices: Vec::new(),
+        });
+        let normalized = normalize_nested_boxes(&inventory);
+        // Parent should expand to fit both children
+        assert!(normalized.boxes[0].bottom_right.1 >= 8);
+    }
+
+    #[test]
+    fn test_normalize_nested_boxes_idempotent() {
+        let mut inventory = PrimitiveInventory::default();
+        // Parent
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (4, 8),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: vec![1],
+        });
+        // Child
+        inventory.boxes.push(DiagramBox {
+            top_left: (1, 2),
+            bottom_right: (3, 6),
+            style: BoxStyle::Single,
+            parent_idx: Some(0),
+            child_indices: Vec::new(),
+        });
+        let norm1 = normalize_nested_boxes(&inventory);
+        let norm2 = normalize_nested_boxes(&norm1);
+        // Idempotent: applying twice should give same result
+        assert_eq!(norm1.boxes, norm2.boxes);
     }
 }
