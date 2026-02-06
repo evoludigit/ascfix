@@ -5,6 +5,91 @@ use crate::primitives::{
     ArrowType, Box as DiagramBox, BoxStyle, HorizontalArrow, PrimitiveInventory,
 };
 
+/// Find groups of boxes that have vertical row overlap and are horizontally adjacent.
+///
+/// Returns a vector of groups, where each group is a vector of box indices
+/// that should be balanced together. Side-by-side boxes get grouped.
+///
+/// Algorithm:
+/// 1. For each pair of boxes, check if they have vertical overlap
+/// 2. Check if they are horizontally adjacent (no gap or minimal gap)
+/// 3. Group adjacent boxes together
+#[allow(dead_code)] // Reason: Used by balancing normalization in upcoming phases
+#[must_use]
+fn find_vertical_overlap_groups(inventory: &PrimitiveInventory) -> Vec<Vec<usize>> {
+    if inventory.boxes.is_empty() {
+        return Vec::new();
+    }
+
+    let mut groups: Vec<Vec<usize>> = Vec::new();
+    let mut assigned = vec![false; inventory.boxes.len()];
+
+    for i in 0..inventory.boxes.len() {
+        if assigned[i] {
+            continue;
+        }
+
+        let mut group = vec![i];
+        assigned[i] = true;
+
+        // Find all boxes adjacent to this one or others in the group
+        let mut changed = true;
+        while changed {
+            changed = false;
+            let mut to_add = Vec::new();
+
+            for (j, &is_assigned) in assigned.iter().enumerate() {
+                if is_assigned {
+                    continue;
+                }
+
+                // Check if box j is adjacent to any box in current group
+                let mut is_adjacent = false;
+                for &group_idx in &group {
+                    let box_in_group = &inventory.boxes[group_idx];
+                    let box_j = &inventory.boxes[j];
+
+                    // Check vertical overlap
+                    let rows_overlap = !(box_in_group.bottom_right.0 < box_j.top_left.0
+                        || box_j.bottom_right.0 < box_in_group.top_left.0);
+
+                    // Check horizontal adjacency (gap <= 1 cell)
+                    let (left_col, right_col) = if box_in_group.bottom_right.1 < box_j.top_left.1 {
+                        (box_in_group.bottom_right.1, box_j.top_left.1)
+                    } else if box_j.bottom_right.1 < box_in_group.top_left.1 {
+                        (box_j.bottom_right.1, box_in_group.top_left.1)
+                    } else {
+                        continue; // Boxes overlap horizontally, skip
+                    };
+
+                    let gap = right_col.saturating_sub(left_col);
+
+                    if rows_overlap && gap <= 1 {
+                        is_adjacent = true;
+                        break;
+                    }
+                }
+
+                if is_adjacent {
+                    to_add.push(j);
+                }
+            }
+
+            for j in to_add {
+                group.push(j);
+                assigned[j] = true;
+                changed = true;
+            }
+        }
+
+        if group.len() > 1 {
+            groups.push(group);
+        }
+    }
+
+    groups
+}
+
 /// Align horizontal arrows to consistent positions.
 ///
 /// Algorithm:
@@ -752,5 +837,102 @@ mod tests {
         assert_eq!(step4.text_rows, step4b.text_rows);
         assert_eq!(step4.horizontal_arrows, step4b.horizontal_arrows);
         assert_eq!(step4.vertical_arrows, step4b.vertical_arrows);
+    }
+
+    // Phase 3, Cycle 9: RED - Overlap detection tests
+    #[test]
+    fn test_find_vertical_overlap_groups_single_box() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (3, 5),
+            style: BoxStyle::Single,
+        });
+
+        let groups = find_vertical_overlap_groups(&inventory);
+        assert!(groups.is_empty() || groups.iter().all(|g| g.len() <= 1));
+    }
+
+    #[test]
+    fn test_find_vertical_overlap_groups_separate_boxes() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 3),
+            style: BoxStyle::Single,
+        });
+        inventory.boxes.push(DiagramBox {
+            top_left: (5, 0),
+            bottom_right: (7, 3),
+            style: BoxStyle::Single,
+        });
+
+        let groups = find_vertical_overlap_groups(&inventory);
+        // Vertically separated boxes should not be grouped
+        assert!(groups.is_empty() || groups.iter().all(|g| g.len() == 1));
+    }
+
+    #[test]
+    fn test_find_vertical_overlap_groups_side_by_side() {
+        let mut inventory = PrimitiveInventory::default();
+        // Left box
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (3, 4),
+            style: BoxStyle::Single,
+        });
+        // Right box - adjacent
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 5),
+            bottom_right: (3, 9),
+            style: BoxStyle::Single,
+        });
+
+        let groups = find_vertical_overlap_groups(&inventory);
+        // Should find one group with 2 boxes
+        assert!(groups.iter().any(|g| g.len() == 2));
+    }
+
+    #[test]
+    fn test_find_vertical_overlap_groups_three_boxes() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 2),
+            style: BoxStyle::Single,
+        });
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 3),
+            bottom_right: (2, 5),
+            style: BoxStyle::Single,
+        });
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 6),
+            bottom_right: (2, 8),
+            style: BoxStyle::Single,
+        });
+
+        let groups = find_vertical_overlap_groups(&inventory);
+        // Should find one group with 3 boxes
+        assert!(groups.iter().any(|g| g.len() == 3));
+    }
+
+    #[test]
+    fn test_find_vertical_overlap_groups_stacked_not_grouped() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 3),
+            style: BoxStyle::Single,
+        });
+        inventory.boxes.push(DiagramBox {
+            top_left: (3, 0),
+            bottom_right: (5, 3),
+            style: BoxStyle::Single,
+        });
+
+        let groups = find_vertical_overlap_groups(&inventory);
+        // Vertically stacked boxes should not be grouped
+        assert!(groups.is_empty() || groups.iter().all(|g| g.len() == 1));
     }
 }
