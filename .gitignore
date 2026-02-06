@@ -13,3 +13,6 @@ Cargo.lock
 # Testing
 .tarpaulin-report.html
 cobertura.xml
+
+# Development phases (local planning only)
+.phases/
