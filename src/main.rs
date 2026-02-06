@@ -13,6 +13,7 @@ mod normalizer;
 mod parser;
 mod primitives;
 mod processor;
+mod renderer;
 mod scanner;
 
 use anyhow::Result;
