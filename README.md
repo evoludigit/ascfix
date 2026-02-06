@@ -326,6 +326,129 @@ Perfect for GitHub Actions:
 
 ---
 
+## Advanced Features in Diagram Mode
+
+### Box Style Variants
+
+ascfix supports multiple box drawing styles and automatically preserves them:
+
+**Single-line boxes** (default):
+```
+┌─────┐
+│ Box │
+└─────┘
+```
+
+**Double-line boxes**:
+```
+╔═════╗
+║ Box ║
+╚═════╝
+```
+
+**Rounded-corner boxes**:
+```
+╭─────╮
+│ Box │
+╰─────╯
+```
+
+All styles are detected, preserved, and normalized consistently. Mixed styles in the same diagram are handled correctly.
+
+---
+
+### Nested Box Hierarchies
+
+ascfix detects and supports parent-child box relationships. Parent boxes automatically expand to properly contain their children with appropriate margins:
+
+**Before** (parent too small):
+```
+┌──────────────┐
+│ Parent       │
+│ ┌────────┐   │
+│ │ Child  │   │
+│ └────────┘   │
+└──────────────┘
+```
+
+**After** (parent expanded with margins):
+```
+┌────────────────────┐
+│ Parent             │
+│                    │
+│  ┌──────────────┐  │
+│  │ Child        │  │
+│  └──────────────┘  │
+│                    │
+└────────────────────┘
+```
+
+**Conservative behavior**: Deeply nested structures (>2 levels) or ambiguous relationships are handled gracefully.
+
+---
+
+### Side-by-Side Box Alignment
+
+ascfix automatically balances the width of horizontally adjacent boxes for visual consistency:
+
+**Before** (inconsistent widths):
+```
+┌───────┐  ┌─────┐  ┌────────────┐
+│ Box 1 │  │ B2  │  │ Box Three  │
+└───────┘  └─────┘  └────────────┘
+```
+
+**After** (uniform widths):
+```
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│ Box 1       │ │ B2          │ │ Box Three   │
+└─────────────┘ └─────────────┘ └─────────────┘
+```
+
+---
+
+### Enhanced Arrow Support
+
+ascfix recognizes and normalizes various arrow styles:
+- Standard arrows: `→ ↓ ↑ ←`
+- Double arrows: `⇒ ⇓ ⇑ ⇐`
+- Extended arrows: `⟶ ⟹`
+
+All arrows are aligned to box centers and maintained at consistent columns throughout the diagram.
+
+---
+
+### Connection Lines (Conservative)
+
+ascfix supports L-shaped connection paths with limited scope (4 segments maximum per connection):
+
+```
+┌────────┐
+│ Start  │
+└───┬────┘
+    │
+    └─────┬─────────┐
+          │         │
+      ┌───▼───┐ ┌──▼──┐
+      │ Path1 │ │Path2│
+      └───────┘ └─────┘
+```
+
+Connection detection is conservative to avoid false positives. Very complex paths are skipped.
+
+---
+
+### Label Preservation (Framework)
+
+ascfix includes framework support for preserving text labels attached to primitives during normalization. Label detection and rendering are currently conservative (skeleton implementation):
+
+- Labels attached to boxes are tracked
+- Labels attached to arrows are preserved
+- Relative offsets are maintained during normalization
+- Collision detection prevents label-diagram overlap
+
+---
+
 ## Building & Testing
 
 ```bash

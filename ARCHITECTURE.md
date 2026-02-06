@@ -182,26 +182,39 @@ pub struct Grid {
 
 ---
 
-### `src/primitives.rs` - Type Definitions (80+ lines)
+### `src/primitives.rs` - Type Definitions (300+ lines)
 **Purpose:** Define diagram primitives and detection results
 
-**Primitives:**
+**Core Primitives:**
 ```rust
+// Box style variants
+pub enum BoxStyle { Single, Double, Rounded }
+
 pub struct Box {
     pub top_left: (usize, usize),
     pub bottom_right: (usize, usize),
+    pub style: BoxStyle,
+    pub parent_idx: Option<usize>,      // Hierarchy support
+    pub child_indices: Vec<usize>,      // Hierarchy support
 }
+
+// Arrow types
+pub enum ArrowType { Standard, Double, Long, Dashed }
 
 pub struct HorizontalArrow {
     pub row: usize,
     pub start_col: usize,
     pub end_col: usize,
+    pub arrow_type: ArrowType,
+    pub rightward: bool,
 }
 
 pub struct VerticalArrow {
     pub start_row: usize,
     pub end_row: usize,
     pub col: usize,
+    pub arrow_type: ArrowType,
+    pub downward: bool,
 }
 
 pub struct TextRow {
@@ -211,48 +224,116 @@ pub struct TextRow {
     pub content: String,
 }
 
+// Connection lines (L-shaped paths)
+pub struct Segment {
+    pub row: usize,
+    pub start_col: usize,
+    pub end_col: usize,
+}
+
+pub struct ConnectionLine {
+    pub segments: Vec<Segment>,
+    pub from_box: Option<usize>,
+    pub to_box: Option<usize>,
+}
+
+// Labels attached to primitives
+pub enum LabelAttachment {
+    Box(usize),
+    HorizontalArrow(usize),
+    VerticalArrow(usize),
+    ConnectionLine(usize),
+}
+
+pub struct Label {
+    pub row: usize,
+    pub col: usize,
+    pub content: String,
+    pub attached_to: LabelAttachment,
+    pub offset: (isize, isize),      // Relative offset from attachment
+}
+
 pub struct PrimitiveInventory {
     pub boxes: Vec<Box>,
     pub horizontal_arrows: Vec<HorizontalArrow>,
     pub vertical_arrows: Vec<VerticalArrow>,
     pub text_rows: Vec<TextRow>,
+    pub connection_lines: Vec<ConnectionLine>,  // NEW: Phase 4
+    pub labels: Vec<Label>,                     // NEW: Phase 6
 }
 ```
 
+**New in Phases 1-6:**
+- **BoxStyle enum** (Phase 1): Support for single-line, double-line, and rounded boxes
+- **ArrowType enum** (Phase 2): Standard, double, long, and dashed arrow support
+- **Box hierarchy fields** (Phase 5): Parent/child relationships for nested boxes
+- **ConnectionLine primitive** (Phase 4): L-shaped connection paths with segments
+- **Label primitive** (Phase 6): Text labels with attachment tracking and offset preservation
+
 ---
 
-### `src/detector.rs` - Primitive Detection (550+ lines)
-**Purpose:** Identify boxes, arrows, and text rows in grids
+### `src/detector.rs` - Primitive Detection (900+ lines)
+**Purpose:** Identify boxes, arrows, text rows, hierarchies, connections, and labels
 
 **Detection Algorithm:**
 
-#### Box Detection
-1. Find box corners (┌, ┐, └, ┘)
+#### Box Detection (All Styles)
+1. Find box corners for all supported styles:
+   - Single-line: ┌, ┐, └, ┘
+   - Double-line: ╔, ╗, ╚, ╝
+   - Rounded: ╭, ╮, ╰, ╯
 2. Flood-fill from corner to find connected component
 3. Verify rectangle shape (straight lines, all four corners)
-4. Record top-left and bottom-right coordinates
+4. Detect style from corner characters
+5. Record box with style information
 
-#### Arrow Detection
-- **Horizontal arrows** (→, ←, ─): Line-based detection with arrow tips required
-- **Vertical arrows** (↓, ↑, │): Column-based detection with arrow tips required
-- **Requirement:** Must have at least one arrow tip (→, ←, ↓, ↑) to be recognized
+#### Arrow Detection (Enhanced Types)
+- **Horizontal arrows** (→, ←, ⇒, ⇐, ─): Line-based detection with arrow tips required
+- **Vertical arrows** (↓, ↑, ⇓, ⇑, │): Column-based detection with arrow tips required
+- **Arrow types detected**: Standard, Double, Long, Dashed
+- **Direction detection**: Rightward/downward flags set from arrow tips
+- **Requirement:** Must have at least one arrow tip to be recognized
 
 #### Text Detection
 - Extract content from inside boxes
 - Preserve original text exactly
 - Record position within box
 
+#### Box Hierarchy Detection (Phase 5)
+- For each pair of boxes, check containment relationship
+- Box A is inside Box B if: A's corners are strictly inside B's interior (with 1-cell margin)
+- Set parent_idx on child boxes
+- Populate child_indices on parent boxes
+- Handles multiple children and single parent relationships
+
+#### Connection Line Detection (Phase 4 - Conservative)
+- Detect L-shaped paths (limited to 4 segments maximum)
+- Trace paths from box edges
+- Distinguish from box borders
+- Record from_box and to_box indices if endpoints connect
+- Skip ambiguous or too-complex structures
+
+#### Label Detection (Phase 6 - Framework)
+- Identify text near boxes, arrows, and connections
+- Calculate attachment type and offset
+- Distance threshold: within 2 cells for attachment
+- Length limit: labels max 20 characters
+- Conservative: skips ambiguous cases
+
 **Safety:**
 - Conservative: Unknown patterns not identified
 - Errors don't cause panics
 - Ambiguous structures left unchanged
+- Hierarchy detection skips overlapping (non-nested) boxes
+- Connection line detection requires clear endpoints
+- Label detection requires close proximity
 
 ---
 
-### `src/normalizer.rs` - Layout Improvement (800+ lines)
-**Purpose:** Fix alignment, padding, and sizing issues
+### `src/normalizer.rs` - Layout Improvement (1200+ lines)
+**Purpose:** Fix alignment, padding, sizing, hierarchies, connections, and labels
 
-**Normalization Steps:**
+**Normalization Pipeline:**
 
 1. **Box Width Expansion**
    - Find longest text row in each box
@@ -260,24 +341,56 @@ pub struct PrimitiveInventory {
    - Expand right edge if needed
    - Idempotent: only expands, never shrinks
 
-2. **Horizontal Arrow Alignment**
-   - Align arrow start/end columns with box edges
+2. **Box Style Preservation**
+   - Render boxes with correct characters for their detected style
+   - Single-line: ┌─┐│└┘
+   - Double-line: ╔═╗║╚╝
+   - Rounded: ╭─╮│╰╯
+
+3. **Side-by-Side Box Balancing** (Phase 3)
+   - Find groups of vertically overlapping, horizontally adjacent boxes
+   - Expand each box to match the widest in its group
+   - Applies only to clearly adjacent boxes (gap ≤ 1 cell)
+
+4. **Nested Box Hierarchy Expansion** (Phase 5)
+   - For each parent box with children, expand to encompass them
+   - Add 1-cell margin around each child
+   - Only expands parent, never shrinks
+   - Processes innermost to outermost (deterministic order)
+   - **Known limitation**: Re-detection on second pass can find new hierarchies
+
+5. **Horizontal Arrow Alignment**
+   - Detect arrow types and directions
+   - Align start/end columns with box edges
    - Maintain relative position
    - Uses BTreeMap for deterministic ordering
 
-3. **Vertical Arrow Alignment**
-   - Align arrow column with box center, left, or right edge
+6. **Vertical Arrow Alignment**
+   - Align arrow column with box center, edge
    - Choose closest alignment point
    - Preserve relative spacing
+   - Handle all arrow types
 
-4. **Padding Normalization**
+7. **Connection Line Normalization** (Phase 4)
+   - Snap endpoints to box edges
+   - Straighten segments
+   - Preserve L-shape topology
+   - Conservative: skip if ambiguous
+
+8. **Label Normalization** (Phase 6)
+   - Move labels with their attached primitives via offset
+   - Preserve relative positioning
+   - Skip if collision detected
+
+9. **Padding Normalization**
    - Enforce uniform 1-space padding inside boxes
    - Add space inside boxes if missing
    - Consistent formatting
 
 **Key Property:**
-- **Idempotent**: Running normalization twice produces identical output
-- Verified by tests: `test_normalization_idempotent_*`
+- **Idempotent (with limitations)**: Running normalization twice produces identical output for simple diagrams
+- Complex diagrams with hierarchies may not be idempotent due to re-detection of hierarchies on second pass
+- Verified by tests: `test_normalization_idempotent_*` and `idempotence_tests.rs`
 
 **Data Flow:**
 ```
@@ -285,9 +398,17 @@ PrimitiveInventory
         ↓
 normalize_box_widths()
         ↓
+balance_horizontal_boxes()
+        ↓
+normalize_nested_boxes()
+        ↓
 align_horizontal_arrows()
         ↓
 align_vertical_arrows()
+        ↓
+normalize_connection_lines()
+        ↓
+normalize_labels()
         ↓
 normalize_padding()
         ↓
