@@ -5,6 +5,37 @@ use crate::primitives::{
     ArrowType, Box as DiagramBox, BoxStyle, HorizontalArrow, PrimitiveInventory,
 };
 
+/// Balance widths of side-by-side boxes in the same group.
+///
+/// For each group of horizontally adjacent boxes with vertical overlap,
+/// expand narrower boxes to match the widest one. Only expands, never shrinks.
+#[must_use]
+pub fn balance_horizontal_boxes(inventory: &PrimitiveInventory) -> PrimitiveInventory {
+    let mut normalized = inventory.clone();
+    let groups = find_vertical_overlap_groups(&normalized);
+
+    for group in groups {
+        // Find maximum width in group
+        let max_width = group
+            .iter()
+            .map(|&idx| normalized.boxes[idx].width())
+            .max()
+            .unwrap_or(0);
+
+        // Expand each box to match max width
+        for &idx in &group {
+            let box_ref = &mut normalized.boxes[idx];
+            let current_width = box_ref.width();
+            if current_width < max_width {
+                let diff = max_width - current_width;
+                box_ref.bottom_right.1 += diff;
+            }
+        }
+    }
+
+    normalized
+}
+
 /// Find groups of boxes that have vertical row overlap and are horizontally adjacent.
 ///
 /// Returns a vector of groups, where each group is a vector of box indices
@@ -934,5 +965,46 @@ mod tests {
         let groups = find_vertical_overlap_groups(&inventory);
         // Vertically stacked boxes should not be grouped
         assert!(groups.is_empty() || groups.iter().all(|g| g.len() == 1));
+    }
+
+    // Phase 3, Cycle 10: Balance algorithm tests
+    #[test]
+    fn test_balance_horizontal_boxes_equalizes_widths() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 2),
+            style: BoxStyle::Single,
+        });
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 3),
+            bottom_right: (2, 8),
+            style: BoxStyle::Single,
+        });
+
+        let balanced = balance_horizontal_boxes(&inventory);
+        // First box should expand from width 3 to width 6
+        assert_eq!(balanced.boxes[0].width(), 6);
+        // Second box stays at width 6
+        assert_eq!(balanced.boxes[1].width(), 6);
+    }
+
+    #[test]
+    fn test_balance_horizontal_boxes_idempotent() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 2),
+            style: BoxStyle::Single,
+        });
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 3),
+            bottom_right: (2, 8),
+            style: BoxStyle::Single,
+        });
+
+        let balanced1 = balance_horizontal_boxes(&inventory);
+        let balanced2 = balance_horizontal_boxes(&balanced1);
+        assert_eq!(balanced1.boxes, balanced2.boxes);
     }
 }

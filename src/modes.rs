@@ -93,6 +93,7 @@ fn process_diagram_mode(content: &str) -> String {
             let normalized = crate::normalizer::normalize_box_widths(&inventory);
             let normalized = crate::normalizer::align_horizontal_arrows(&normalized);
             let normalized = crate::normalizer::align_vertical_arrows(&normalized);
+            let normalized = crate::normalizer::balance_horizontal_boxes(&normalized);
             let normalized = crate::normalizer::normalize_padding(&normalized);
 
             // Render
