@@ -61,6 +61,24 @@ fn golden_file_markdown_with_diagram() {
 }
 
 #[test]
+fn golden_file_ci_pipeline() {
+    let input = fs::read_to_string("tests/golden/input/ci_pipeline.md")
+        .expect("Failed to read input fixture");
+    let expected = fs::read_to_string("tests/golden/expected/ci_pipeline.md")
+        .expect("Failed to read expected fixture");
+
+    // Process the input
+    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
+
+    // Compare
+    assert_eq!(
+        result.trim(),
+        expected.trim(),
+        "Output does not match expected for ci_pipeline"
+    );
+}
+
+#[test]
 fn all_golden_files_have_expected_output() {
     let input_dir = Path::new("tests/golden/input");
     let expected_dir = Path::new("tests/golden/expected");
