@@ -85,6 +85,13 @@ cargo build --release
 
 All code is tested with TDD discipline - unit tests, integration tests, and golden file tests.
 
+## Documentation
+
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Design overview, module structure, and data flow
+- **[SECURITY.md](SECURITY.md)** - Security policies, audit status, and best practices
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development guidelines and contribution process
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+
 ## License
 
 Licensed under the MIT License ([LICENSE](LICENSE) or https://opensource.org/licenses/MIT)
