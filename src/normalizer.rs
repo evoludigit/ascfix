@@ -580,4 +580,124 @@ mod tests {
         assert_eq!(normalized.text_rows[0].start_col, 1);
         assert_eq!(normalized.text_rows[1].start_col, 11);
     }
+
+    #[test]
+    fn test_normalization_idempotent_box_widths() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 3),
+        });
+        inventory.text_rows.push(crate::primitives::TextRow {
+            row: 1,
+            start_col: 1,
+            end_col: 2,
+            content: " LongContent ".to_string(),
+        });
+
+        let normalized1 = normalize_box_widths(&inventory);
+        let normalized2 = normalize_box_widths(&normalized1);
+
+        // Second normalization should not change anything
+        assert_eq!(normalized1.boxes, normalized2.boxes);
+        assert_eq!(normalized1.text_rows, normalized2.text_rows);
+    }
+
+    #[test]
+    fn test_normalization_idempotent_horizontal_arrows() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.horizontal_arrows.push(HorizontalArrow {
+            row: 0,
+            start_col: 2,
+            end_col: 5,
+        });
+        inventory.horizontal_arrows.push(HorizontalArrow {
+            row: 0,
+            start_col: 10,
+            end_col: 15,
+        });
+
+        let normalized1 = align_horizontal_arrows(&inventory);
+        let normalized2 = align_horizontal_arrows(&normalized1);
+
+        assert_eq!(normalized1.horizontal_arrows, normalized2.horizontal_arrows);
+    }
+
+    #[test]
+    fn test_normalization_idempotent_vertical_arrows() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 5),
+            bottom_right: (3, 15),
+        });
+        inventory
+            .vertical_arrows
+            .push(crate::primitives::VerticalArrow {
+                col: 11,
+                start_row: 4,
+                end_row: 6,
+            });
+
+        let normalized1 = align_vertical_arrows(&inventory);
+        let normalized2 = align_vertical_arrows(&normalized1);
+
+        assert_eq!(normalized1.vertical_arrows, normalized2.vertical_arrows);
+    }
+
+    #[test]
+    fn test_normalization_idempotent_padding() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (3, 10),
+        });
+        inventory.text_rows.push(crate::primitives::TextRow {
+            row: 1,
+            start_col: 0,
+            end_col: 9,
+            content: "Content".to_string(),
+        });
+
+        let normalized1 = normalize_padding(&inventory);
+        let normalized2 = normalize_padding(&normalized1);
+
+        assert_eq!(normalized1.text_rows, normalized2.text_rows);
+    }
+
+    #[test]
+    fn test_full_normalization_pipeline_idempotent() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 5),
+        });
+        inventory.text_rows.push(crate::primitives::TextRow {
+            row: 1,
+            start_col: 0,
+            end_col: 4,
+            content: " Text ".to_string(),
+        });
+        inventory.horizontal_arrows.push(HorizontalArrow {
+            row: 3,
+            start_col: 0,
+            end_col: 2,
+        });
+
+        // Apply full pipeline twice
+        let step1 = normalize_box_widths(&inventory);
+        let step2 = normalize_padding(&step1);
+        let step3 = align_horizontal_arrows(&step2);
+        let step4 = align_vertical_arrows(&step3);
+
+        let step1b = normalize_box_widths(&step4);
+        let step2b = normalize_padding(&step1b);
+        let step3b = align_horizontal_arrows(&step2b);
+        let step4b = align_vertical_arrows(&step3b);
+
+        // Second pipeline should produce identical results
+        assert_eq!(step4.boxes, step4b.boxes);
+        assert_eq!(step4.text_rows, step4b.text_rows);
+        assert_eq!(step4.horizontal_arrows, step4b.horizontal_arrows);
+        assert_eq!(step4.vertical_arrows, step4b.vertical_arrows);
+    }
 }
