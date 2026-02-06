@@ -3,6 +3,27 @@
 use clap::{Parser, ValueEnum};
 use std::path::PathBuf;
 
+/// Parse a size string with optional suffix (B, KB, MB, GB).
+/// Examples: "100", "50MB", "1GB", "500KB"
+#[allow(dead_code)] // Used by clap's value_parser
+fn parse_size(s: &str) -> Result<u64, String> {
+    let s = s.trim().to_uppercase();
+
+    let (num_str, multiplier) = match s.as_str() {
+        _ if s.ends_with("GB") => (s.strip_suffix("GB").unwrap(), 1024 * 1024 * 1024),
+        _ if s.ends_with("MB") => (s.strip_suffix("MB").unwrap(), 1024 * 1024),
+        _ if s.ends_with("KB") => (s.strip_suffix("KB").unwrap(), 1024),
+        _ if s.ends_with('B') => (s.strip_suffix('B').unwrap(), 1),
+        _ => (s.as_str(), 1),
+    };
+
+    num_str
+        .trim()
+        .parse::<u64>()
+        .map(|n| n * multiplier)
+        .map_err(|_| format!("invalid size: {s}"))
+}
+
 #[derive(Parser, Debug, Clone)]
 #[command(name = "ascfix")]
 #[command(about = "Repair ASCII diagrams in Markdown files", long_about = None)]
@@ -21,6 +42,10 @@ pub struct Args {
     /// Check if files need fixing (exit 1 if yes, 0 if no)
     #[arg(long)]
     pub check: bool,
+
+    /// Maximum file size to process (e.g., "100MB", "1GB", default: unlimited)
+    #[arg(long, value_parser = parse_size)]
+    pub max_size: Option<u64>,
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq, Eq)]
@@ -79,5 +104,46 @@ mod tests {
         let args = Args::try_parse_from(["ascfix", "--check", "test.md"]);
         assert!(args.is_ok());
         assert!(args.unwrap().check);
+    }
+
+    #[test]
+    fn test_args_parse_max_size_mb() {
+        let args = Args::try_parse_from(["ascfix", "--max-size", "100MB", "test.md"]);
+        assert!(args.is_ok());
+        assert_eq!(args.unwrap().max_size, Some(100 * 1024 * 1024));
+    }
+
+    #[test]
+    fn test_args_parse_max_size_gb() {
+        let args = Args::try_parse_from(["ascfix", "--max-size", "2GB", "test.md"]);
+        assert!(args.is_ok());
+        assert_eq!(args.unwrap().max_size, Some(2 * 1024 * 1024 * 1024));
+    }
+
+    #[test]
+    fn test_args_parse_max_size_kb() {
+        let args = Args::try_parse_from(["ascfix", "--max-size", "500KB", "test.md"]);
+        assert!(args.is_ok());
+        assert_eq!(args.unwrap().max_size, Some(500 * 1024));
+    }
+
+    #[test]
+    fn test_args_parse_max_size_bytes() {
+        let args = Args::try_parse_from(["ascfix", "--max-size", "1024", "test.md"]);
+        assert!(args.is_ok());
+        assert_eq!(args.unwrap().max_size, Some(1024));
+    }
+
+    #[test]
+    fn test_args_parse_max_size_invalid() {
+        let args = Args::try_parse_from(["ascfix", "--max-size", "invalid", "test.md"]);
+        assert!(args.is_err());
+    }
+
+    #[test]
+    fn test_args_parse_no_max_size() {
+        let args = Args::try_parse_from(["ascfix", "test.md"]);
+        assert!(args.is_ok());
+        assert_eq!(args.unwrap().max_size, None);
     }
 }
