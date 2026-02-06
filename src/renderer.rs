@@ -125,11 +125,13 @@ fn draw_text_row(grid: &mut Grid, row: &crate::primitives::TextRow) {
 
 /// Draw a horizontal arrow on the grid.
 fn draw_horizontal_arrow(grid: &mut Grid, arrow: &crate::primitives::HorizontalArrow) {
+    let chars = arrow.arrow_type.chars();
+
     // Draw arrow line from start_col to end_col
     for col in arrow.start_col..=arrow.end_col {
         if let Some(cell) = grid.get_mut(arrow.row, col) {
             if *cell == ' ' {
-                *cell = '─';
+                *cell = chars.line;
             }
         }
     }
@@ -137,18 +139,29 @@ fn draw_horizontal_arrow(grid: &mut Grid, arrow: &crate::primitives::HorizontalA
     // Draw arrowhead at end
     if arrow.end_col > arrow.start_col {
         if let Some(cell) = grid.get_mut(arrow.row, arrow.end_col) {
-            *cell = '→';
+            let arrowhead = if arrow.rightward {
+                chars.arrowhead_right
+            } else {
+                chars.arrowhead_left
+            };
+            *cell = arrowhead;
         }
     }
 }
 
 /// Draw a vertical arrow on the grid.
 fn draw_vertical_arrow(grid: &mut Grid, arrow: &crate::primitives::VerticalArrow) {
+    // Vertical arrows always use │ or ║ depending on type
+    let line_char = match arrow.arrow_type {
+        ArrowType::Double => '║',
+        _ => '│',
+    };
+
     // Draw arrow line from start_row to end_row
     for row in arrow.start_row..=arrow.end_row {
         if let Some(cell) = grid.get_mut(row, arrow.col) {
             if *cell == ' ' {
-                *cell = '│';
+                *cell = line_char;
             }
         }
     }
@@ -156,7 +169,8 @@ fn draw_vertical_arrow(grid: &mut Grid, arrow: &crate::primitives::VerticalArrow
     // Draw arrowhead at end
     if arrow.end_row > arrow.start_row {
         if let Some(cell) = grid.get_mut(arrow.end_row, arrow.col) {
-            *cell = '↓';
+            let arrowhead = if arrow.downward { '↓' } else { '↑' };
+            *cell = arrowhead;
         }
     }
 }
