@@ -149,19 +149,84 @@ pub struct TextRow {
     pub content: String,
 }
 
+/// Single-line box characters for character set constant.
+#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+const SINGLE_LINE_HORIZ: char = '─';
+/// Single-line box characters for character set constant.
+#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+const SINGLE_LINE_VERT: char = '│';
+/// Single-line box characters for character set constant.
+#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+const SINGLE_LINE_CORNERS: &[char] = &['┌', '┐', '└', '┘'];
+
+/// Double-line box characters for character set constant.
+#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+const DOUBLE_LINE_HORIZ: char = '═';
+/// Double-line box characters for character set constant.
+#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+const DOUBLE_LINE_VERT: char = '║';
+/// Double-line box characters for character set constant.
+#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+const DOUBLE_LINE_CORNERS: &[char] = &['╔', '╗', '╚', '╝'];
+
+/// Rounded box characters for character set constant.
+#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+const ROUNDED_HORIZ: char = '─';
+/// Rounded box characters for character set constant.
+#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+const ROUNDED_VERT: char = '│';
+/// Rounded box characters for character set constant.
+#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+const ROUNDED_CORNERS: &[char] = &['╭', '╮', '╰', '╯'];
+
 /// Check if a character is a box character.
-#[allow(dead_code)] // Reason: May be used by other detectors
+#[allow(dead_code)] // Reason: Used by detector in upcoming phases
 const fn is_box_char(ch: char) -> bool {
     matches!(
         ch,
-        '─' | '│' | '┌' | '┐' | '└' | '┘' | '├' | '┤' | '┼' | '┬' | '┴' | '┃'
+        '─' | '│'
+            | '┌'
+            | '┐'
+            | '└'
+            | '┘'
+            | '├'
+            | '┤'
+            | '┼'
+            | '┬'
+            | '┴'
+            | '┃'
+            | '═'
+            | '║'
+            | '╔'
+            | '╗'
+            | '╚'
+            | '╝'
+            | '╭'
+            | '╮'
+            | '╰'
+            | '╯'
     )
 }
 
-/// Check if a character is a box corner.
-#[allow(dead_code)] // Reason: May be used by other detectors
+/// Check if a character is a box corner (any style).
+#[allow(dead_code)] // Reason: Used by detector in upcoming phases
 const fn is_box_corner(ch: char) -> bool {
-    matches!(ch, '┌' | '┐' | '└' | '┘')
+    matches!(
+        ch,
+        '┌' | '┐' | '└' | '┘' | '╔' | '╗' | '╚' | '╝' | '╭' | '╮' | '╰' | '╯'
+    )
+}
+
+/// Check if a character is a double-line box corner.
+#[allow(dead_code)] // Reason: Used by detector in upcoming phases
+const fn is_double_line_corner(ch: char) -> bool {
+    matches!(ch, '╔' | '╗' | '╚' | '╝')
+}
+
+/// Check if a character is a rounded box corner.
+#[allow(dead_code)] // Reason: Used by detector in upcoming phases
+const fn is_rounded_corner(ch: char) -> bool {
+    matches!(ch, '╭' | '╮' | '╰' | '╯')
 }
 
 /// Complete inventory of detected primitives in a diagram.
@@ -304,5 +369,65 @@ mod tests {
         assert_eq!(chars.top_right, '╮');
         assert_eq!(chars.bottom_left, '╰');
         assert_eq!(chars.bottom_right, '╯');
+    }
+
+    // Phase 1, Cycle 2: RED - Character recognition tests
+    #[test]
+    fn test_is_box_char_double_line() {
+        // Double-line characters should be recognized
+        assert!(is_box_char('═'));
+        assert!(is_box_char('║'));
+        assert!(is_box_char('╔'));
+        assert!(is_box_char('╗'));
+        assert!(is_box_char('╚'));
+        assert!(is_box_char('╝'));
+    }
+
+    #[test]
+    fn test_is_box_char_rounded() {
+        // Rounded characters should be recognized
+        assert!(is_box_char('╭'));
+        assert!(is_box_char('╮'));
+        assert!(is_box_char('╰'));
+        assert!(is_box_char('╯'));
+    }
+
+    #[test]
+    fn test_is_box_corner_all_styles() {
+        // Single line corners
+        assert!(is_box_corner('┌'));
+        assert!(is_box_corner('┐'));
+        assert!(is_box_corner('└'));
+        assert!(is_box_corner('┘'));
+        // Double line corners
+        assert!(is_box_corner('╔'));
+        assert!(is_box_corner('╗'));
+        assert!(is_box_corner('╚'));
+        assert!(is_box_corner('╝'));
+        // Rounded corners
+        assert!(is_box_corner('╭'));
+        assert!(is_box_corner('╮'));
+        assert!(is_box_corner('╰'));
+        assert!(is_box_corner('╯'));
+    }
+
+    #[test]
+    fn test_is_double_line_corner() {
+        assert!(is_double_line_corner('╔'));
+        assert!(is_double_line_corner('╗'));
+        assert!(is_double_line_corner('╚'));
+        assert!(is_double_line_corner('╝'));
+        assert!(!is_double_line_corner('┌'));
+        assert!(!is_double_line_corner('╭'));
+    }
+
+    #[test]
+    fn test_is_rounded_corner() {
+        assert!(is_rounded_corner('╭'));
+        assert!(is_rounded_corner('╮'));
+        assert!(is_rounded_corner('╰'));
+        assert!(is_rounded_corner('╯'));
+        assert!(!is_rounded_corner('┌'));
+        assert!(!is_rounded_corner('╔'));
     }
 }
