@@ -18,12 +18,15 @@ impl Processor {
 
     /// Process a single file.
     ///
+    /// Routes to the appropriate processor based on the configured mode.
+    ///
     /// # Errors
     ///
     /// Returns an error if file reading/writing fails.
-    #[allow(clippy::unused_self)] // Reason: Keep as method for API consistency
     pub fn process_file(&self, path: &Path) -> Result<String> {
-        io::read_markdown(path)
+        let content = io::read_markdown(path)?;
+        let processed = crate::modes::process_by_mode(&self.args.mode, &content);
+        Ok(processed)
     }
 
     /// Process all files specified in arguments.

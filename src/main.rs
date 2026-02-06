@@ -9,6 +9,7 @@ mod cli;
 mod detector;
 pub mod grid;
 mod io;
+mod modes;
 mod normalizer;
 mod parser;
 mod primitives;
