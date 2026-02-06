@@ -38,6 +38,7 @@ pub enum Mode {
 
 impl Args {
     /// Parse command-line arguments.
+    #[must_use]
     pub fn parse_args() -> Self {
         Parser::parse()
     }

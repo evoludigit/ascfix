@@ -42,6 +42,7 @@ pub fn align_horizontal_arrows(inventory: &PrimitiveInventory) -> PrimitiveInven
 /// 2. Ensure it ends 1 column before right border
 /// 3. Adjust `start_col` and `end_col` to maintain padding
 #[allow(dead_code)] // Reason: Used by main processing pipeline
+#[must_use] 
 pub fn normalize_padding(inventory: &PrimitiveInventory) -> PrimitiveInventory {
     let mut normalized = inventory.clone();
 
@@ -69,6 +70,7 @@ pub fn normalize_padding(inventory: &PrimitiveInventory) -> PrimitiveInventory {
 /// 2. Snap the arrow's column to the box's left/right/center column
 /// 3. Maintain arrow row positions (only adjust column)
 #[allow(dead_code)] // Reason: Used by main processing pipeline
+#[must_use] 
 pub fn align_vertical_arrows(inventory: &PrimitiveInventory) -> PrimitiveInventory {
     let mut normalized = inventory.clone();
 
@@ -115,6 +117,7 @@ fn find_alignment_column(boxes: &[crate::primitives::Box], col: usize) -> Option
 /// 2. Calculate required width (content + 2 for borders + padding)
 /// 3. Expand box if necessary
 #[allow(dead_code)] // Reason: Used by main processing pipeline
+#[must_use] 
 pub fn normalize_box_widths(inventory: &PrimitiveInventory) -> PrimitiveInventory {
     let mut normalized = inventory.clone();
 

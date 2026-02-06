@@ -12,18 +12,21 @@ pub struct Box {
 impl Box {
     /// Get the width of the box (number of columns).
     #[allow(dead_code)] // Reason: Used by normalization pipeline
+    #[must_use] 
     pub const fn width(&self) -> usize {
         self.bottom_right.1 - self.top_left.1 + 1
     }
 
     /// Get the height of the box (number of rows).
     #[allow(dead_code)] // Reason: Used by normalization pipeline
+    #[must_use] 
     pub const fn height(&self) -> usize {
         self.bottom_right.0 - self.top_left.0 + 1
     }
 
     /// Check if a position is inside the box interior (not on border).
     #[allow(dead_code)] // Reason: Used by normalization pipeline
+    #[must_use] 
     pub const fn contains_interior(&self, row: usize, col: usize) -> bool {
         row > self.top_left.0
             && row < self.bottom_right.0
@@ -33,6 +36,7 @@ impl Box {
 
     /// Check if a position is on the box border.
     #[allow(dead_code)] // Reason: Used by normalization pipeline
+    #[must_use] 
     pub const fn contains_border(&self, row: usize, col: usize) -> bool {
         (row == self.top_left.0 || row == self.bottom_right.0)
             && col >= self.top_left.1

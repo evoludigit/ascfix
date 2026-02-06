@@ -17,6 +17,7 @@ pub struct DiagramBlock {
 /// A diagram block is a contiguous sequence of non-empty lines outside code fences.
 /// Blank lines separate blocks.
 #[allow(dead_code)] // Reason: Used by main processing pipeline
+#[must_use] 
 pub fn extract_diagram_blocks(text: &str) -> Vec<DiagramBlock> {
     let normal_lines = parser::extract_normal_lines(text);
     let mut blocks = Vec::new();

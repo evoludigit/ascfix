@@ -9,6 +9,7 @@ use std::fmt::Write;
 /// - `Safe`: Only normalize Markdown tables (minimal changes, no diagrams)
 /// - `Diagram`: Detect and normalize ASCII diagrams (boxes, arrows, text)
 /// - `Check`: Validate content but don't modify (used with --check flag)
+#[must_use]
 #[allow(dead_code)] // Reason: Used by main processing pipeline
 pub fn process_by_mode(mode: &Mode, content: &str) -> String {
     match mode {
@@ -128,6 +129,7 @@ fn process_check_mode(content: &str) -> String {
 /// Compare original and processed content to determine if fixes are needed.
 ///
 /// Returns true if the content has been modified, false if identical.
+#[must_use]
 #[allow(dead_code)] // Reason: Used by CLI for --check mode
 pub fn content_needs_fixing(original: &str, processed: &str) -> bool {
     original != processed

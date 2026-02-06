@@ -45,6 +45,7 @@ fn parse_line_contexts(text: &str) -> Vec<(usize, &str, LineContext)> {
 
 /// Extract all normal (non-code-fence) lines from Markdown content.
 #[allow(dead_code)] // Reason: Used by main processing pipeline
+#[must_use] 
 pub fn extract_normal_lines(text: &str) -> Vec<(usize, String)> {
     parse_line_contexts(text)
         .into_iter()
