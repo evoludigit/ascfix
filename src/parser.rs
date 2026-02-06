@@ -2,7 +2,7 @@
 
 /// Represents a line of Markdown and whether it's inside a code fence.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(dead_code)]  // Reason: Useful type for semantic clarity, used in tests
+#[allow(dead_code)] // Reason: Useful type for semantic clarity, used in tests
 enum LineContext {
     /// Outside any code fence
     Normal,
@@ -11,7 +11,7 @@ enum LineContext {
 }
 
 /// Parse Markdown content and return lines with their context (inside/outside code fences).
-#[allow(dead_code)]  // Reason: Used by extract_normal_lines and tests
+#[allow(dead_code)] // Reason: Used by extract_normal_lines and tests
 fn parse_line_contexts(text: &str) -> Vec<(usize, &str, LineContext)> {
     let mut result = Vec::new();
     let mut in_fence = false;
@@ -44,7 +44,7 @@ fn parse_line_contexts(text: &str) -> Vec<(usize, &str, LineContext)> {
 }
 
 /// Extract all normal (non-code-fence) lines from Markdown content.
-#[allow(dead_code)]  // Reason: Used by main processing pipeline
+#[allow(dead_code)] // Reason: Used by main processing pipeline
 pub fn extract_normal_lines(text: &str) -> Vec<(usize, String)> {
     parse_line_contexts(text)
         .into_iter()

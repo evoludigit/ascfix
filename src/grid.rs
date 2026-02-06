@@ -2,7 +2,7 @@
 
 /// A 2D grid of characters representing an ASCII diagram.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)]  // Reason: Used by main processing pipeline
+#[allow(dead_code)] // Reason: Used by main processing pipeline
 pub struct Grid {
     /// Grid data: rows of characters
     rows: Vec<Vec<char>>,
@@ -10,7 +10,7 @@ pub struct Grid {
 
 impl Grid {
     /// Create a grid from lines of text.
-    #[allow(dead_code)]  // Reason: Used by main processing pipeline
+    #[allow(dead_code)] // Reason: Used by main processing pipeline
     #[must_use]
     pub fn from_lines(lines: &[&str]) -> Self {
         let rows = lines.iter().map(|line| line.chars().collect()).collect();
@@ -18,34 +18,34 @@ impl Grid {
     }
 
     /// Get the number of rows in the grid.
-    #[allow(dead_code)]  // Reason: Used by main processing pipeline
+    #[allow(dead_code)] // Reason: Used by main processing pipeline
     #[must_use]
     pub const fn height(&self) -> usize {
         self.rows.len()
     }
 
     /// Get the number of columns in the grid (width of the longest row).
-    #[allow(dead_code)]  // Reason: Used by main processing pipeline
+    #[allow(dead_code)] // Reason: Used by main processing pipeline
     #[must_use]
     pub fn width(&self) -> usize {
         self.rows.iter().map(Vec::len).max().unwrap_or(0)
     }
 
     /// Get a character at (row, col). Returns None if out of bounds.
-    #[allow(dead_code)]  // Reason: Used by main processing pipeline
+    #[allow(dead_code)] // Reason: Used by main processing pipeline
     #[must_use]
     pub fn get(&self, row: usize, col: usize) -> Option<char> {
         self.rows.get(row).and_then(|r| r.get(col).copied())
     }
 
     /// Get a mutable reference to a cell. Returns None if out of bounds.
-    #[allow(dead_code)]  // Reason: Used by main processing pipeline
+    #[allow(dead_code)] // Reason: Used by main processing pipeline
     pub fn get_mut(&mut self, row: usize, col: usize) -> Option<&mut char> {
         self.rows.get_mut(row).and_then(|r| r.get_mut(col))
     }
 
     /// Render the grid back to a string (including trailing whitespace).
-    #[allow(dead_code)]  // Reason: Used by main processing pipeline
+    #[allow(dead_code)] // Reason: Used by main processing pipeline
     #[must_use]
     pub fn render(&self) -> String {
         self.rows
@@ -56,7 +56,7 @@ impl Grid {
     }
 
     /// Render the grid, trimming trailing whitespace from each line.
-    #[allow(dead_code)]  // Reason: Used by main processing pipeline
+    #[allow(dead_code)] // Reason: Used by main processing pipeline
     #[must_use]
     pub fn render_trimmed(&self) -> String {
         self.rows

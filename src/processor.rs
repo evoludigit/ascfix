@@ -21,7 +21,7 @@ impl Processor {
     /// # Errors
     ///
     /// Returns an error if file reading/writing fails.
-    #[allow(clippy::unused_self)]  // Reason: Keep as method for API consistency
+    #[allow(clippy::unused_self)] // Reason: Keep as method for API consistency
     pub fn process_file(&self, path: &Path) -> Result<String> {
         io::read_markdown(path)
     }

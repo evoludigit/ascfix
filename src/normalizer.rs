@@ -1,20 +1,20 @@
 //! Layout normalization and repair logic for ASCII diagrams.
 
-#[allow(unused_imports)]  // Reason: DiagramBox used in tests
+#[allow(unused_imports)] // Reason: DiagramBox used in tests
 use crate::primitives::{Box as DiagramBox, HorizontalArrow, PrimitiveInventory};
 
 /// Align horizontal arrows to consistent positions.
 ///
 /// Algorithm:
 /// 1. Group arrows by row
-/// 2. Normalize each arrow's position to match anchor points
-/// 3. Ensure no overlap between arrows
-#[allow(dead_code)]  // Reason: Used by main processing pipeline
+/// 2. Sort within each row by start position
+/// 3. Preserve row order for deterministic output
+#[allow(dead_code)] // Reason: Used by main processing pipeline
 pub fn align_horizontal_arrows(inventory: &PrimitiveInventory) -> PrimitiveInventory {
     let mut normalized = inventory.clone();
 
-    // Group arrows by row
-    let mut arrows_by_row = std::collections::HashMap::new();
+    // Group arrows by row while preserving order
+    let mut arrows_by_row = std::collections::BTreeMap::new();
     for arrow in &normalized.horizontal_arrows {
         arrows_by_row
             .entry(arrow.row)
@@ -22,11 +22,11 @@ pub fn align_horizontal_arrows(inventory: &PrimitiveInventory) -> PrimitiveInven
             .push(arrow.clone());
     }
 
-    // For each row, ensure arrows don't overlap and are properly spaced
+    // For each row, sort arrows by start position and collect preserving row order
     normalized.horizontal_arrows = arrows_by_row
         .into_iter()
         .flat_map(|(_row, mut arrows)| {
-            // Sort arrows by start position
+            // Sort arrows by start position within row
             arrows.sort_by_key(|a| a.start_col);
             arrows
         })
@@ -35,13 +35,59 @@ pub fn align_horizontal_arrows(inventory: &PrimitiveInventory) -> PrimitiveInven
     normalized
 }
 
+/// Align vertical arrows to box column positions.
+///
+/// Algorithm:
+/// 1. For each vertical arrow, find the nearest box
+/// 2. Snap the arrow's column to the box's left/right/center column
+/// 3. Maintain arrow row positions (only adjust column)
+#[allow(dead_code)] // Reason: Used by main processing pipeline
+pub fn align_vertical_arrows(inventory: &PrimitiveInventory) -> PrimitiveInventory {
+    let mut normalized = inventory.clone();
+
+    for arrow in &mut normalized.vertical_arrows {
+        // Find boxes that might this arrow should align to
+        // A vertical arrow aligns to a box if it's roughly within the box's column range
+        // or closest to it horizontally
+        if let Some(aligned_col) = find_alignment_column(&normalized.boxes, arrow.col) {
+            arrow.col = aligned_col;
+        }
+    }
+
+    normalized
+}
+
+/// Find the nearest box column alignment for a given column position.
+fn find_alignment_column(boxes: &[crate::primitives::Box], col: usize) -> Option<usize> {
+    let mut closest_col = None;
+    let mut min_distance = usize::MAX;
+
+    for b in boxes {
+        // Consider three alignment points: left edge, center, right edge
+        let left_col = b.top_left.1;
+        let center_col = usize::midpoint(b.top_left.1, b.bottom_right.1);
+        let right_col = b.bottom_right.1;
+
+        let candidates = [left_col, center_col, right_col];
+        for &candidate in &candidates {
+            let distance = candidate.abs_diff(col);
+            if distance < min_distance {
+                min_distance = distance;
+                closest_col = Some(candidate);
+            }
+        }
+    }
+
+    closest_col
+}
+
 /// Normalize box widths to fit their content.
 ///
 /// Algorithm:
 /// 1. For each box, find the longest interior text row
 /// 2. Calculate required width (content + 2 for borders + padding)
 /// 3. Expand box if necessary
-#[allow(dead_code)]  // Reason: Used by main processing pipeline
+#[allow(dead_code)] // Reason: Used by main processing pipeline
 pub fn normalize_box_widths(inventory: &PrimitiveInventory) -> PrimitiveInventory {
     let mut normalized = inventory.clone();
 
@@ -70,9 +116,11 @@ pub fn normalize_box_widths(inventory: &PrimitiveInventory) -> PrimitiveInventor
 
     // Adjust text rows to match new box widths
     for row in &mut normalized.text_rows {
-        if let Some(b) = normalized.boxes.iter().find(|box_| {
-            row.row > box_.top_left.0 && row.row < box_.bottom_right.0
-        }) {
+        if let Some(b) = normalized
+            .boxes
+            .iter()
+            .find(|box_| row.row > box_.top_left.0 && row.row < box_.bottom_right.0)
+        {
             row.end_col = b.bottom_right.1 - 1;
         }
     }
@@ -254,7 +302,9 @@ mod tests {
         let normalized = align_horizontal_arrows(&inventory);
         // Should be sorted by start_col
         assert_eq!(normalized.horizontal_arrows.len(), 2);
-        assert!(normalized.horizontal_arrows[0].start_col < normalized.horizontal_arrows[1].start_col);
+        assert!(
+            normalized.horizontal_arrows[0].start_col < normalized.horizontal_arrows[1].start_col
+        );
     }
 
     #[test]
@@ -282,5 +332,107 @@ mod tests {
         let inventory = PrimitiveInventory::default();
         let normalized = align_horizontal_arrows(&inventory);
         assert!(normalized.horizontal_arrows.is_empty());
+    }
+
+    #[test]
+    fn test_align_vertical_arrow_to_box_center() {
+        let mut inventory = PrimitiveInventory::default();
+        // Box from col 5 to col 15 (center at 10)
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 5),
+            bottom_right: (3, 15),
+        });
+        // Arrow slightly off-center at col 11
+        inventory
+            .vertical_arrows
+            .push(crate::primitives::VerticalArrow {
+                col: 11,
+                start_row: 4,
+                end_row: 6,
+            });
+
+        let normalized = align_vertical_arrows(&inventory);
+        let arrow = &normalized.vertical_arrows[0];
+        // Should snap to box center (10)
+        assert_eq!(arrow.col, 10);
+    }
+
+    #[test]
+    fn test_align_vertical_arrow_to_box_edge() {
+        let mut inventory = PrimitiveInventory::default();
+        // Box from col 5 to col 15
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 5),
+            bottom_right: (3, 15),
+        });
+        // Arrow at col 6 (close to left edge at 5)
+        inventory
+            .vertical_arrows
+            .push(crate::primitives::VerticalArrow {
+                col: 6,
+                start_row: 4,
+                end_row: 6,
+            });
+
+        let normalized = align_vertical_arrows(&inventory);
+        let arrow = &normalized.vertical_arrows[0];
+        // Should snap to left edge (5)
+        assert_eq!(arrow.col, 5);
+    }
+
+    #[test]
+    fn test_align_vertical_arrow_to_nearest_box() {
+        let mut inventory = PrimitiveInventory::default();
+        // Two boxes
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 2),
+            bottom_right: (3, 5),
+        });
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 10),
+            bottom_right: (3, 15),
+        });
+        // Arrow closer to second box
+        inventory
+            .vertical_arrows
+            .push(crate::primitives::VerticalArrow {
+                col: 9,
+                start_row: 4,
+                end_row: 6,
+            });
+
+        let normalized = align_vertical_arrows(&inventory);
+        let arrow = &normalized.vertical_arrows[0];
+        // Should align to second box (center at 12 is closer than col 9 to first box)
+        assert!(arrow.col >= 10 && arrow.col <= 15);
+    }
+
+    #[test]
+    fn test_vertical_arrow_maintains_row_positions() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 5),
+            bottom_right: (3, 15),
+        });
+        inventory
+            .vertical_arrows
+            .push(crate::primitives::VerticalArrow {
+                col: 11,
+                start_row: 4,
+                end_row: 6,
+            });
+
+        let normalized = align_vertical_arrows(&inventory);
+        let arrow = &normalized.vertical_arrows[0];
+        // Row positions should not change
+        assert_eq!(arrow.start_row, 4);
+        assert_eq!(arrow.end_row, 6);
+    }
+
+    #[test]
+    fn test_no_vertical_arrows_unchanged() {
+        let inventory = PrimitiveInventory::default();
+        let normalized = align_vertical_arrows(&inventory);
+        assert!(normalized.vertical_arrows.is_empty());
     }
 }

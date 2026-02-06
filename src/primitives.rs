@@ -11,19 +11,19 @@ pub struct Box {
 
 impl Box {
     /// Get the width of the box (number of columns).
-    #[allow(dead_code)]  // Reason: Used by normalization pipeline
+    #[allow(dead_code)] // Reason: Used by normalization pipeline
     pub const fn width(&self) -> usize {
         self.bottom_right.1 - self.top_left.1 + 1
     }
 
     /// Get the height of the box (number of rows).
-    #[allow(dead_code)]  // Reason: Used by normalization pipeline
+    #[allow(dead_code)] // Reason: Used by normalization pipeline
     pub const fn height(&self) -> usize {
         self.bottom_right.0 - self.top_left.0 + 1
     }
 
     /// Check if a position is inside the box interior (not on border).
-    #[allow(dead_code)]  // Reason: Used by normalization pipeline
+    #[allow(dead_code)] // Reason: Used by normalization pipeline
     pub const fn contains_interior(&self, row: usize, col: usize) -> bool {
         row > self.top_left.0
             && row < self.bottom_right.0
@@ -32,7 +32,7 @@ impl Box {
     }
 
     /// Check if a position is on the box border.
-    #[allow(dead_code)]  // Reason: Used by normalization pipeline
+    #[allow(dead_code)] // Reason: Used by normalization pipeline
     pub const fn contains_border(&self, row: usize, col: usize) -> bool {
         (row == self.top_left.0 || row == self.bottom_right.0)
             && col >= self.top_left.1
@@ -45,7 +45,7 @@ impl Box {
 
 /// A horizontal arrow or connector.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)]  // Reason: Used by main processing pipeline
+#[allow(dead_code)] // Reason: Used by main processing pipeline
 pub struct HorizontalArrow {
     /// Row position
     pub row: usize,
@@ -57,7 +57,7 @@ pub struct HorizontalArrow {
 
 /// A vertical arrow or connector.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)]  // Reason: Used by main processing pipeline
+#[allow(dead_code)] // Reason: Used by main processing pipeline
 pub struct VerticalArrow {
     /// Column position
     pub col: usize,
@@ -69,7 +69,7 @@ pub struct VerticalArrow {
 
 /// A row of text content.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)]  // Reason: Used by main processing pipeline
+#[allow(dead_code)] // Reason: Used by main processing pipeline
 pub struct TextRow {
     /// Row position
     pub row: usize,
@@ -82,7 +82,7 @@ pub struct TextRow {
 }
 
 /// Check if a character is a box character.
-#[allow(dead_code)]  // Reason: May be used by other detectors
+#[allow(dead_code)] // Reason: May be used by other detectors
 const fn is_box_char(ch: char) -> bool {
     matches!(
         ch,
@@ -91,14 +91,14 @@ const fn is_box_char(ch: char) -> bool {
 }
 
 /// Check if a character is a box corner.
-#[allow(dead_code)]  // Reason: May be used by other detectors
+#[allow(dead_code)] // Reason: May be used by other detectors
 const fn is_box_corner(ch: char) -> bool {
     matches!(ch, '┌' | '┐' | '└' | '┘')
 }
 
 /// Complete inventory of detected primitives in a diagram.
 #[derive(Debug, Clone, Default)]
-#[allow(dead_code)]  // Reason: Used by main processing pipeline
+#[allow(dead_code)] // Reason: Used by main processing pipeline
 pub struct PrimitiveInventory {
     /// Detected boxes
     pub boxes: Vec<Box>,

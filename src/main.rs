@@ -5,9 +5,9 @@
 //! - ASCII boxes and arrows
 //! - Text row formatting
 
-pub mod grid;
 mod cli;
 mod detector;
+pub mod grid;
 mod io;
 mod normalizer;
 mod parser;
