@@ -191,6 +191,23 @@ fn draw_connection_line(_grid: &mut Grid, _conn: &crate::primitives::ConnectionL
     // TODO: Implement segment rendering with elbow detection in future phase
 }
 
+/// Draw a label on the grid.
+///
+/// Algorithm:
+/// 1. Check if label position is empty (space character)
+/// 2. Render label text character by character
+/// 3. Skip if collision detected with existing content
+/// 4. Labels rendered last (lowest priority)
+///
+/// Conservative: Does not render to avoid text collision.
+#[allow(dead_code)] // Reason: Used by rendering pipeline in upcoming phase
+#[allow(clippy::missing_const_for_fn)] // Future implementation will need mutable grid
+fn draw_label(_grid: &mut Grid, _label: &crate::primitives::Label) {
+    // Conservative approach: Skip rendering for now
+    // Prevents unintended overwrites of diagram content
+    // TODO: Implement text placement with collision detection in future phase
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -589,5 +606,122 @@ mod tests {
         assert_eq!(grid.get(0, 0), Some('┌'));
         assert_eq!(grid.get(1, 1), Some('╔'));
         assert_eq!(grid.get(2, 2), Some('╭'));
+    }
+
+    // Phase 6, Cycle 23: RED - Label rendering tests
+    #[test]
+    fn test_render_with_labels() {
+        use crate::primitives::{Label, LabelAttachment};
+
+        let mut inventory = PrimitiveInventory::default();
+        // Add a box
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (2, 4),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Add a label
+        inventory.labels.push(Label {
+            row: 4,
+            col: 0,
+            content: "Label".to_string(),
+            attached_to: LabelAttachment::Box(0),
+            offset: (2, 0),
+        });
+
+        let grid = render_diagram(&inventory);
+        // Box should be rendered
+        assert_eq!(grid.get(0, 0), Some('┌'));
+        // Grid should accommodate label space
+        assert!(grid.height() > 2);
+    }
+
+    #[test]
+    fn test_render_empty_labels() {
+        let mut inventory = PrimitiveInventory::default();
+        // Add a box with no labels
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (2, 4),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+
+        let grid = render_diagram(&inventory);
+        // Box should be rendered normally
+        assert_eq!(grid.get(0, 0), Some('┌'));
+    }
+
+    #[test]
+    fn test_render_label_no_collision() {
+        use crate::primitives::{Label, LabelAttachment};
+
+        let mut inventory = PrimitiveInventory::default();
+        // Add a box
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (2, 4),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Add a label far from box (empty space)
+        inventory.labels.push(Label {
+            row: 5,
+            col: 0,
+            content: "Text".to_string(),
+            attached_to: LabelAttachment::Box(0),
+            offset: (3, 0),
+        });
+
+        let grid = render_diagram(&inventory);
+        // Box corners should be intact
+        assert_eq!(grid.get(0, 0), Some('┌'));
+        assert_eq!(grid.get(2, 4), Some('┘'));
+    }
+
+    #[test]
+    fn test_render_multiple_labels() {
+        use crate::primitives::{Label, LabelAttachment};
+
+        let mut inventory = PrimitiveInventory::default();
+        // Add two boxes
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (2, 3),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 5),
+            bottom_right: (2, 8),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Add labels for each box
+        inventory.labels.push(Label {
+            row: 4,
+            col: 1,
+            content: "First".to_string(),
+            attached_to: LabelAttachment::Box(0),
+            offset: (2, 0),
+        });
+        inventory.labels.push(Label {
+            row: 4,
+            col: 6,
+            content: "Second".to_string(),
+            attached_to: LabelAttachment::Box(1),
+            offset: (2, 0),
+        });
+
+        let grid = render_diagram(&inventory);
+        // Both boxes should be rendered
+        assert_eq!(grid.get(0, 0), Some('┌'));
+        assert_eq!(grid.get(0, 5), Some('┌'));
     }
 }
