@@ -276,6 +276,23 @@ pub fn normalize_box_widths(inventory: &PrimitiveInventory) -> PrimitiveInventor
     normalized
 }
 
+/// Normalize connection lines (snap to box edges, straighten segments).
+///
+/// Algorithm:
+/// 1. For each connection line's endpoints
+/// 2. If attached to a box, snap to nearest edge
+/// 3. Straighten segments (avoid unnecessary elbows)
+/// 4. Skip if ambiguous or too complex
+///
+/// Conservative: Only modifies connections that clearly attach to boxes.
+#[allow(dead_code)] // Reason: Used by normalization pipeline
+#[must_use]
+pub fn normalize_connection_lines(inventory: &PrimitiveInventory) -> PrimitiveInventory {
+    // For MVP, return unchanged (conservative approach)
+    // Will implement snapping and straightening in future phase
+    inventory.clone()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1006,5 +1023,58 @@ mod tests {
         let balanced1 = balance_horizontal_boxes(&inventory);
         let balanced2 = balance_horizontal_boxes(&balanced1);
         assert_eq!(balanced1.boxes, balanced2.boxes);
+    }
+
+    // Phase 4, Cycle 14: RED - Connection normalization tests
+    #[test]
+    fn test_normalize_connection_lines_empty() {
+        let inventory = PrimitiveInventory::default();
+        let normalized = normalize_connection_lines(&inventory);
+        assert!(normalized.connection_lines.is_empty());
+    }
+
+    #[test]
+    fn test_normalize_connection_lines_preserves_basic() {
+        use crate::primitives::{ConnectionLine, Segment};
+
+        let mut inventory = PrimitiveInventory::default();
+        inventory.connection_lines.push(ConnectionLine {
+            segments: vec![Segment::Horizontal {
+                row: 2,
+                start_col: 0,
+                end_col: 5,
+            }],
+            from_box: Some(0),
+            to_box: None,
+        });
+        let normalized = normalize_connection_lines(&inventory);
+        assert_eq!(normalized.connection_lines.len(), 1);
+        assert_eq!(normalized.connection_lines[0].segments.len(), 1);
+    }
+
+    #[test]
+    fn test_normalize_connection_lines_idempotent() {
+        use crate::primitives::{ConnectionLine, Segment};
+
+        let mut inventory = PrimitiveInventory::default();
+        inventory.connection_lines.push(ConnectionLine {
+            segments: vec![
+                Segment::Horizontal {
+                    row: 2,
+                    start_col: 0,
+                    end_col: 5,
+                },
+                Segment::Vertical {
+                    col: 5,
+                    start_row: 2,
+                    end_row: 5,
+                },
+            ],
+            from_box: Some(0),
+            to_box: Some(1),
+        });
+        let norm1 = normalize_connection_lines(&inventory);
+        let norm2 = normalize_connection_lines(&norm1);
+        assert_eq!(norm1.connection_lines, norm2.connection_lines);
     }
 }
