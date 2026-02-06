@@ -246,6 +246,58 @@ pub struct TextRow {
     pub content: String,
 }
 
+/// A segment of a connection line (either horizontal or vertical).
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)] // Reason: Used by connection line detection and rendering
+pub enum Segment {
+    /// Horizontal segment: row and column range
+    Horizontal {
+        /// Row position
+        row: usize,
+        /// Starting column
+        start_col: usize,
+        /// Ending column
+        end_col: usize,
+    },
+    /// Vertical segment: column and row range
+    Vertical {
+        /// Column position
+        col: usize,
+        /// Starting row
+        start_row: usize,
+        /// Ending row
+        end_row: usize,
+    },
+}
+
+impl Segment {
+    /// Get the length of this segment (number of cells spanned).
+    #[allow(dead_code)] // Reason: Used by normalization pipeline
+    #[must_use]
+    pub fn length(&self) -> usize {
+        match self {
+            Self::Horizontal {
+                start_col, end_col, ..
+            } => end_col - start_col + 1,
+            Self::Vertical {
+                start_row, end_row, ..
+            } => end_row - start_row + 1,
+        }
+    }
+}
+
+/// An L-shaped or multi-segment connection line (e.g., between boxes).
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)] // Reason: Used by main processing pipeline
+pub struct ConnectionLine {
+    /// Segments that make up this connection line
+    pub segments: Vec<Segment>,
+    /// Index of the box this line originates from (if any)
+    pub from_box: Option<usize>,
+    /// Index of the box this line connects to (if any)
+    pub to_box: Option<usize>,
+}
+
 /// Single-line box characters for character set constant.
 #[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
 const SINGLE_LINE_HORIZ: char = '─';
@@ -344,6 +396,8 @@ pub struct PrimitiveInventory {
     pub vertical_arrows: Vec<VerticalArrow>,
     /// Text rows (extracted from inside boxes)
     pub text_rows: Vec<TextRow>,
+    /// Detected connection lines
+    pub connection_lines: Vec<ConnectionLine>,
 }
 
 #[cfg(test)]
@@ -703,5 +757,102 @@ mod tests {
         };
         assert_eq!(arr.arrow_type, ArrowType::Dashed);
         assert!(!arr.downward);
+    }
+
+    // Phase 4, Cycle 12: RED - ConnectionLine primitive tests
+    #[test]
+    fn test_segment_horizontal() {
+        let seg = Segment::Horizontal {
+            row: 5,
+            start_col: 2,
+            end_col: 8,
+        };
+        match seg {
+            Segment::Horizontal {
+                row,
+                start_col,
+                end_col,
+            } => {
+                assert_eq!(row, 5);
+                assert_eq!(start_col, 2);
+                assert_eq!(end_col, 8);
+            }
+            Segment::Vertical { .. } => panic!("Expected Horizontal segment"),
+        }
+    }
+
+    #[test]
+    fn test_segment_vertical() {
+        let seg = Segment::Vertical {
+            col: 3,
+            start_row: 1,
+            end_row: 6,
+        };
+        match seg {
+            Segment::Vertical {
+                col,
+                start_row,
+                end_row,
+            } => {
+                assert_eq!(col, 3);
+                assert_eq!(start_row, 1);
+                assert_eq!(end_row, 6);
+            }
+            Segment::Horizontal { .. } => panic!("Expected Vertical segment"),
+        }
+    }
+
+    #[test]
+    fn test_connection_line_basic() {
+        let conn = ConnectionLine {
+            segments: vec![
+                Segment::Horizontal {
+                    row: 2,
+                    start_col: 0,
+                    end_col: 5,
+                },
+                Segment::Vertical {
+                    col: 5,
+                    start_row: 2,
+                    end_row: 5,
+                },
+            ],
+            from_box: Some(0),
+            to_box: Some(1),
+        };
+        assert_eq!(conn.segments.len(), 2);
+        assert_eq!(conn.from_box, Some(0));
+        assert_eq!(conn.to_box, Some(1));
+    }
+
+    #[test]
+    fn test_connection_line_unattached() {
+        let conn = ConnectionLine {
+            segments: vec![Segment::Horizontal {
+                row: 3,
+                start_col: 0,
+                end_col: 10,
+            }],
+            from_box: None,
+            to_box: None,
+        };
+        assert_eq!(conn.segments.len(), 1);
+        assert!(conn.from_box.is_none());
+        assert!(conn.to_box.is_none());
+    }
+
+    #[test]
+    fn test_connection_line_single_segment() {
+        let conn = ConnectionLine {
+            segments: vec![Segment::Vertical {
+                col: 2,
+                start_row: 0,
+                end_row: 4,
+            }],
+            from_box: Some(0),
+            to_box: None,
+        };
+        assert_eq!(conn.segments.len(), 1);
+        assert_eq!(conn.from_box, Some(0));
     }
 }
