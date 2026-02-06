@@ -500,4 +500,94 @@ mod tests {
         assert_eq!(grid.get(0, 0), Some('┌'));
         assert_eq!(grid.get(2, 3), Some('┘'));
     }
+
+    // Phase 5, Cycle 18: RED - Nested rendering tests
+    #[test]
+    fn test_render_nested_boxes() {
+        let mut inventory = PrimitiveInventory::default();
+        // Parent box
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (4, 8),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: vec![1],
+        });
+        // Child box
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (1, 2),
+            bottom_right: (3, 6),
+            style: BoxStyle::Single,
+            parent_idx: Some(0),
+            child_indices: Vec::new(),
+        });
+
+        let grid = render_diagram(&inventory);
+        // Parent should be rendered
+        assert_eq!(grid.get(0, 0), Some('┌'));
+        // Child should be rendered (not overwritten by parent)
+        assert_eq!(grid.get(1, 2), Some('┌'));
+    }
+
+    #[test]
+    fn test_render_nested_different_styles() {
+        let mut inventory = PrimitiveInventory::default();
+        // Single-line parent
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (4, 8),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: vec![1],
+        });
+        // Double-line child
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (1, 2),
+            bottom_right: (3, 6),
+            style: BoxStyle::Double,
+            parent_idx: Some(0),
+            child_indices: Vec::new(),
+        });
+
+        let grid = render_diagram(&inventory);
+        // Parent corners should be single-line
+        assert_eq!(grid.get(0, 0), Some('┌'));
+        // Child corners should be double-line
+        assert_eq!(grid.get(1, 2), Some('╔'));
+    }
+
+    #[test]
+    fn test_render_multiple_nested_levels() {
+        let mut inventory = PrimitiveInventory::default();
+        // Grandparent
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (6, 10),
+            style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: vec![1],
+        });
+        // Parent
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (1, 1),
+            bottom_right: (5, 9),
+            style: BoxStyle::Double,
+            parent_idx: Some(0),
+            child_indices: vec![2],
+        });
+        // Child
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (2, 2),
+            bottom_right: (4, 8),
+            style: BoxStyle::Rounded,
+            parent_idx: Some(1),
+            child_indices: Vec::new(),
+        });
+
+        let grid = render_diagram(&inventory);
+        // All boxes should be rendered with their own styles
+        assert_eq!(grid.get(0, 0), Some('┌'));
+        assert_eq!(grid.get(1, 1), Some('╔'));
+        assert_eq!(grid.get(2, 2), Some('╭'));
+    }
 }
