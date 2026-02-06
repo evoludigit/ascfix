@@ -27,20 +27,20 @@ ascfix README.md --in-place --mode=diagram
 ascfix docs/*.md --in-place
 ```
 
-## Development
-
-This project follows a phase-based TDD methodology. See [`.phases/README.md`](./.phases/README.md) for the development plan.
-
-### Setup
+## Building & Testing
 
 ```bash
+# Run all tests
 cargo test
+
+# Check code quality
 cargo clippy --all-targets --all-features -- -D warnings
+
+# Build release binary
+cargo build --release
 ```
 
-### Current Phase
-
-See [`.phases/README.md`](./.phases/README.md) for current development status.
+All code is tested with TDD discipline - unit tests, integration tests, and golden file tests.
 
 ## License
 
