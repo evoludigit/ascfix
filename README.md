@@ -180,6 +180,145 @@ Source Code
 
 ---
 
+### Diagram Mode: Nested Boxes and Hierarchies
+
+**Before** (misaligned nested structure):
+```markdown
+┌─────────────────────────────────┐
+│ System                          │
+│ ┌──────────────┐ ┌─────────────┐│
+│ │ Frontend     │ │Backend      ││
+│ └──────────────┘ └─────────────┘│
+│       ↓              ↓          │
+│  ┌─────────────────────────┐   │
+│  │ Database                │   │
+│  └─────────────────────────┘   │
+└─────────────────────────────────┘
+```
+
+**After** (normalized, consistent alignment):
+```markdown
+┌──────────────────────────────────┐
+│ System                           │
+│ ┌────────────────┐ ┌────────────┐│
+│ │ Frontend       │ │ Backend    ││
+│ └────────────────┘ └────────────┘│
+│        ↓                ↓        │
+│ ┌──────────────────────────────┐ │
+│ │ Database                     │ │
+│ └──────────────────────────────┘ │
+└──────────────────────────────────┘
+```
+
+**Command:**
+```bash
+ascfix architecture.md --in-place --mode=diagram
+```
+
+---
+
+### Diagram Mode: Microservices Architecture
+
+**Before** (AI-generated, inconsistent spacing):
+```markdown
+        ┌────────────────┐
+        │ Load Balancer  │
+        └────────────────┘
+          ↓     ↓     ↓
+    ┌──────────┐ ┌──────────┐ ┌──────────┐
+    │Service A │ │Service B │ │Service C │
+    └──────────┘ └──────────┘ └──────────┘
+      ↓   ↓        ↓   ↓        ↓   ↓
+ ┌─────────────────────────────────────┐
+ │ Shared Cache (Redis)                │
+ └─────────────────────────────────────┘
+      ↓
+ ┌─────────────────────────────────────┐
+ │ Database (PostgreSQL)               │
+ └─────────────────────────────────────┘
+```
+
+**After** (normalized, properly aligned):
+```markdown
+          ┌────────────────┐
+          │ Load Balancer  │
+          └────────────────┘
+            ↓      ↓      ↓
+    ┌───────────┐ ┌───────────┐ ┌───────────┐
+    │ Service A │ │ Service B │ │ Service C │
+    └───────────┘ └───────────┘ └───────────┘
+      ↓    ↓        ↓    ↓        ↓    ↓
+    ┌────────────────────────────────────────┐
+    │ Shared Cache (Redis)                   │
+    └────────────────────────────────────────┘
+               ↓
+    ┌────────────────────────────────────────┐
+    │ Database (PostgreSQL)                  │
+    └────────────────────────────────────────┘
+```
+
+**Command:**
+```bash
+ascfix architecture.md --in-place --mode=diagram
+```
+
+---
+
+### Diagram Mode: Complex CI/CD Pipeline
+
+**Before** (misaligned, cramped):
+```markdown
+┌──────────┐
+│ Git Push │
+└──────────┘
+     ↓
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│Lint Check   │→│ Unit Tests   │→│ Build Image  │
+└──────────────┘ └──────────────┘ └──────────────┘
+          ↓
+     ┌───────────────────────────────┐
+     │ Artifact Registry             │
+     └───────────────────────────────┘
+          ↓
+     ┌─────────────────┐     ┌──────────────┐
+     │ Staging Deploy  │────→│ Smoke Tests  │
+     └─────────────────┘     └──────────────┘
+          ↓
+     ┌─────────────────────────────────┐
+     │ Production Deploy               │
+     └─────────────────────────────────┘
+```
+
+**After** (normalized, well-spaced):
+```markdown
+┌──────────┐
+│ Git Push │
+└──────────┘
+     ↓
+┌────────────────┐ ┌────────────────┐ ┌────────────────┐
+│ Lint Check     │→│ Unit Tests     │→│ Build Image    │
+└────────────────┘ └────────────────┘ └────────────────┘
+          ↓
+    ┌────────────────────────────────────┐
+    │ Artifact Registry                  │
+    └────────────────────────────────────┘
+          ↓
+    ┌──────────────────┐ ┌──────────────┐
+    │ Staging Deploy   │→│ Smoke Tests  │
+    └──────────────────┘ └──────────────┘
+          ↓
+    ┌────────────────────────────────────┐
+    │ Production Deploy                  │
+    └────────────────────────────────────┘
+```
+
+**Command:**
+```bash
+ascfix ci-pipeline.md --in-place --mode=diagram
+```
+
+---
+
 ### Check Mode: CI/CD Validation
 
 **Validate without modifying** (useful for pull requests):
