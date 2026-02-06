@@ -2,9 +2,13 @@
 name = "ascfix"
 version = "0.1.0"
 edition = "2021"
+authors = ["evoludigit"]
 description = "Automatic ASCII diagram repair tool for Markdown files"
 license = "MIT"
 repository = "https://github.com/evoludigit/ascfix"
+homepage = "https://github.com/evoludigit/ascfix"
+documentation = "https://docs.rs/ascfix"
+readme = "README.md"
 keywords = ["ascii", "diagram", "markdown", "repair"]
 categories = ["command-line-utilities", "text-processing"]
 

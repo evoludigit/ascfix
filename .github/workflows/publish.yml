@@ -1,0 +1,40 @@
+name: Publish to crates.io
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish:
+    name: Publish Crate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      # Verify the version in Cargo.toml matches the release tag
+      - name: Check version
+        run: |
+          VERSION=$(cargo metadata --format-version=1 | jq -r '.packages[0].version')
+          TAG=${GITHUB_REF#refs/tags/v}
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "Version mismatch: Cargo.toml has $VERSION but tag is v$TAG"
+            exit 1
+          fi
+
+      # Run full test suite before publishing
+      - name: Run tests
+        run: cargo test --release
+
+      # Check formatting and lints
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      # Verify the package can be published
+      - name: Verify publish
+        run: cargo publish --dry-run
+
+      # Publish to crates.io
+      - name: Publish
+        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
