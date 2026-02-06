@@ -60,6 +60,71 @@ fn process_safe_mode(content: &str) -> String {
     result.join("\n")
 }
 
+/// Diagram mode: Detect and normalize ASCII diagrams (full pipeline).
+fn process_diagram_mode(content: &str) -> String {
+    let blocks = crate::scanner::extract_diagram_blocks(content);
+
+    // If no diagram blocks found, return content unchanged
+    if blocks.is_empty() {
+        return content.to_string();
+    }
+
+    // Build result line by line, preserving structure
+    let mut lines: Vec<String> = content.lines().map(String::from).collect();
+
+    // Process each diagram block (in reverse to maintain indices)
+    for block in blocks.iter().rev() {
+        let diagram_content = block.lines.join("\n");
+
+        // Convert to grid
+        let block_lines: Vec<&str> = diagram_content.lines().collect();
+        let grid = crate::grid::Grid::from_lines(&block_lines);
+
+        // Detect primitives
+        let inventory = crate::detector::detect_all_primitives(&grid);
+
+        // Only process if we found actual diagram primitives (boxes or arrows)
+        if !inventory.boxes.is_empty()
+            || !inventory.horizontal_arrows.is_empty()
+            || !inventory.vertical_arrows.is_empty()
+        {
+            // Normalize
+            let normalized = crate::normalizer::normalize_box_widths(&inventory);
+            let normalized = crate::normalizer::align_horizontal_arrows(&normalized);
+            let normalized = crate::normalizer::align_vertical_arrows(&normalized);
+            let normalized = crate::normalizer::normalize_padding(&normalized);
+
+            // Render
+            let rendered_grid = crate::renderer::render_diagram(&normalized);
+            let rendered = rendered_grid.render_trimmed();
+
+            // Replace the block in the original content (in reverse to maintain indices)
+            let block_len = block.lines.len();
+
+            // Remove old lines and insert new ones
+            for _ in 0..block_len {
+                if block.start_line < lines.len() {
+                    lines.remove(block.start_line);
+                }
+            }
+            // Insert new lines
+            for (i, line) in rendered.lines().map(String::from).enumerate() {
+                lines.insert(block.start_line + i, line);
+            }
+        }
+        // If no primitives found, leave the block unchanged
+    }
+
+    lines.join("\n")
+}
+
+/// Check mode: Validate without modifying (used with --check flag).
+fn process_check_mode(content: &str) -> String {
+    // Check mode uses the same processing as diagram mode but doesn't write
+    // The caller will compare input vs output
+    process_diagram_mode(content)
+}
+
 /// Check if a line is a table row (starts with |, ends with |).
 #[allow(dead_code)] // Reason: Used in tests
 fn is_table_row(line: &str) -> bool {
@@ -154,20 +219,6 @@ fn parse_table_row(row: &str) -> Option<Vec<String>> {
     } else {
         Some(cells)
     }
-}
-
-/// Diagram mode: Detect and normalize ASCII diagrams (full pipeline).
-fn process_diagram_mode(content: &str) -> String {
-    // For now, return content unchanged
-    // TODO: Implement full diagram detection, normalization, rendering pipeline
-    content.to_string()
-}
-
-/// Check mode: Validate without modifying (used with --check flag).
-fn process_check_mode(content: &str) -> String {
-    // Check mode uses the same processing as diagram mode but doesn't write
-    // The caller will compare input vs output
-    process_diagram_mode(content)
 }
 
 #[cfg(test)]
@@ -279,5 +330,24 @@ mod tests {
 
         let invalid = parse_table_row("no pipes");
         assert_eq!(invalid, None);
+    }
+
+    #[test]
+    fn test_diagram_mode_processes_boxes() {
+        let content = "┌─┐\n│ │\n└─┘";
+        let result = process_by_mode(&Mode::Diagram, content);
+        // Should render the diagram (may change spacing but keep structure)
+        assert!(result.contains("┌"));
+        assert!(result.contains("└"));
+        assert!(result.contains("│"));
+    }
+
+    #[test]
+    fn test_diagram_mode_preserves_non_diagram_text() {
+        let content = "# Title\n\nSome text\n\nMore content";
+        let result = process_by_mode(&Mode::Diagram, content);
+        // Non-diagram content should be preserved
+        assert!(result.contains("# Title"));
+        assert!(result.contains("Some text"));
     }
 }
