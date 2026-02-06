@@ -976,4 +976,86 @@ mod tests {
         assert!(result.boxes[0].child_indices.is_empty());
         assert!(result.boxes[1].parent_idx.is_none());
     }
+
+    #[test]
+    fn test_detect_complex_multi_level_hierarchy() {
+        // This tests the Database Architecture diagram structure:
+        // Level 0: Parent (Database as the Optimizer)
+        // Level 1: 3 middle boxes (Compilation Pipeline, confiture, pg_tviews)
+        // Level 2: 3 bottom boxes (fraiseql-core, fraiseql-observers, jsonb_delta)
+        let mut inventory = crate::primitives::PrimitiveInventory::default();
+
+        // Level 0: Root/parent box
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 20),
+            bottom_right: (3, 45),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+
+        // Level 1: Three middle boxes
+        // Left: Compilation Pipeline
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (6, 5),
+            bottom_right: (9, 20),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Middle: confiture
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (6, 23),
+            bottom_right: (9, 38),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Right: pg_tviews
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (6, 41),
+            bottom_right: (9, 56),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+
+        // Level 2: Three bottom boxes
+        // Left: fraiseql-core
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (12, 5),
+            bottom_right: (15, 20),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Middle: fraiseql-observers
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (12, 23),
+            bottom_right: (15, 38),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Right: jsonb_delta
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (12, 41),
+            bottom_right: (15, 56),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+
+        // Detect hierarchy
+        let result = detect_box_hierarchy(&inventory);
+
+        // Verify structure: total 7 boxes
+        assert_eq!(result.boxes.len(), 7);
+
+        // For this diagram, boxes aren't strictly nested (side-by-side arrangement),
+        // but the test ensures the detector handles complex layouts without crashing
+        assert!(!result.boxes.is_empty());
+        // All boxes should be independent (no nesting in this layout)
+        assert!(result.boxes.iter().all(|b| b.parent_idx.is_none()));
+    }
 }
