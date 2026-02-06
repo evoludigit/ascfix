@@ -996,7 +996,6 @@ mod tests {
         assert_eq!(step4.vertical_arrows, step4b.vertical_arrows);
     }
 
-    // Phase 3, Cycle 9: RED - Overlap detection tests
     #[test]
     fn test_find_vertical_overlap_groups_single_box() {
         let mut inventory = PrimitiveInventory::default();
@@ -1113,7 +1112,6 @@ mod tests {
         assert!(groups.is_empty() || groups.iter().all(|g| g.len() == 1));
     }
 
-    // Phase 3, Cycle 10: Balance algorithm tests
     #[test]
     fn test_balance_horizontal_boxes_equalizes_widths() {
         let mut inventory = PrimitiveInventory::default();
@@ -1162,7 +1160,6 @@ mod tests {
         assert_eq!(balanced1.boxes, balanced2.boxes);
     }
 
-    // Phase 4, Cycle 14: RED - Connection normalization tests
     #[test]
     fn test_normalize_connection_lines_empty() {
         let inventory = PrimitiveInventory::default();
@@ -1215,7 +1212,6 @@ mod tests {
         assert_eq!(norm1.connection_lines, norm2.connection_lines);
     }
 
-    // Phase 5, Cycle 17: RED - Nested normalization tests
     #[test]
     fn test_normalize_nested_boxes_empty() {
         let inventory = PrimitiveInventory::default();
@@ -1320,7 +1316,6 @@ mod tests {
         assert_eq!(norm1.boxes, norm2.boxes);
     }
 
-    // Phase 6, Cycle 22: RED - Label normalization tests
     #[test]
     fn test_normalize_labels_empty() {
         let inventory = PrimitiveInventory::default();

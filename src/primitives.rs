@@ -540,7 +540,6 @@ mod tests {
         assert!(!is_box_corner('│'));
     }
 
-    // Phase 1, Cycle 1: RED - BoxStyle enum tests
     #[test]
     fn test_box_style_single_chars() {
         let chars = BoxStyle::Single.chars();
@@ -577,7 +576,6 @@ mod tests {
         assert_eq!(chars.bottom_right, '╯');
     }
 
-    // Phase 1, Cycle 2: RED - Character recognition tests
     #[test]
     fn test_is_box_char_double_line() {
         // Double-line characters should be recognized
@@ -637,7 +635,6 @@ mod tests {
         assert!(!is_rounded_corner('╔'));
     }
 
-    // Phase 1, Cycle 3: RED - Box style detection tests
     #[test]
     fn test_box_style_from_single_corner() {
         assert_eq!(BoxStyle::from_corner('┌'), Some(BoxStyle::Single));
@@ -693,10 +690,8 @@ mod tests {
         assert_eq!(b.style, BoxStyle::Double);
     }
 
-    // Phase 1, Cycle 3: Tests ensuring from_corner() method works
     // (Note: tests in cycle 3 RED phase above)
 
-    // Phase 2, Cycle 5: RED - ArrowType enum tests
     #[test]
     fn test_arrow_type_standard_chars() {
         let chars = ArrowType::Standard.chars();
@@ -752,7 +747,6 @@ mod tests {
         assert!(!is_vertical_arrow_char('a'));
     }
 
-    // Phase 2, Cycle 6: RED - Arrow detection tests
     #[test]
     fn test_horizontal_arrow_has_type_field() {
         let arr = HorizontalArrow {
@@ -805,7 +799,6 @@ mod tests {
         assert!(!arr.downward);
     }
 
-    // Phase 4, Cycle 12: RED - ConnectionLine primitive tests
     #[test]
     fn test_segment_horizontal() {
         let seg = Segment::Horizontal {
@@ -902,7 +895,6 @@ mod tests {
         assert_eq!(conn.from_box, Some(0));
     }
 
-    // Phase 6, Cycle 20: RED - Label primitive tests
     #[test]
     fn test_label_attachment_box() {
         let attachment = LabelAttachment::Box(0);

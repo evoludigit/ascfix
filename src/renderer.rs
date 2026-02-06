@@ -362,7 +362,6 @@ mod tests {
         assert!(grid.width() >= 10);
     }
 
-    // Phase 1, Cycle 4: RED - Style-aware rendering tests
     #[test]
     fn test_render_double_style_box() {
         let mut inventory = PrimitiveInventory::default();
@@ -436,7 +435,6 @@ mod tests {
         assert_eq!(grid.get(0, 8), Some('╗'));
     }
 
-    // Phase 4, Cycle 15: RED - Connection line rendering tests
     #[test]
     fn test_render_with_connection_lines() {
         use crate::primitives::{ConnectionLine, Segment};
@@ -518,7 +516,6 @@ mod tests {
         assert_eq!(grid.get(2, 3), Some('┘'));
     }
 
-    // Phase 5, Cycle 18: RED - Nested rendering tests
     #[test]
     fn test_render_nested_boxes() {
         let mut inventory = PrimitiveInventory::default();
@@ -608,7 +605,6 @@ mod tests {
         assert_eq!(grid.get(2, 2), Some('╭'));
     }
 
-    // Phase 6, Cycle 23: RED - Label rendering tests
     #[test]
     fn test_render_with_labels() {
         use crate::primitives::{Label, LabelAttachment};

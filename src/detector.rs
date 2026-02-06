@@ -762,7 +762,6 @@ mod tests {
         assert_eq!(text_row.end_col, 2);
     }
 
-    // Phase 4, Cycle 13: RED - Connection line detection tests
     #[test]
     fn test_detect_connection_lines_completes() {
         // Function should return a vector without crashing
@@ -801,7 +800,6 @@ mod tests {
         // Function should complete without crashing (conservative approach)
     }
 
-    // Phase 5, Cycle 16: RED - Hierarchy detection tests
     #[test]
     fn test_detect_box_hierarchy_empty() {
         let inventory = crate::primitives::PrimitiveInventory::default();
@@ -908,7 +906,6 @@ mod tests {
         assert!(result.boxes[0].child_indices.contains(&2));
     }
 
-    // Phase 5, Cycle 19: RED - Edge case tests
     #[test]
     fn test_detect_box_hierarchy_deep_nesting() {
         let mut inventory = crate::primitives::PrimitiveInventory::default();
@@ -1081,7 +1078,6 @@ mod tests {
         assert!(result.boxes.iter().all(|b| b.parent_idx.is_none()));
     }
 
-    // Phase 6, Cycle 21: RED - Label detection tests
     #[test]
     fn test_detect_labels_empty() {
         let inventory = crate::primitives::PrimitiveInventory::default();
