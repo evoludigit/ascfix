@@ -35,6 +35,33 @@ pub fn align_horizontal_arrows(inventory: &PrimitiveInventory) -> PrimitiveInven
     normalized
 }
 
+/// Enforce uniform 1-space interior padding in boxes.
+///
+/// Algorithm:
+/// 1. For each text row inside a box, ensure it starts 1 column after left border
+/// 2. Ensure it ends 1 column before right border
+/// 3. Adjust `start_col` and `end_col` to maintain padding
+#[allow(dead_code)] // Reason: Used by main processing pipeline
+pub fn normalize_padding(inventory: &PrimitiveInventory) -> PrimitiveInventory {
+    let mut normalized = inventory.clone();
+
+    for row in &mut normalized.text_rows {
+        // Find the box containing this row (must be inside both row and column ranges)
+        if let Some(b) = normalized.boxes.iter().find(|box_| {
+            row.row > box_.top_left.0
+                && row.row < box_.bottom_right.0
+                && row.start_col >= box_.top_left.1
+                && row.start_col <= box_.bottom_right.1
+        }) {
+            // Enforce 1-space padding: start at left+1, end at right-1
+            row.start_col = b.top_left.1 + 1;
+            row.end_col = b.bottom_right.1 - 1;
+        }
+    }
+
+    normalized
+}
+
 /// Align vertical arrows to box column positions.
 ///
 /// Algorithm:
@@ -434,5 +461,123 @@ mod tests {
         let inventory = PrimitiveInventory::default();
         let normalized = align_vertical_arrows(&inventory);
         assert!(normalized.vertical_arrows.is_empty());
+    }
+
+    #[test]
+    fn test_padding_enforces_one_space_inside_box() {
+        let mut inventory = PrimitiveInventory::default();
+        // Box from col 0 to col 10
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (3, 10),
+        });
+        // Text row starting at col 0 (should be col 1 for padding)
+        inventory.text_rows.push(crate::primitives::TextRow {
+            row: 1,
+            start_col: 0,
+            end_col: 9,
+            content: "Content".to_string(),
+        });
+
+        let normalized = normalize_padding(&inventory);
+        let row = &normalized.text_rows[0];
+        // Should start at col 1 (1 space from left border at col 0)
+        assert_eq!(row.start_col, 1);
+    }
+
+    #[test]
+    fn test_padding_enforces_uniform_one_space() {
+        let mut inventory = PrimitiveInventory::default();
+        // Box from col 5 to col 15
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 5),
+            bottom_right: (3, 15),
+        });
+        // Multiple rows with inconsistent padding
+        inventory.text_rows.push(crate::primitives::TextRow {
+            row: 1,
+            start_col: 5,
+            end_col: 14,
+            content: "Row1".to_string(),
+        });
+        inventory.text_rows.push(crate::primitives::TextRow {
+            row: 2,
+            start_col: 7,
+            end_col: 14,
+            content: "Row2".to_string(),
+        });
+
+        let normalized = normalize_padding(&inventory);
+        // Both rows should have consistent 1-space padding
+        assert_eq!(normalized.text_rows[0].start_col, 6); // Box left (5) + 1
+        assert_eq!(normalized.text_rows[1].start_col, 6); // Same
+    }
+
+    #[test]
+    fn test_padding_respects_box_boundaries() {
+        let mut inventory = PrimitiveInventory::default();
+        // Box from col 2 to col 8
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 2),
+            bottom_right: (3, 8),
+        });
+        inventory.text_rows.push(crate::primitives::TextRow {
+            row: 1,
+            start_col: 2,
+            end_col: 7,
+            content: "Text".to_string(),
+        });
+
+        let normalized = normalize_padding(&inventory);
+        let row = &normalized.text_rows[0];
+        // Start should be box left (2) + 1 = 3
+        // End should be box right (8) - 1 = 7
+        assert_eq!(row.start_col, 3);
+        assert_eq!(row.end_col, 7);
+    }
+
+    #[test]
+    fn test_padding_no_rows_no_crash() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (3, 10),
+        });
+        // No text rows
+        let normalized = normalize_padding(&inventory);
+        assert!(normalized.text_rows.is_empty());
+    }
+
+    #[test]
+    fn test_padding_multiple_boxes_independent() {
+        let mut inventory = PrimitiveInventory::default();
+        // Two boxes
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 0),
+            bottom_right: (2, 5),
+        });
+        inventory.boxes.push(DiagramBox {
+            top_left: (0, 10),
+            bottom_right: (2, 15),
+        });
+        // Rows in each box
+        inventory.text_rows.push(crate::primitives::TextRow {
+            row: 1,
+            start_col: 0,
+            end_col: 4,
+            content: "A".to_string(),
+        });
+        inventory.text_rows.push(crate::primitives::TextRow {
+            row: 1,
+            start_col: 10,
+            end_col: 14,
+            content: "B".to_string(),
+        });
+
+        let normalized = normalize_padding(&inventory);
+        // First row in first box: start should be 0 + 1 = 1
+        // Second row in second box: start should be 10 + 1 = 11
+        assert_eq!(normalized.text_rows[0].start_col, 1);
+        assert_eq!(normalized.text_rows[1].start_col, 11);
     }
 }
