@@ -20,7 +20,7 @@ pub struct BoxDetector<'a> {
 
 impl<'a> BoxDetector<'a> {
     /// Create a new box detector for a grid.
-    #[must_use] 
+    #[must_use]
     pub fn new(grid: &'a Grid) -> Self {
         BoxDetector {
             grid,
@@ -34,7 +34,7 @@ impl<'a> BoxDetector<'a> {
     /// 1. For each unvisited box character, start a flood-fill
     /// 2. Collect all connected box characters
     /// 3. Extract bounding box as primitive if it's a valid rectangle
-    #[must_use] 
+    #[must_use]
     pub fn detect(mut self) -> Vec<Box> {
         let mut boxes = Vec::new();
 
@@ -123,7 +123,7 @@ impl<'a> BoxDetector<'a> {
 
 /// Convenience function to detect boxes in a grid.
 #[allow(dead_code)] // Reason: Used by main processing pipeline
-#[must_use] 
+#[must_use]
 pub fn detect_boxes(grid: &Grid) -> Vec<Box> {
     BoxDetector::new(grid).detect()
 }
@@ -133,7 +133,7 @@ pub fn detect_boxes(grid: &Grid) -> Vec<Box> {
 /// This is the main entry point for diagram analysis. It orchestrates
 /// detection of all primitive types and returns a complete inventory.
 #[allow(dead_code)] // Reason: Used by main processing pipeline
-#[must_use] 
+#[must_use]
 pub fn detect_all_primitives(grid: &Grid) -> crate::primitives::PrimitiveInventory {
     let boxes = detect_boxes(grid);
     let horizontal_arrows = detect_horizontal_arrows(grid);
@@ -167,7 +167,7 @@ pub fn detect_all_primitives(grid: &Grid) -> crate::primitives::PrimitiveInvento
 ///
 /// Returns the content of interior rows between the top and bottom borders.
 #[allow(dead_code)] // Reason: Used by main processing pipeline
-#[must_use] 
+#[must_use]
 pub fn extract_box_content(grid: &Grid, b: &Box) -> Vec<String> {
     let mut content = Vec::new();
 
@@ -188,7 +188,7 @@ pub fn extract_box_content(grid: &Grid, b: &Box) -> Vec<String> {
 ///
 /// Detects patterns like `↓`, `↑`, and sequences of `│` or `┃`.
 #[allow(dead_code)] // Reason: Used by main processing pipeline
-#[must_use] 
+#[must_use]
 pub fn detect_vertical_arrows(grid: &Grid) -> Vec<crate::primitives::VerticalArrow> {
     let mut arrows = Vec::new();
 
@@ -240,7 +240,7 @@ pub fn detect_vertical_arrows(grid: &Grid) -> Vec<crate::primitives::VerticalArr
 ///
 /// Detects patterns like `→`, `←`, and sequences of `─`.
 #[allow(dead_code)] // Reason: Used by main processing pipeline
-#[must_use] 
+#[must_use]
 pub fn detect_horizontal_arrows(grid: &Grid) -> Vec<crate::primitives::HorizontalArrow> {
     let mut arrows = Vec::new();
 
@@ -267,9 +267,8 @@ pub fn detect_horizontal_arrows(grid: &Grid) -> Vec<crate::primitives::Horizonta
                     end_col -= 1;
 
                     // Only add if it contains an arrow tip (→ or ←) somewhere in the sequence
-                    let has_arrow_tip = (start_col..=end_col).any(|c| {
-                        matches!(grid.get(row, c), Some('→' | '←'))
-                    });
+                    let has_arrow_tip =
+                        (start_col..=end_col).any(|c| matches!(grid.get(row, c), Some('→' | '←')));
 
                     if has_arrow_tip {
                         arrows.push(crate::primitives::HorizontalArrow {
