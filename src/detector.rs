@@ -1,14 +1,42 @@
 //! Detection logic for ASCII diagram primitives.
 
 use crate::grid::Grid;
-use crate::primitives::Box;
+use crate::primitives::{Box, BoxStyle};
 use std::collections::{HashSet, VecDeque};
 
 /// Box character set for detection.
 const fn is_box_char(ch: char) -> bool {
     matches!(
         ch,
-        '─' | '│' | '┌' | '┐' | '└' | '┘' | '├' | '┤' | '┼' | '┬' | '┴' | '┃'
+        '─' | '│'
+            | '┌'
+            | '┐'
+            | '└'
+            | '┘'
+            | '├'
+            | '┤'
+            | '┼'
+            | '┬'
+            | '┴'
+            | '┃'
+            | '═'
+            | '║'
+            | '╔'
+            | '╗'
+            | '╚'
+            | '╝'
+            | '╭'
+            | '╮'
+            | '╰'
+            | '╯'
+    )
+}
+
+/// Check if a character is any box corner (single, double, or rounded).
+const fn is_any_box_corner(ch: char) -> bool {
+    matches!(
+        ch,
+        '┌' | '┐' | '└' | '┘' | '╔' | '╗' | '╚' | '╝' | '╭' | '╮' | '╰' | '╯'
     )
 }
 
@@ -101,19 +129,19 @@ impl<'a> BoxDetector<'a> {
         let max_col = boundary.iter().map(|(_, c)| *c).max()?;
 
         // Verify it's a valid rectangle (has corners)
-        let top_left_is_corner = self
-            .grid
-            .get(min_row, min_col)
-            .is_some_and(|ch| matches!(ch, '┌' | '┬' | '├' | '┼'));
-        let bottom_right_is_corner = self
-            .grid
-            .get(max_row, max_col)
-            .is_some_and(|ch| matches!(ch, '┘' | '┴' | '┤' | '┼'));
+        let top_left_char = self.grid.get(min_row, min_col)?;
+        let bottom_right_char = self.grid.get(max_row, max_col)?;
+
+        let top_left_is_corner = is_any_box_corner(top_left_char);
+        let bottom_right_is_corner = is_any_box_corner(bottom_right_char);
 
         if top_left_is_corner && bottom_right_is_corner && min_row < max_row && min_col < max_col {
+            // Detect the style from the top-left corner
+            let style = BoxStyle::from_corner(top_left_char).unwrap_or(BoxStyle::Single);
             Some(Box {
                 top_left: (min_row, min_col),
                 bottom_right: (max_row, max_col),
+                style,
             })
         } else {
             None
@@ -358,6 +386,7 @@ mod tests {
         let b = Box {
             top_left: (0, 0),
             bottom_right: (2, 2),
+            style: BoxStyle::Single,
         };
         let content = extract_box_content(&grid, &b);
         assert_eq!(content.len(), 1);
@@ -371,6 +400,7 @@ mod tests {
         let b = Box {
             top_left: (0, 0),
             bottom_right: (2, 6),
+            style: BoxStyle::Single,
         };
         let content = extract_box_content(&grid, &b);
         assert_eq!(content.len(), 1);
@@ -384,6 +414,7 @@ mod tests {
         let b = Box {
             top_left: (0, 0),
             bottom_right: (4, 7),
+            style: BoxStyle::Single,
         };
         let content = extract_box_content(&grid, &b);
         assert_eq!(content.len(), 3);
@@ -399,6 +430,7 @@ mod tests {
         let b = Box {
             top_left: (0, 0),
             bottom_right: (2, 9),
+            style: BoxStyle::Single,
         };
         let content = extract_box_content(&grid, &b);
         assert_eq!(content[0], " Text   ");

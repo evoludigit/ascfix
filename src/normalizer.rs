@@ -1,7 +1,7 @@
 //! Layout normalization and repair logic for ASCII diagrams.
 
 #[allow(unused_imports)] // Reason: DiagramBox used in tests
-use crate::primitives::{Box as DiagramBox, HorizontalArrow, PrimitiveInventory};
+use crate::primitives::{Box as DiagramBox, BoxStyle, HorizontalArrow, PrimitiveInventory};
 
 /// Align horizontal arrows to consistent positions.
 ///
@@ -168,6 +168,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (2, 3),
+            style: BoxStyle::Single,
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -190,6 +191,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (2, 3),
+            style: BoxStyle::Single,
         });
 
         let normalized = normalize_box_widths(&inventory);
@@ -203,10 +205,12 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (2, 3),
+            style: BoxStyle::Single,
         });
         inventory.boxes.push(DiagramBox {
             top_left: (0, 5),
             bottom_right: (2, 8),
+            style: BoxStyle::Single,
         });
 
         inventory.text_rows.push(crate::primitives::TextRow {
@@ -235,6 +239,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (2, 10),
+            style: BoxStyle::Single,
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -254,6 +259,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (2, 3),
+            style: BoxStyle::Single,
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -274,6 +280,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (4, 3),
+            style: BoxStyle::Single,
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -371,6 +378,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 5),
             bottom_right: (3, 15),
+            style: BoxStyle::Single,
         });
         // Arrow slightly off-center at col 11
         inventory
@@ -394,6 +402,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 5),
             bottom_right: (3, 15),
+            style: BoxStyle::Single,
         });
         // Arrow at col 6 (close to left edge at 5)
         inventory
@@ -417,10 +426,12 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 2),
             bottom_right: (3, 5),
+            style: BoxStyle::Single,
         });
         inventory.boxes.push(DiagramBox {
             top_left: (0, 10),
             bottom_right: (3, 15),
+            style: BoxStyle::Single,
         });
         // Arrow closer to second box
         inventory
@@ -443,6 +454,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 5),
             bottom_right: (3, 15),
+            style: BoxStyle::Single,
         });
         inventory
             .vertical_arrows
@@ -473,6 +485,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (3, 10),
+            style: BoxStyle::Single,
         });
         // Text row starting at col 0 (should be col 1 for padding)
         inventory.text_rows.push(crate::primitives::TextRow {
@@ -495,6 +508,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 5),
             bottom_right: (3, 15),
+            style: BoxStyle::Single,
         });
         // Multiple rows with inconsistent padding
         inventory.text_rows.push(crate::primitives::TextRow {
@@ -523,6 +537,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 2),
             bottom_right: (3, 8),
+            style: BoxStyle::Single,
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -545,6 +560,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (3, 10),
+            style: BoxStyle::Single,
         });
         // No text rows
         let normalized = normalize_padding(&inventory);
@@ -558,10 +574,12 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (2, 5),
+            style: BoxStyle::Single,
         });
         inventory.boxes.push(DiagramBox {
             top_left: (0, 10),
             bottom_right: (2, 15),
+            style: BoxStyle::Single,
         });
         // Rows in each box
         inventory.text_rows.push(crate::primitives::TextRow {
@@ -590,6 +608,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (2, 3),
+            style: BoxStyle::Single,
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -632,6 +651,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 5),
             bottom_right: (3, 15),
+            style: BoxStyle::Single,
         });
         inventory
             .vertical_arrows
@@ -653,6 +673,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (3, 10),
+            style: BoxStyle::Single,
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -673,6 +694,7 @@ mod tests {
         inventory.boxes.push(DiagramBox {
             top_left: (0, 0),
             bottom_right: (2, 5),
+            style: BoxStyle::Single,
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,

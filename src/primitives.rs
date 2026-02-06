@@ -62,6 +62,21 @@ impl BoxStyle {
             },
         }
     }
+
+    /// Determine box style from a corner character.
+    ///
+    /// Returns the style if the character is a corner of a box,
+    /// or None if the character is not a corner.
+    #[must_use]
+    #[allow(dead_code)] // Reason: Used by detector in upcoming phases
+    pub const fn from_corner(ch: char) -> Option<Self> {
+        match ch {
+            '┌' | '┐' | '└' | '┘' => Some(Self::Single),
+            '╔' | '╗' | '╚' | '╝' => Some(Self::Double),
+            '╭' | '╮' | '╰' | '╯' => Some(Self::Rounded),
+            _ => None,
+        }
+    }
 }
 
 /// A rectangular box defined by its border.
@@ -71,6 +86,8 @@ pub struct Box {
     pub top_left: (usize, usize),
     /// Bottom-right corner (row, col)
     pub bottom_right: (usize, usize),
+    /// Style of the box (single, double, or rounded lines)
+    pub style: BoxStyle,
 }
 
 impl Box {
@@ -252,6 +269,7 @@ mod tests {
         let b = Box {
             top_left: (0, 0),
             bottom_right: (3, 5),
+            style: BoxStyle::Single,
         };
         assert_eq!(b.width(), 6);
         assert_eq!(b.height(), 4);
@@ -262,6 +280,7 @@ mod tests {
         let b = Box {
             top_left: (0, 0),
             bottom_right: (3, 5),
+            style: BoxStyle::Single,
         };
         assert!(b.contains_interior(1, 1));
         assert!(b.contains_interior(2, 3));
@@ -275,6 +294,7 @@ mod tests {
         let b = Box {
             top_left: (0, 0),
             bottom_right: (3, 5),
+            style: BoxStyle::Single,
         };
         assert!(b.contains_border(0, 0)); // Top-left
         assert!(b.contains_border(0, 3)); // Top
@@ -430,4 +450,59 @@ mod tests {
         assert!(!is_rounded_corner('┌'));
         assert!(!is_rounded_corner('╔'));
     }
+
+    // Phase 1, Cycle 3: RED - Box style detection tests
+    #[test]
+    fn test_box_style_from_single_corner() {
+        assert_eq!(BoxStyle::from_corner('┌'), Some(BoxStyle::Single));
+        assert_eq!(BoxStyle::from_corner('┐'), Some(BoxStyle::Single));
+        assert_eq!(BoxStyle::from_corner('└'), Some(BoxStyle::Single));
+        assert_eq!(BoxStyle::from_corner('┘'), Some(BoxStyle::Single));
+    }
+
+    #[test]
+    fn test_box_style_from_double_corner() {
+        assert_eq!(BoxStyle::from_corner('╔'), Some(BoxStyle::Double));
+        assert_eq!(BoxStyle::from_corner('╗'), Some(BoxStyle::Double));
+        assert_eq!(BoxStyle::from_corner('╚'), Some(BoxStyle::Double));
+        assert_eq!(BoxStyle::from_corner('╝'), Some(BoxStyle::Double));
+    }
+
+    #[test]
+    fn test_box_style_from_rounded_corner() {
+        assert_eq!(BoxStyle::from_corner('╭'), Some(BoxStyle::Rounded));
+        assert_eq!(BoxStyle::from_corner('╮'), Some(BoxStyle::Rounded));
+        assert_eq!(BoxStyle::from_corner('╰'), Some(BoxStyle::Rounded));
+        assert_eq!(BoxStyle::from_corner('╯'), Some(BoxStyle::Rounded));
+    }
+
+    #[test]
+    fn test_box_style_from_non_corner() {
+        assert_eq!(BoxStyle::from_corner('─'), None);
+        assert_eq!(BoxStyle::from_corner('│'), None);
+        assert_eq!(BoxStyle::from_corner('a'), None);
+    }
+
+    #[test]
+    fn test_box_has_style_field() {
+        let b = Box {
+            top_left: (0, 0),
+            bottom_right: (3, 5),
+            style: BoxStyle::Single,
+        };
+        assert_eq!(b.style, BoxStyle::Single);
+    }
+
+    #[test]
+    fn test_box_style_preserved() {
+        let b = Box {
+            top_left: (1, 2),
+            bottom_right: (5, 8),
+            style: BoxStyle::Double,
+        };
+        assert_eq!(b.style, BoxStyle::Double);
+    }
+
+    // Phase 1, Cycle 3: Tests ensuring from_corner() method works
+    // (Note: tests in cycle 3 RED phase above)
 }

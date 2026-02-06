@@ -1,5 +1,7 @@
 //! Render normalized primitives back to ASCII grid.
 
+#[allow(unused_imports)] // Reason: Used in tests
+use crate::primitives::BoxStyle;
 use crate::{grid::Grid, primitives::PrimitiveInventory};
 
 /// Render a primitive inventory back to an ASCII grid.
@@ -167,6 +169,7 @@ mod tests {
         inventory.boxes.push(crate::primitives::Box {
             top_left: (0, 0),
             bottom_right: (2, 4),
+            style: BoxStyle::Single,
         });
 
         let grid = render_diagram(&inventory);
@@ -183,6 +186,7 @@ mod tests {
         inventory.boxes.push(crate::primitives::Box {
             top_left: (0, 0),
             bottom_right: (3, 10),
+            style: BoxStyle::Single,
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -205,6 +209,7 @@ mod tests {
         inventory.boxes.push(crate::primitives::Box {
             top_left: (2, 0),
             bottom_right: (4, 4),
+            style: BoxStyle::Single,
         });
         inventory
             .vertical_arrows
@@ -227,6 +232,7 @@ mod tests {
         inventory.boxes.push(crate::primitives::Box {
             top_left: (0, 4),
             bottom_right: (2, 8),
+            style: BoxStyle::Single,
         });
         inventory
             .horizontal_arrows
@@ -249,10 +255,12 @@ mod tests {
         inventory.boxes.push(crate::primitives::Box {
             top_left: (0, 0),
             bottom_right: (2, 4),
+            style: BoxStyle::Single,
         });
         inventory.boxes.push(crate::primitives::Box {
             top_left: (0, 6),
             bottom_right: (2, 10),
+            style: BoxStyle::Single,
         });
         inventory
             .horizontal_arrows
@@ -276,6 +284,7 @@ mod tests {
         inventory.boxes.push(crate::primitives::Box {
             top_left: (5, 5),
             bottom_right: (7, 9),
+            style: BoxStyle::Single,
         });
 
         let grid = render_diagram(&inventory);
