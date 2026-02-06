@@ -74,38 +74,40 @@ fn calculate_bounds(inventory: &PrimitiveInventory) -> (usize, usize) {
 
 /// Draw a box on the grid.
 fn draw_box(grid: &mut Grid, b: &crate::primitives::Box) {
+    let chars = b.style.chars();
+
     // Top and bottom borders
     for col in b.top_left.1..=b.bottom_right.1 {
         if let Some(cell) = grid.get_mut(b.top_left.0, col) {
-            *cell = '─';
+            *cell = chars.horizontal;
         }
         if let Some(cell) = grid.get_mut(b.bottom_right.0, col) {
-            *cell = '─';
+            *cell = chars.horizontal;
         }
     }
 
     // Left and right borders
     for row in b.top_left.0..=b.bottom_right.0 {
         if let Some(cell) = grid.get_mut(row, b.top_left.1) {
-            *cell = '│';
+            *cell = chars.vertical;
         }
         if let Some(cell) = grid.get_mut(row, b.bottom_right.1) {
-            *cell = '│';
+            *cell = chars.vertical;
         }
     }
 
     // Corners
     if let Some(cell) = grid.get_mut(b.top_left.0, b.top_left.1) {
-        *cell = '┌';
+        *cell = chars.top_left;
     }
     if let Some(cell) = grid.get_mut(b.top_left.0, b.bottom_right.1) {
-        *cell = '┐';
+        *cell = chars.top_right;
     }
     if let Some(cell) = grid.get_mut(b.bottom_right.0, b.top_left.1) {
-        *cell = '└';
+        *cell = chars.bottom_left;
     }
     if let Some(cell) = grid.get_mut(b.bottom_right.0, b.bottom_right.1) {
-        *cell = '┘';
+        *cell = chars.bottom_right;
     }
 }
 
@@ -291,5 +293,71 @@ mod tests {
         // Grid should be large enough
         assert!(grid.height() >= 8);
         assert!(grid.width() >= 10);
+    }
+
+    // Phase 1, Cycle 4: RED - Style-aware rendering tests
+    #[test]
+    fn test_render_double_style_box() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (2, 4),
+            style: BoxStyle::Double,
+        });
+
+        let grid = render_diagram(&inventory);
+        // Check double-line corners and borders
+        assert_eq!(grid.get(0, 0), Some('╔'));
+        assert_eq!(grid.get(0, 4), Some('╗'));
+        assert_eq!(grid.get(2, 0), Some('╚'));
+        assert_eq!(grid.get(2, 4), Some('╝'));
+        // Check double-line borders
+        assert_eq!(grid.get(0, 1), Some('═'));
+        assert_eq!(grid.get(1, 0), Some('║'));
+    }
+
+    #[test]
+    fn test_render_rounded_style_box() {
+        let mut inventory = PrimitiveInventory::default();
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (2, 4),
+            style: BoxStyle::Rounded,
+        });
+
+        let grid = render_diagram(&inventory);
+        // Check rounded corners
+        assert_eq!(grid.get(0, 0), Some('╭'));
+        assert_eq!(grid.get(0, 4), Some('╮'));
+        assert_eq!(grid.get(2, 0), Some('╰'));
+        assert_eq!(grid.get(2, 4), Some('╯'));
+        // Check borders use single-line (─ and │)
+        assert_eq!(grid.get(0, 1), Some('─'));
+        assert_eq!(grid.get(1, 0), Some('│'));
+    }
+
+    #[test]
+    fn test_render_mixed_style_boxes() {
+        let mut inventory = PrimitiveInventory::default();
+        // Single-line box
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (2, 3),
+            style: BoxStyle::Single,
+        });
+        // Double-line box
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 5),
+            bottom_right: (2, 8),
+            style: BoxStyle::Double,
+        });
+
+        let grid = render_diagram(&inventory);
+        // Single-line box
+        assert_eq!(grid.get(0, 0), Some('┌'));
+        assert_eq!(grid.get(0, 3), Some('┐'));
+        // Double-line box
+        assert_eq!(grid.get(0, 5), Some('╔'));
+        assert_eq!(grid.get(0, 8), Some('╗'));
     }
 }
