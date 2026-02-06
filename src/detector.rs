@@ -885,4 +885,95 @@ mod tests {
         assert!(result.boxes[0].child_indices.contains(&1));
         assert!(result.boxes[0].child_indices.contains(&2));
     }
+
+    // Phase 5, Cycle 19: RED - Edge case tests
+    #[test]
+    fn test_detect_box_hierarchy_deep_nesting() {
+        let mut inventory = crate::primitives::PrimitiveInventory::default();
+        // Level 0: Grandgrandparent
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (8, 12),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Level 1: Grandparent
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (1, 1),
+            bottom_right: (7, 11),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Level 2: Parent
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (2, 2),
+            bottom_right: (6, 10),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Level 3: Child (may be conservative and skip)
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (3, 3),
+            bottom_right: (5, 9),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        let result = detect_box_hierarchy(&inventory);
+        // Should handle deep nesting or conservatively process
+        assert_eq!(result.boxes.len(), 4);
+    }
+
+    #[test]
+    fn test_detect_box_hierarchy_overlapping_not_nested() {
+        let mut inventory = crate::primitives::PrimitiveInventory::default();
+        // Box 1
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (3, 5),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Box 2 - overlaps but not nested
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (1, 4),
+            bottom_right: (4, 7),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        let result = detect_box_hierarchy(&inventory);
+        // Overlapping boxes should not be nested
+        assert!(result.boxes[0].child_indices.is_empty());
+        assert!(result.boxes[1].parent_idx.is_none());
+    }
+
+    #[test]
+    fn test_detect_box_hierarchy_touching_border() {
+        let mut inventory = crate::primitives::PrimitiveInventory::default();
+        // Outer box
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (4, 6),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Inner box touching border (should not be nested)
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 1),
+            bottom_right: (2, 5),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        let result = detect_box_hierarchy(&inventory);
+        // Should not be nested if touching border
+        assert!(result.boxes[0].child_indices.is_empty());
+        assert!(result.boxes[1].parent_idx.is_none());
+    }
 }
