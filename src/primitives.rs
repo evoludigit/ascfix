@@ -128,6 +128,78 @@ impl Box {
     }
 }
 
+/// Arrow type for different arrow styles.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+pub enum ArrowType {
+    /// Standard arrow: → ←
+    Standard,
+    /// Double arrow: ⇒ ⇐
+    Double,
+    /// Long arrow: ⟶ ⟵
+    Long,
+    /// Dashed arrow: · > <
+    Dashed,
+}
+
+/// Arrow drawing characters for a specific style.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+pub struct ArrowChars {
+    /// Line character
+    pub line: char,
+    /// Arrowhead pointing right
+    pub arrowhead_right: char,
+    /// Arrowhead pointing left
+    pub arrowhead_left: char,
+}
+
+impl ArrowType {
+    /// Get the characters used for this arrow type.
+    #[must_use]
+    #[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+    pub const fn chars(self) -> ArrowChars {
+        match self {
+            Self::Standard => ArrowChars {
+                line: '─',
+                arrowhead_right: '→',
+                arrowhead_left: '←',
+            },
+            Self::Double => ArrowChars {
+                line: '═',
+                arrowhead_right: '⇒',
+                arrowhead_left: '⇐',
+            },
+            Self::Long => ArrowChars {
+                line: '─',
+                arrowhead_right: '⟶',
+                arrowhead_left: '⟵',
+            },
+            Self::Dashed => ArrowChars {
+                line: '·',
+                arrowhead_right: '>',
+                arrowhead_left: '<',
+            },
+        }
+    }
+
+    /// Determine arrow type from an arrowhead character.
+    ///
+    /// Returns the type if the character is an arrowhead,
+    /// or None if the character is not an arrowhead.
+    #[must_use]
+    #[allow(dead_code)] // Reason: Used by detector in upcoming phases
+    pub const fn from_char(ch: char) -> Option<Self> {
+        match ch {
+            '→' | '←' => Some(Self::Standard),
+            '⇒' | '⇐' => Some(Self::Double),
+            '⟶' | '⟵' => Some(Self::Long),
+            '>' | '<' => Some(Self::Dashed),
+            _ => None,
+        }
+    }
+}
+
 /// A horizontal arrow or connector.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)] // Reason: Used by main processing pipeline
@@ -244,6 +316,12 @@ const fn is_double_line_corner(ch: char) -> bool {
 #[allow(dead_code)] // Reason: Used by detector in upcoming phases
 const fn is_rounded_corner(ch: char) -> bool {
     matches!(ch, '╭' | '╮' | '╰' | '╯')
+}
+
+/// Check if a character is a vertical arrow character (any style or direction).
+#[allow(dead_code)] // Reason: Used by detector in upcoming phases
+const fn is_vertical_arrow_char(ch: char) -> bool {
+    matches!(ch, '↓' | '↑' | '⇓' | '⇑' | '⟱' | '⟰')
 }
 
 /// Complete inventory of detected primitives in a diagram.
@@ -505,4 +583,60 @@ mod tests {
 
     // Phase 1, Cycle 3: Tests ensuring from_corner() method works
     // (Note: tests in cycle 3 RED phase above)
+
+    // Phase 2, Cycle 5: RED - ArrowType enum tests
+    #[test]
+    fn test_arrow_type_standard_chars() {
+        let chars = ArrowType::Standard.chars();
+        assert_eq!(chars.line, '─');
+        assert_eq!(chars.arrowhead_right, '→');
+        assert_eq!(chars.arrowhead_left, '←');
+    }
+
+    #[test]
+    fn test_arrow_type_double_chars() {
+        let chars = ArrowType::Double.chars();
+        assert_eq!(chars.line, '═');
+        assert_eq!(chars.arrowhead_right, '⇒');
+        assert_eq!(chars.arrowhead_left, '⇐');
+    }
+
+    #[test]
+    fn test_arrow_type_long_chars() {
+        let chars = ArrowType::Long.chars();
+        assert_eq!(chars.line, '─');
+        assert_eq!(chars.arrowhead_right, '⟶');
+        assert_eq!(chars.arrowhead_left, '⟵');
+    }
+
+    #[test]
+    fn test_arrow_type_dashed_chars() {
+        let chars = ArrowType::Dashed.chars();
+        assert_eq!(chars.line, '·');
+        assert_eq!(chars.arrowhead_right, '>');
+        assert_eq!(chars.arrowhead_left, '<');
+    }
+
+    #[test]
+    fn test_arrow_type_from_char() {
+        assert_eq!(ArrowType::from_char('→'), Some(ArrowType::Standard));
+        assert_eq!(ArrowType::from_char('←'), Some(ArrowType::Standard));
+        assert_eq!(ArrowType::from_char('⇒'), Some(ArrowType::Double));
+        assert_eq!(ArrowType::from_char('⇐'), Some(ArrowType::Double));
+        assert_eq!(ArrowType::from_char('⟶'), Some(ArrowType::Long));
+        assert_eq!(ArrowType::from_char('⟵'), Some(ArrowType::Long));
+        assert_eq!(ArrowType::from_char('a'), None);
+    }
+
+    #[test]
+    fn test_arrow_type_is_vertical_arrow_char() {
+        assert!(is_vertical_arrow_char('↓'));
+        assert!(is_vertical_arrow_char('↑'));
+        assert!(is_vertical_arrow_char('⇓'));
+        assert!(is_vertical_arrow_char('⇑'));
+        assert!(is_vertical_arrow_char('⟱'));
+        assert!(is_vertical_arrow_char('⟰'));
+        assert!(!is_vertical_arrow_char('→'));
+        assert!(!is_vertical_arrow_char('a'));
+    }
 }
