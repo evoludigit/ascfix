@@ -142,6 +142,8 @@ impl<'a> BoxDetector<'a> {
                 top_left: (min_row, min_col),
                 bottom_right: (max_row, max_col),
                 style,
+                parent_idx: None,
+                child_indices: Vec::new(),
             })
         } else {
             None
@@ -346,6 +348,56 @@ pub const fn detect_connection_lines(
     Vec::new()
 }
 
+/// Detect box hierarchy (parent/child relationships for nested boxes).
+///
+/// Algorithm:
+/// 1. For each box, check if it's completely inside another box
+/// 2. If yes, set `parent_idx` and add to parent's `child_indices`
+/// 3. Skip ambiguous cases (overlapping but not nested)
+///
+/// Conservative: Only establishes clear containment relationships.
+#[allow(dead_code)] // Reason: Used by main processing pipeline
+#[must_use]
+pub fn detect_box_hierarchy(
+    inventory: &crate::primitives::PrimitiveInventory,
+) -> crate::primitives::PrimitiveInventory {
+    let mut result = inventory.clone();
+
+    // For each pair of boxes, check if one is inside the other
+    let box_count = result.boxes.len();
+    for i in 0..box_count {
+        for j in 0..box_count {
+            if i != j {
+                let box_i = &result.boxes[i];
+                let box_j = &result.boxes[j];
+
+                // Check if box_i is completely inside box_j (not just touching border)
+                if is_box_inside(box_i, box_j) {
+                    // box_i is a child of box_j
+                    result.boxes[i].parent_idx = Some(j);
+                    if !result.boxes[j].child_indices.contains(&i) {
+                        result.boxes[j].child_indices.push(i);
+                    }
+                }
+            }
+        }
+    }
+
+    result
+}
+
+/// Check if `box_inner` is completely inside `box_outer` (interior, not on border).
+#[allow(dead_code)] // Reason: Helper for hierarchy detection
+#[must_use]
+pub const fn is_box_inside(inner: &crate::primitives::Box, outer: &crate::primitives::Box) -> bool {
+    // Inner box's borders must be strictly inside outer box's interior
+    // (with at least 1 cell of margin)
+    inner.top_left.0 > outer.top_left.0
+        && inner.bottom_right.0 < outer.bottom_right.0
+        && inner.top_left.1 > outer.top_left.1
+        && inner.bottom_right.1 < outer.bottom_right.1
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -414,6 +466,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 2),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         };
         let content = extract_box_content(&grid, &b);
         assert_eq!(content.len(), 1);
@@ -428,6 +482,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 6),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         };
         let content = extract_box_content(&grid, &b);
         assert_eq!(content.len(), 1);
@@ -442,6 +498,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (4, 7),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         };
         let content = extract_box_content(&grid, &b);
         assert_eq!(content.len(), 3);
@@ -458,6 +516,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 9),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         };
         let content = extract_box_content(&grid, &b);
         assert_eq!(content[0], " Text   ");
@@ -717,5 +777,112 @@ mod tests {
         let grid = Grid::from_lines(&lines);
         let _connections = detect_connection_lines(&grid);
         // Function should complete without crashing (conservative approach)
+    }
+
+    // Phase 5, Cycle 16: RED - Hierarchy detection tests
+    #[test]
+    fn test_detect_box_hierarchy_empty() {
+        let inventory = crate::primitives::PrimitiveInventory::default();
+        let result = detect_box_hierarchy(&inventory);
+        assert!(result.boxes.is_empty());
+    }
+
+    #[test]
+    fn test_detect_box_hierarchy_single_box() {
+        let mut inventory = crate::primitives::PrimitiveInventory::default();
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (2, 4),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        let result = detect_box_hierarchy(&inventory);
+        // Single box should have no parent and no children
+        assert_eq!(result.boxes.len(), 1);
+        assert!(result.boxes[0].parent_idx.is_none());
+        assert!(result.boxes[0].child_indices.is_empty());
+    }
+
+    #[test]
+    fn test_detect_box_hierarchy_separate_boxes() {
+        let mut inventory = crate::primitives::PrimitiveInventory::default();
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (2, 4),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 6),
+            bottom_right: (2, 10),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        let result = detect_box_hierarchy(&inventory);
+        // Separate boxes should have no relationships
+        assert!(result.boxes.iter().all(|b| b.parent_idx.is_none()));
+        assert!(result.boxes.iter().all(|b| b.child_indices.is_empty()));
+    }
+
+    #[test]
+    fn test_detect_box_hierarchy_nested() {
+        let mut inventory = crate::primitives::PrimitiveInventory::default();
+        // Outer box
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (4, 8),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Inner box
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (1, 2),
+            bottom_right: (3, 6),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        let result = detect_box_hierarchy(&inventory);
+        // Inner box should have parent=0, outer should have child=1
+        assert_eq!(result.boxes[0].child_indices, vec![1]);
+        assert_eq!(result.boxes[1].parent_idx, Some(0));
+    }
+
+    #[test]
+    fn test_detect_box_hierarchy_multiple_children() {
+        let mut inventory = crate::primitives::PrimitiveInventory::default();
+        // Parent box
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (0, 0),
+            bottom_right: (6, 12),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Child 1
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (1, 1),
+            bottom_right: (3, 5),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        // Child 2
+        inventory.boxes.push(crate::primitives::Box {
+            top_left: (1, 7),
+            bottom_right: (3, 11),
+            style: crate::primitives::BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
+        });
+        let result = detect_box_hierarchy(&inventory);
+        // Parent should have two children
+        assert_eq!(result.boxes[0].child_indices.len(), 2);
+        assert!(result.boxes[0].child_indices.contains(&1));
+        assert!(result.boxes[0].child_indices.contains(&2));
     }
 }

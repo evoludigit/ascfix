@@ -304,6 +304,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 3),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -327,6 +329,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 3),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
 
         let normalized = normalize_box_widths(&inventory);
@@ -341,11 +345,15 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 3),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.boxes.push(DiagramBox {
             top_left: (0, 5),
             bottom_right: (2, 8),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
 
         inventory.text_rows.push(crate::primitives::TextRow {
@@ -375,6 +383,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 10),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -395,6 +405,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 3),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -416,6 +428,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (4, 3),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -524,6 +538,8 @@ mod tests {
             top_left: (0, 5),
             bottom_right: (3, 15),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         // Arrow slightly off-center at col 11
         inventory
@@ -550,6 +566,8 @@ mod tests {
             top_left: (0, 5),
             bottom_right: (3, 15),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         // Arrow at col 6 (close to left edge at 5)
         inventory
@@ -576,11 +594,15 @@ mod tests {
             top_left: (0, 2),
             bottom_right: (3, 5),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.boxes.push(DiagramBox {
             top_left: (0, 10),
             bottom_right: (3, 15),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         // Arrow closer to second box
         inventory
@@ -606,6 +628,8 @@ mod tests {
             top_left: (0, 5),
             bottom_right: (3, 15),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory
             .vertical_arrows
@@ -639,6 +663,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (3, 10),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         // Text row starting at col 0 (should be col 1 for padding)
         inventory.text_rows.push(crate::primitives::TextRow {
@@ -662,6 +688,8 @@ mod tests {
             top_left: (0, 5),
             bottom_right: (3, 15),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         // Multiple rows with inconsistent padding
         inventory.text_rows.push(crate::primitives::TextRow {
@@ -691,6 +719,8 @@ mod tests {
             top_left: (0, 2),
             bottom_right: (3, 8),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -714,6 +744,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (3, 10),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         // No text rows
         let normalized = normalize_padding(&inventory);
@@ -728,11 +760,15 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 5),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.boxes.push(DiagramBox {
             top_left: (0, 10),
             bottom_right: (2, 15),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         // Rows in each box
         inventory.text_rows.push(crate::primitives::TextRow {
@@ -762,6 +798,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 3),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -809,6 +847,8 @@ mod tests {
             top_left: (0, 5),
             bottom_right: (3, 15),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory
             .vertical_arrows
@@ -833,6 +873,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (3, 10),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -854,6 +896,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 5),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.text_rows.push(crate::primitives::TextRow {
             row: 1,
@@ -895,6 +939,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (3, 5),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
 
         let groups = find_vertical_overlap_groups(&inventory);
@@ -908,11 +954,15 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 3),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.boxes.push(DiagramBox {
             top_left: (5, 0),
             bottom_right: (7, 3),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
 
         let groups = find_vertical_overlap_groups(&inventory);
@@ -928,12 +978,16 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (3, 4),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         // Right box - adjacent
         inventory.boxes.push(DiagramBox {
             top_left: (0, 5),
             bottom_right: (3, 9),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
 
         let groups = find_vertical_overlap_groups(&inventory);
@@ -948,16 +1002,22 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 2),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.boxes.push(DiagramBox {
             top_left: (0, 3),
             bottom_right: (2, 5),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.boxes.push(DiagramBox {
             top_left: (0, 6),
             bottom_right: (2, 8),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
 
         let groups = find_vertical_overlap_groups(&inventory);
@@ -972,11 +1032,15 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 3),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.boxes.push(DiagramBox {
             top_left: (3, 0),
             bottom_right: (5, 3),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
 
         let groups = find_vertical_overlap_groups(&inventory);
@@ -992,11 +1056,15 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 2),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.boxes.push(DiagramBox {
             top_left: (0, 3),
             bottom_right: (2, 8),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
 
         let balanced = balance_horizontal_boxes(&inventory);
@@ -1013,11 +1081,15 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (2, 2),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
         inventory.boxes.push(DiagramBox {
             top_left: (0, 3),
             bottom_right: (2, 8),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         });
 
         let balanced1 = balance_horizontal_boxes(&inventory);

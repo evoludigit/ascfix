@@ -88,6 +88,10 @@ pub struct Box {
     pub bottom_right: (usize, usize),
     /// Style of the box (single, double, or rounded lines)
     pub style: BoxStyle,
+    /// Index of parent box (if nested inside another box)
+    pub parent_idx: Option<usize>,
+    /// Indices of child boxes (if this box contains other boxes)
+    pub child_indices: Vec<usize>,
 }
 
 impl Box {
@@ -410,6 +414,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (3, 5),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         };
         assert_eq!(b.width(), 6);
         assert_eq!(b.height(), 4);
@@ -421,6 +427,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (3, 5),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         };
         assert!(b.contains_interior(1, 1));
         assert!(b.contains_interior(2, 3));
@@ -435,6 +443,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (3, 5),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         };
         assert!(b.contains_border(0, 0)); // Top-left
         assert!(b.contains_border(0, 3)); // Top
@@ -633,6 +643,8 @@ mod tests {
             top_left: (0, 0),
             bottom_right: (3, 5),
             style: BoxStyle::Single,
+            parent_idx: None,
+            child_indices: Vec::new(),
         };
         assert_eq!(b.style, BoxStyle::Single);
     }
@@ -643,6 +655,8 @@ mod tests {
             top_left: (1, 2),
             bottom_right: (5, 8),
             style: BoxStyle::Double,
+            parent_idx: None,
+            child_indices: Vec::new(),
         };
         assert_eq!(b.style, BoxStyle::Double);
     }
