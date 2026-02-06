@@ -210,6 +210,10 @@ pub struct HorizontalArrow {
     pub start_col: usize,
     /// Ending column
     pub end_col: usize,
+    /// Type of the arrow (standard, double, long, dashed)
+    pub arrow_type: ArrowType,
+    /// Direction: true if rightward (→), false if leftward (←)
+    pub rightward: bool,
 }
 
 /// A vertical arrow or connector.
@@ -222,6 +226,10 @@ pub struct VerticalArrow {
     pub start_row: usize,
     /// Ending row
     pub end_row: usize,
+    /// Type of the arrow (standard, double, long, dashed)
+    pub arrow_type: ArrowType,
+    /// Direction: true if downward (↓), false if upward (↑)
+    pub downward: bool,
 }
 
 /// A row of text content.
@@ -386,6 +394,8 @@ mod tests {
             row: 5,
             start_col: 2,
             end_col: 8,
+            arrow_type: ArrowType::Standard,
+            rightward: true,
         };
         assert_eq!(arr.row, 5);
         assert_eq!(arr.start_col, 2);
@@ -397,6 +407,8 @@ mod tests {
             col: 3,
             start_row: 1,
             end_row: 6,
+            arrow_type: ArrowType::Standard,
+            downward: true,
         };
         assert_eq!(arr.col, 3);
         assert_eq!(arr.start_row, 1);
@@ -638,5 +650,58 @@ mod tests {
         assert!(is_vertical_arrow_char('⟰'));
         assert!(!is_vertical_arrow_char('→'));
         assert!(!is_vertical_arrow_char('a'));
+    }
+
+    // Phase 2, Cycle 6: RED - Arrow detection tests
+    #[test]
+    fn test_horizontal_arrow_has_type_field() {
+        let arr = HorizontalArrow {
+            row: 5,
+            start_col: 2,
+            end_col: 8,
+            arrow_type: ArrowType::Standard,
+            rightward: true,
+        };
+        assert_eq!(arr.arrow_type, ArrowType::Standard);
+        assert!(arr.rightward);
+    }
+
+    #[test]
+    fn test_horizontal_arrow_leftward() {
+        let arr = HorizontalArrow {
+            row: 5,
+            start_col: 8,
+            end_col: 2,
+            arrow_type: ArrowType::Double,
+            rightward: false,
+        };
+        assert_eq!(arr.arrow_type, ArrowType::Double);
+        assert!(!arr.rightward);
+    }
+
+    #[test]
+    fn test_vertical_arrow_has_type_field() {
+        let arr = VerticalArrow {
+            col: 3,
+            start_row: 1,
+            end_row: 6,
+            arrow_type: ArrowType::Long,
+            downward: true,
+        };
+        assert_eq!(arr.arrow_type, ArrowType::Long);
+        assert!(arr.downward);
+    }
+
+    #[test]
+    fn test_vertical_arrow_upward() {
+        let arr = VerticalArrow {
+            col: 3,
+            start_row: 6,
+            end_row: 1,
+            arrow_type: ArrowType::Dashed,
+            downward: false,
+        };
+        assert_eq!(arr.arrow_type, ArrowType::Dashed);
+        assert!(!arr.downward);
     }
 }

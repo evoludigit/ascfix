@@ -1,7 +1,7 @@
 //! Render normalized primitives back to ASCII grid.
 
 #[allow(unused_imports)] // Reason: Used in tests
-use crate::primitives::BoxStyle;
+use crate::primitives::{ArrowType, BoxStyle};
 use crate::{grid::Grid, primitives::PrimitiveInventory};
 
 /// Render a primitive inventory back to an ASCII grid.
@@ -219,6 +219,8 @@ mod tests {
                 col: 2,
                 start_row: 0,
                 end_row: 2,
+                arrow_type: ArrowType::Standard,
+                downward: true,
             });
 
         let grid = render_diagram(&inventory);
@@ -242,6 +244,8 @@ mod tests {
                 row: 1,
                 start_col: 0,
                 end_col: 4,
+                arrow_type: ArrowType::Standard,
+                rightward: true,
             });
 
         let grid = render_diagram(&inventory);
@@ -270,6 +274,8 @@ mod tests {
                 row: 1,
                 start_col: 4,
                 end_col: 6,
+                arrow_type: ArrowType::Standard,
+                rightward: true,
             });
 
         let grid = render_diagram(&inventory);

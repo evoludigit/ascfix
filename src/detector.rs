@@ -1,7 +1,7 @@
 //! Detection logic for ASCII diagram primitives.
 
 use crate::grid::Grid;
-use crate::primitives::{Box, BoxStyle};
+use crate::primitives::{ArrowType, Box, BoxStyle};
 use std::collections::{HashSet, VecDeque};
 
 /// Box character set for detection.
@@ -248,6 +248,8 @@ pub fn detect_vertical_arrows(grid: &Grid) -> Vec<crate::primitives::VerticalArr
                             col,
                             start_row,
                             end_row,
+                            arrow_type: ArrowType::Standard,
+                            downward: true,
                         });
                     }
 
@@ -303,6 +305,8 @@ pub fn detect_horizontal_arrows(grid: &Grid) -> Vec<crate::primitives::Horizonta
                             row,
                             start_col,
                             end_col,
+                            arrow_type: ArrowType::Standard,
+                            rightward: true,
                         });
                     }
 

@@ -1,7 +1,9 @@
 //! Layout normalization and repair logic for ASCII diagrams.
 
 #[allow(unused_imports)] // Reason: DiagramBox used in tests
-use crate::primitives::{Box as DiagramBox, BoxStyle, HorizontalArrow, PrimitiveInventory};
+use crate::primitives::{
+    ArrowType, Box as DiagramBox, BoxStyle, HorizontalArrow, PrimitiveInventory,
+};
 
 /// Align horizontal arrows to consistent positions.
 ///
@@ -314,6 +316,8 @@ mod tests {
             row: 0,
             start_col: 2,
             end_col: 5,
+            arrow_type: ArrowType::Standard,
+            rightward: true,
         });
 
         let normalized = align_horizontal_arrows(&inventory);
@@ -329,11 +333,15 @@ mod tests {
             row: 0,
             start_col: 10,
             end_col: 15,
+            arrow_type: ArrowType::Standard,
+            rightward: true,
         });
         inventory.horizontal_arrows.push(HorizontalArrow {
             row: 0,
             start_col: 2,
             end_col: 5,
+            arrow_type: ArrowType::Standard,
+            rightward: true,
         });
 
         let normalized = align_horizontal_arrows(&inventory);
@@ -351,11 +359,15 @@ mod tests {
             row: 0,
             start_col: 5,
             end_col: 8,
+            arrow_type: ArrowType::Standard,
+            rightward: true,
         });
         inventory.horizontal_arrows.push(HorizontalArrow {
             row: 5,
             start_col: 5,
             end_col: 8,
+            arrow_type: ArrowType::Standard,
+            rightward: true,
         });
 
         let normalized = align_horizontal_arrows(&inventory);
@@ -387,6 +399,8 @@ mod tests {
                 col: 11,
                 start_row: 4,
                 end_row: 6,
+                arrow_type: ArrowType::Standard,
+                downward: true,
             });
 
         let normalized = align_vertical_arrows(&inventory);
@@ -411,6 +425,8 @@ mod tests {
                 col: 6,
                 start_row: 4,
                 end_row: 6,
+                arrow_type: ArrowType::Standard,
+                downward: true,
             });
 
         let normalized = align_vertical_arrows(&inventory);
@@ -440,6 +456,8 @@ mod tests {
                 col: 9,
                 start_row: 4,
                 end_row: 6,
+                arrow_type: ArrowType::Standard,
+                downward: true,
             });
 
         let normalized = align_vertical_arrows(&inventory);
@@ -462,6 +480,8 @@ mod tests {
                 col: 11,
                 start_row: 4,
                 end_row: 6,
+                arrow_type: ArrowType::Standard,
+                downward: true,
             });
 
         let normalized = align_vertical_arrows(&inventory);
@@ -632,11 +652,15 @@ mod tests {
             row: 0,
             start_col: 2,
             end_col: 5,
+            arrow_type: ArrowType::Standard,
+            rightward: true,
         });
         inventory.horizontal_arrows.push(HorizontalArrow {
             row: 0,
             start_col: 10,
             end_col: 15,
+            arrow_type: ArrowType::Standard,
+            rightward: true,
         });
 
         let normalized1 = align_horizontal_arrows(&inventory);
@@ -659,6 +683,8 @@ mod tests {
                 col: 11,
                 start_row: 4,
                 end_row: 6,
+                arrow_type: ArrowType::Standard,
+                downward: true,
             });
 
         let normalized1 = align_vertical_arrows(&inventory);
@@ -706,6 +732,8 @@ mod tests {
             row: 3,
             start_col: 0,
             end_col: 2,
+            arrow_type: ArrowType::Standard,
+            rightward: true,
         });
 
         // Apply full pipeline twice
