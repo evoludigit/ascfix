@@ -1,5 +1,69 @@
 //! Primitive types representing ASCII diagram elements.
 
+/// Box drawing style for different box types.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+pub enum BoxStyle {
+    /// Single-line boxes: ─ │ ┌ ┐ └ ┘
+    Single,
+    /// Double-line boxes: ═ ║ ╔ ╗ ╚ ╝
+    Double,
+    /// Rounded-corner boxes: ─ │ ╭ ╮ ╰ ╯
+    Rounded,
+}
+
+/// Box drawing characters for a specific style.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+pub struct BoxChars {
+    /// Horizontal line character
+    pub horizontal: char,
+    /// Vertical line character
+    pub vertical: char,
+    /// Top-left corner
+    pub top_left: char,
+    /// Top-right corner
+    pub top_right: char,
+    /// Bottom-left corner
+    pub bottom_left: char,
+    /// Bottom-right corner
+    pub bottom_right: char,
+}
+
+impl BoxStyle {
+    /// Get the characters used for this box style.
+    #[must_use]
+    #[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+    pub const fn chars(self) -> BoxChars {
+        match self {
+            Self::Single => BoxChars {
+                horizontal: '─',
+                vertical: '│',
+                top_left: '┌',
+                top_right: '┐',
+                bottom_left: '└',
+                bottom_right: '┘',
+            },
+            Self::Double => BoxChars {
+                horizontal: '═',
+                vertical: '║',
+                top_left: '╔',
+                top_right: '╗',
+                bottom_left: '╚',
+                bottom_right: '╝',
+            },
+            Self::Rounded => BoxChars {
+                horizontal: '─',
+                vertical: '│',
+                top_left: '╭',
+                top_right: '╮',
+                bottom_left: '╰',
+                bottom_right: '╯',
+            },
+        }
+    }
+}
+
 /// A rectangular box defined by its border.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Box {
@@ -203,5 +267,42 @@ mod tests {
         assert!(is_box_corner('┘'));
         assert!(!is_box_corner('─'));
         assert!(!is_box_corner('│'));
+    }
+
+    // Phase 1, Cycle 1: RED - BoxStyle enum tests
+    #[test]
+    fn test_box_style_single_chars() {
+        let chars = BoxStyle::Single.chars();
+        // Single line: horizontal, vertical, top_left, top_right, bottom_left, bottom_right
+        assert_eq!(chars.horizontal, '─');
+        assert_eq!(chars.vertical, '│');
+        assert_eq!(chars.top_left, '┌');
+        assert_eq!(chars.top_right, '┐');
+        assert_eq!(chars.bottom_left, '└');
+        assert_eq!(chars.bottom_right, '┘');
+    }
+
+    #[test]
+    fn test_box_style_double_chars() {
+        let chars = BoxStyle::Double.chars();
+        // Double line: horizontal, vertical, top_left, top_right, bottom_left, bottom_right
+        assert_eq!(chars.horizontal, '═');
+        assert_eq!(chars.vertical, '║');
+        assert_eq!(chars.top_left, '╔');
+        assert_eq!(chars.top_right, '╗');
+        assert_eq!(chars.bottom_left, '╚');
+        assert_eq!(chars.bottom_right, '╝');
+    }
+
+    #[test]
+    fn test_box_style_rounded_chars() {
+        let chars = BoxStyle::Rounded.chars();
+        // Rounded: horizontal, vertical, top_left, top_right, bottom_left, bottom_right
+        assert_eq!(chars.horizontal, '─');
+        assert_eq!(chars.vertical, '│');
+        assert_eq!(chars.top_left, '╭');
+        assert_eq!(chars.top_right, '╮');
+        assert_eq!(chars.bottom_left, '╰');
+        assert_eq!(chars.bottom_right, '╯');
     }
 }
