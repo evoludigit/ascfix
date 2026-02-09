@@ -22,6 +22,11 @@ Ideal for:
 - **Diagram mode**: Repair ASCII boxes and arrows
 - **Fence repair**: Fix code fence boundary issues (mismatched lengths, unclosed fences)
 - **Check mode**: Validate files without modifying (exit codes for CI/CD)
+- **Directory processing**: Recursively process directories with file discovery
+- **MDX support**: Process both `.md` and `.mdx` files by default
+- **Gitignore respect**: Automatically respects `.gitignore` rules (can be disabled)
+- **Custom extensions**: Filter files by extension (`--ext .md,.mdx`)
+- **Error resilience**: Continue processing on individual file errors
 - **Conservative**: Only fixes well-understood structures
 - **Idempotent**: Running twice produces identical output
 - **Fast**: Linear processing time
@@ -45,6 +50,8 @@ cargo install --path .
 
 ## Usage
 
+### Single Files
+
 ```bash
 # Check a file (default: safe mode, output to stdout)
 ascfix README.md
@@ -58,15 +65,33 @@ ascfix README.md --in-place --fences
 # Enable diagram mode for box/arrow repair
 ascfix README.md --in-place --mode=diagram
 
-# Repair everything (fences + diagrams) - shorthand for --fences --mode=diagram
+# Repair everything (fences + diagrams)
 ascfix README.md --in-place --all
 
-# Validate without modifying (check mode)
-ascfix README.md --check --mode=diagram
-# Returns exit code 1 if changes would be made
+# Validate without modifying (check mode, exit code 1 if changes needed)
+ascfix README.md -c --mode=diagram
+```
 
-# Process multiple files
-ascfix docs/*.md --in-place --mode=diagram
+### Directories
+
+```bash
+# Process all .md and .mdx files in a directory (respects .gitignore)
+ascfix docs/ --in-place --mode=diagram
+
+# Process a directory recursively
+ascfix . --in-place --all
+
+# Process only .md files (default includes both .md and .mdx)
+ascfix docs/ -e .md --in-place
+
+# Process .mdx files only
+ascfix docs/ -e .mdx --in-place
+
+# Process directories ignoring .gitignore
+ascfix docs/ --no-gitignore --in-place --all
+
+# Check multiple files without modifying
+ascfix docs/ -c
 ```
 
 ### Modes
@@ -79,14 +104,16 @@ ascfix docs/*.md --in-place --mode=diagram
 
 ### Flags
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--in-place` | Modify files instead of printing to stdout | Off |
-| `--check` | Validate files without modifying (returns exit code 1 if changes needed) | Off |
-| `--fences` | Repair code fence boundaries | Off |
-| `--all` | Shorthand for `--fences --mode=diagram` | Off |
-| `--mode` | Processing mode (safe, diagram, check) | safe |
-| `--max-size` | Maximum file size to process (e.g., "100MB", "1GB") | Unlimited |
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--in-place` | `-i` | Modify files instead of printing to stdout | Off |
+| `--check` | `-c` | Validate files without modifying (returns exit code 1 if changes needed) | Off |
+| `--fences` | | Repair code fence boundaries | Off |
+| `--all` | | Shorthand for `--fences --mode=diagram` | Off |
+| `--mode` | | Processing mode (safe, diagram, check) | safe |
+| `--ext` | `-e` | File extensions to process (comma-separated, e.g., `.md,.mdx`) | `.md,.mdx` |
+| `--no-gitignore` | | Do not respect .gitignore files | Off (respects .gitignore) |
+| `--max-size` | | Maximum file size to process (e.g., "100MB", "1GB") | Unlimited |
 
 ## Examples
 
