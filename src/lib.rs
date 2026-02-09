@@ -4,6 +4,7 @@
 //! ASCII diagrams in Markdown content.
 
 pub mod cli;
+pub mod discovery;
 pub mod modes;
 
 // Internal modules (not part of public API)
