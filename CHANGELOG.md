@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-02-09
+
+### Added - Directory Support, MDX Files, and Duplicate Fence Repair
+
+**Directory Processing and File Discovery**
+- Process entire directories recursively with automatic file discovery
+- Recursive traversal of nested directories
+- Auto-detection of `.md` and `.mdx` files by default
+- Custom file extension filtering via `--ext` / `-e` flag (comma-separated)
+- Respect `.gitignore` files by default with `--no-gitignore` override
+- Mixed argument support: process both files and directories in a single invocation
+
+**MDX File Support (Issue #3)**
+- `.mdx` files included in default processing
+- Seamless handling alongside Markdown files
+- Full feature parity with `.md` files
+
+**Duplicate Closing Fence Detection (Issue #4)**
+- Detect orphaned/duplicate closing fence markers
+- Remove duplicate closing fences that appear after properly closed blocks
+- Handle consecutive duplicate closing fences
+- Support for both backtick and tilde fence types
+- Conservative approach: preserves intentional nesting and longer fences
+
+**CLI Improvements**
+- New `--ext` / `-e` flag for custom file extension filtering
+- New `--no-gitignore` flag to disable gitignore respect
+- Graceful error handling: continue processing on single file errors
+- Batch processing with error collection and reporting
+- Short flag support for all flags (`-c`, `-e`, `-i`, `-a`, etc.)
+- Improved help output with categorized sections and examples
+
+**Batch Processing Enhancements**
+- Process multiple files with resilience: errors in one file don't stop batch processing
+- Comprehensive error reporting at end of processing
+- Proper exit codes (0 for success, 1 for errors or changes needed)
+- Clear error messages for file discovery and processing failures
+
+**Dependencies**
+- Added `ignore` crate (v0.4) for directory walking and gitignore support
+
+### Testing
+- 7 new integration tests for duplicate closing fence repair
+- 16 unit tests for file discovery
+- 5 tests for gitignore behavior and respect
+- 7 end-to-end directory integration tests
+- All existing tests continue to pass (247 unit tests, 572 total)
+
+### Fixed
+- Clippy warnings and code style improvements
+
+### Changed
+- Renamed internal `files` argument to `paths` for clarity (user-facing behavior unchanged)
+- Default file extensions now include `.mdx` alongside `.md`
+
 ## [0.3.0] - 2026-02-09
 
 ### Added - Code Fence Boundary Validation and Repair
