@@ -55,7 +55,7 @@ impl Processor {
     pub fn process_all(&self) -> Result<i32> {
         let mut any_needs_fixing = false;
 
-        for file_path in &self.args.files {
+        for file_path in &self.args.paths {
             // Check file size if max_size is set
             if let Some(max_size) = self.args.max_size {
                 let file_size = file_path.metadata()?.len();
@@ -141,7 +141,7 @@ mod tests {
         use clap::Parser;
         let args = Args::try_parse_from(["ascfix", "test.md"]).expect("Failed to parse args");
         let processor = Processor::new(args);
-        assert_eq!(processor.args.files.len(), 1);
+        assert_eq!(processor.args.paths.len(), 1);
     }
 
     #[test]

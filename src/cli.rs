@@ -29,8 +29,8 @@ fn parse_size(s: &str) -> Result<u64, String> {
 #[command(about = "Repair ASCII diagrams in Markdown files", long_about = None)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct Args {
-    /// File or glob pattern to process
-    pub files: Vec<PathBuf>,
+    /// Files or directories to process
+    pub paths: Vec<PathBuf>,
 
     /// Processing mode
     #[arg(long, value_enum, default_value = "safe")]
@@ -41,7 +41,7 @@ pub struct Args {
     pub in_place: bool,
 
     /// Check if files need fixing (exit 1 if yes, 0 if no)
-    #[arg(long)]
+    #[arg(long, short = 'c')]
     pub check: bool,
 
     /// Maximum file size to process (e.g., "100MB", "1GB", default: unlimited)
@@ -55,6 +55,14 @@ pub struct Args {
     /// Repair everything (fences + diagrams) - shorthand for --fences --mode=diagram
     #[arg(long)]
     pub all: bool,
+
+    /// File extensions to process (comma-separated, default: .md,.mdx)
+    #[arg(long, short = 'e', value_delimiter = ',', default_value = ".md,.mdx")]
+    pub ext: Vec<String>,
+
+    /// Do not respect .gitignore files
+    #[arg(long)]
+    pub no_gitignore: bool,
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq, Eq)]
@@ -74,7 +82,21 @@ impl Args {
     /// Parse command-line arguments.
     #[must_use]
     pub fn parse_args() -> Self {
-        Parser::parse()
+        let mut args: Self = Parser::parse();
+        // Normalize extensions to have leading dots
+        args.ext = args
+            .ext
+            .iter()
+            .map(|ext: &String| {
+                let trimmed = ext.trim();
+                if trimmed.starts_with('.') {
+                    trimmed.to_string()
+                } else {
+                    format!(".{trimmed}")
+                }
+            })
+            .collect();
+        args
     }
 }
 
@@ -87,8 +109,8 @@ mod tests {
         let args = Args::try_parse_from(["ascfix", "test.md"]);
         assert!(args.is_ok());
         let parsed = args.unwrap();
-        assert_eq!(parsed.files.len(), 1);
-        assert_eq!(parsed.files[0], PathBuf::from("test.md"));
+        assert_eq!(parsed.paths.len(), 1);
+        assert_eq!(&parsed.paths[0], &PathBuf::from("test.md"));
         assert_eq!(parsed.mode, Mode::Safe);
         assert!(!parsed.in_place);
         assert!(!parsed.check);
