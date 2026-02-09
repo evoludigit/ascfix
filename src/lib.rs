@@ -8,6 +8,7 @@ pub mod modes;
 
 // Internal modules (not part of public API)
 pub mod detector;
+pub mod fences;
 pub mod grid;
 pub mod normalizer;
 pub mod parser;

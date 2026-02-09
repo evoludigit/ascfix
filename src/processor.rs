@@ -32,7 +32,15 @@ impl Processor {
     #[allow(dead_code)] // Reason: Part of public API for library usage
     pub fn process_file(&self, path: &Path) -> Result<String> {
         let content = io::read_markdown(path)?;
-        let processed = crate::modes::process_by_mode(&self.args.mode, &content);
+        // Determine if we should repair fences (--all implies --fences)
+        let repair_fences = self.args.fences || self.args.all;
+        // Determine the mode (--all implies --mode=diagram)
+        let mode = if self.args.all {
+            &crate::cli::Mode::Diagram
+        } else {
+            &self.args.mode
+        };
+        let processed = crate::modes::process_by_mode(mode, &content, repair_fences);
         Ok(processed)
     }
 
@@ -63,7 +71,15 @@ impl Processor {
             }
 
             let content = io::read_markdown(file_path)?;
-            let processed = crate::modes::process_by_mode(&self.args.mode, &content);
+            // Determine if we should repair fences (--all implies --fences)
+            let repair_fences = self.args.fences || self.args.all;
+            // Determine the mode (--all implies --mode=diagram)
+            let mode = if self.args.all {
+                &crate::cli::Mode::Diagram
+            } else {
+                &self.args.mode
+            };
+            let processed = crate::modes::process_by_mode(mode, &content, repair_fences);
 
             // Check if file needs fixing
             if crate::modes::content_needs_fixing(&content, &processed) {

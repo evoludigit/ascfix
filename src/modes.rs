@@ -9,13 +9,22 @@ use std::fmt::Write;
 /// - `Safe`: Only normalize Markdown tables (minimal changes, no diagrams)
 /// - `Diagram`: Detect and normalize ASCII diagrams (boxes, arrows, text)
 /// - `Check`: Validate content but don't modify (used with --check flag)
+///
+/// If `repair_fences` is true, fence normalization is applied first.
 #[must_use]
 #[allow(dead_code)] // Reason: Used by main processing pipeline
-pub fn process_by_mode(mode: &Mode, content: &str) -> String {
+pub fn process_by_mode(mode: &Mode, content: &str, repair_fences: bool) -> String {
+    // Apply fence repair first if enabled
+    let content = if repair_fences {
+        crate::fences::normalize_fences(content)
+    } else {
+        content.to_string()
+    };
+
     match mode {
-        Mode::Safe => process_safe_mode(content),
-        Mode::Diagram => process_diagram_mode(content),
-        Mode::Check => process_check_mode(content),
+        Mode::Safe => process_safe_mode(&content),
+        Mode::Diagram => process_diagram_mode(&content),
+        Mode::Check => process_check_mode(&content),
     }
 }
 
@@ -239,7 +248,7 @@ mod tests {
     #[test]
     fn test_safe_mode_preserves_content() {
         let content = "# Test\n\nSome content";
-        let result = process_by_mode(&Mode::Safe, content);
+        let result = process_by_mode(&Mode::Safe, content, false);
         // Safe mode should preserve content for now
         assert_eq!(result, content);
     }
@@ -247,7 +256,7 @@ mod tests {
     #[test]
     fn test_diagram_mode_preserves_content() {
         let content = "# Test\n\nSome content";
-        let result = process_by_mode(&Mode::Diagram, content);
+        let result = process_by_mode(&Mode::Diagram, content, false);
         // Diagram mode should preserve content when no diagrams exist
         assert_eq!(result, content);
     }
@@ -255,7 +264,7 @@ mod tests {
     #[test]
     fn test_check_mode_preserves_content() {
         let content = "# Test\n\nSome content";
-        let result = process_by_mode(&Mode::Check, content);
+        let result = process_by_mode(&Mode::Check, content, false);
         // Check mode should use same processing as diagram
         assert_eq!(result, content);
     }
@@ -263,9 +272,9 @@ mod tests {
     #[test]
     fn test_all_modes_are_safe() {
         let content = "# Header\n\nText content\n\nMore text";
-        let safe_result = process_by_mode(&Mode::Safe, content);
-        let diagram_result = process_by_mode(&Mode::Diagram, content);
-        let check_result = process_by_mode(&Mode::Check, content);
+        let safe_result = process_by_mode(&Mode::Safe, content, false);
+        let diagram_result = process_by_mode(&Mode::Diagram, content, false);
+        let check_result = process_by_mode(&Mode::Check, content, false);
 
         // All modes should handle content safely (no crashes, no panics)
         assert!(!safe_result.is_empty());
@@ -276,7 +285,7 @@ mod tests {
     #[test]
     fn test_safe_mode_normalizes_table() {
         let content = "| Name | Age |\n|------|-----|\n| Alice | 30 |\n| Bob | 25 |";
-        let result = process_by_mode(&Mode::Safe, content);
+        let result = process_by_mode(&Mode::Safe, content, false);
         // Result should be normalized (may have different spacing)
         assert!(result.contains("| Name"));
         assert!(result.contains("| Age"));
@@ -287,14 +296,14 @@ mod tests {
     #[test]
     fn test_safe_mode_preserves_non_tables() {
         let content = "# Title\n\nSome paragraph.\n\nMore text.";
-        let result = process_by_mode(&Mode::Safe, content);
+        let result = process_by_mode(&Mode::Safe, content, false);
         assert_eq!(result, content);
     }
 
     #[test]
     fn test_safe_mode_misaligned_table() {
         let content = "| A | B |\n|---|---|\n| x| y |";
-        let result = process_by_mode(&Mode::Safe, content);
+        let result = process_by_mode(&Mode::Safe, content, false);
         // Should normalize spacing
         assert!(result.contains("| A"));
         assert!(result.contains("| B"));
@@ -304,7 +313,7 @@ mod tests {
     fn test_safe_mode_multiple_tables() {
         let content =
             "| H1 | H2 |\n|---|---|\n| a | b |\n\nText\n\n| C | D |\n|---|---|\n| c | d |";
-        let result = process_by_mode(&Mode::Safe, content);
+        let result = process_by_mode(&Mode::Safe, content, false);
         // Both tables should be present
         assert!(result.contains("| H1"));
         assert!(result.contains("| C"));
@@ -346,7 +355,7 @@ mod tests {
     #[test]
     fn test_diagram_mode_processes_boxes() {
         let content = "┌─┐\n│ │\n└─┘";
-        let result = process_by_mode(&Mode::Diagram, content);
+        let result = process_by_mode(&Mode::Diagram, content, false);
         // Should render the diagram (may change spacing but keep structure)
         assert!(result.contains("┌"));
         assert!(result.contains("└"));
@@ -356,7 +365,7 @@ mod tests {
     #[test]
     fn test_diagram_mode_preserves_non_diagram_text() {
         let content = "# Title\n\nSome text\n\nMore content";
-        let result = process_by_mode(&Mode::Diagram, content);
+        let result = process_by_mode(&Mode::Diagram, content, false);
         // Non-diagram content should be preserved
         assert!(result.contains("# Title"));
         assert!(result.contains("Some text"));
@@ -365,7 +374,7 @@ mod tests {
     #[test]
     fn test_check_mode_returns_unchanged_content() {
         let content = "# Test\n\nNo diagrams here";
-        let result = process_by_mode(&Mode::Check, content);
+        let result = process_by_mode(&Mode::Check, content, false);
         // Check mode processes same as diagram mode but returns content
         assert_eq!(result, content);
     }
@@ -373,7 +382,7 @@ mod tests {
     #[test]
     fn test_content_needs_fixing_detects_differences() {
         let original = "┌──┐\n│Hi│\n└──┘";
-        let processed = process_by_mode(&Mode::Diagram, original);
+        let processed = process_by_mode(&Mode::Diagram, original, false);
         // If there are primitives, processing might change formatting
         // Check that comparison would detect the difference
         let needs_fixing = content_needs_fixing(original, &processed);
@@ -384,7 +393,7 @@ mod tests {
     #[test]
     fn test_content_needs_fixing_detects_identical() {
         let original = "# Title\n\nNo diagrams";
-        let processed = process_by_mode(&Mode::Diagram, original);
+        let processed = process_by_mode(&Mode::Diagram, original, false);
         // When no changes are made, content should be identical
         let needs_fixing = content_needs_fixing(original, &processed);
         assert!(!needs_fixing);
@@ -408,5 +417,13 @@ mod tests {
         let original = "line1\nline2";
         let modified = "line1\nline2";
         assert!(!content_needs_fixing(original, modified));
+    }
+
+    #[test]
+    fn test_fence_repair_in_pipeline() {
+        let content = "```python\ncode\n`````";
+        let result = process_by_mode(&Mode::Diagram, content, true);
+        // Fences should be normalized before diagram processing
+        assert!(result.contains('`'));
     }
 }

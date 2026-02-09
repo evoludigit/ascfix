@@ -7,6 +7,7 @@
 
 mod cli;
 mod detector;
+mod fences;
 pub mod grid;
 mod io;
 mod modes;

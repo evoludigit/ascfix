@@ -27,6 +27,7 @@ fn parse_size(s: &str) -> Result<u64, String> {
 #[derive(Parser, Debug, Clone)]
 #[command(name = "ascfix")]
 #[command(about = "Repair ASCII diagrams in Markdown files", long_about = None)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Args {
     /// File or glob pattern to process
     pub files: Vec<PathBuf>,
@@ -46,6 +47,14 @@ pub struct Args {
     /// Maximum file size to process (e.g., "100MB", "1GB", default: unlimited)
     #[arg(long, value_parser = parse_size)]
     pub max_size: Option<u64>,
+
+    /// Repair code fence boundaries
+    #[arg(long)]
+    pub fences: bool,
+
+    /// Repair everything (fences + diagrams) - shorthand for --fences --mode=diagram
+    #[arg(long)]
+    pub all: bool,
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq, Eq)]
@@ -145,5 +154,38 @@ mod tests {
         let args = Args::try_parse_from(["ascfix", "test.md"]);
         assert!(args.is_ok());
         assert_eq!(args.unwrap().max_size, None);
+    }
+
+    #[test]
+    fn test_args_parse_fences() {
+        let args = Args::try_parse_from(["ascfix", "--fences", "test.md"]);
+        assert!(args.is_ok());
+        assert!(args.unwrap().fences);
+    }
+
+    #[test]
+    fn test_args_parse_all() {
+        let args = Args::try_parse_from(["ascfix", "--all", "test.md"]);
+        assert!(args.is_ok());
+        assert!(args.unwrap().all);
+    }
+
+    #[test]
+    fn test_args_parse_fences_and_mode() {
+        let args = Args::try_parse_from(["ascfix", "--fences", "--mode", "diagram", "test.md"]);
+        assert!(args.is_ok());
+        let parsed = args.unwrap();
+        assert!(parsed.fences);
+        assert_eq!(parsed.mode, Mode::Diagram);
+    }
+
+    #[test]
+    fn test_args_parse_all_flag_defaults() {
+        let args = Args::try_parse_from(["ascfix", "--all", "test.md"]);
+        assert!(args.is_ok());
+        let parsed = args.unwrap();
+        assert!(parsed.all);
+        // --all doesn't automatically change mode, that's handled in processor
+        assert_eq!(parsed.mode, Mode::Safe);
     }
 }

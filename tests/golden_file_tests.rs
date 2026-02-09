@@ -14,7 +14,7 @@ fn golden_file_simple_box() {
         .expect("Failed to read expected fixture");
 
     // Process the input
-    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
+    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
 
     // Compare
     assert_eq!(
@@ -32,7 +32,7 @@ fn golden_file_box_with_arrow() {
         .expect("Failed to read expected fixture");
 
     // Process the input
-    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
+    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
 
     // Compare
     assert_eq!(
@@ -50,7 +50,7 @@ fn golden_file_markdown_with_diagram() {
         .expect("Failed to read expected fixture");
 
     // Process the input
-    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
+    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
 
     // Compare
     assert_eq!(
@@ -68,7 +68,7 @@ fn golden_file_ci_pipeline() {
         .expect("Failed to read expected fixture");
 
     // Process the input
-    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
+    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
 
     // Compare
     assert_eq!(
@@ -85,7 +85,7 @@ fn golden_file_double_line_boxes() {
     let expected = fs::read_to_string("tests/golden/expected/double_line_boxes.md")
         .expect("Failed to read expected fixture");
 
-    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
+    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
 
     assert_eq!(
         result.trim(),
@@ -101,7 +101,7 @@ fn golden_file_rounded_boxes() {
     let expected = fs::read_to_string("tests/golden/expected/rounded_boxes.md")
         .expect("Failed to read expected fixture");
 
-    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
+    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
 
     assert_eq!(
         result.trim(),
@@ -117,7 +117,7 @@ fn golden_file_nested_boxes() {
     let expected = fs::read_to_string("tests/golden/expected/nested_boxes.md")
         .expect("Failed to read expected fixture");
 
-    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
+    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
 
     assert_eq!(
         result.trim(),
@@ -133,7 +133,7 @@ fn golden_file_side_by_side_boxes() {
     let expected = fs::read_to_string("tests/golden/expected/side_by_side_boxes.md")
         .expect("Failed to read expected fixture");
 
-    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
+    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
 
     assert_eq!(
         result.trim(),
@@ -149,7 +149,7 @@ fn golden_file_connection_lines() {
     let expected = fs::read_to_string("tests/golden/expected/connection_lines.md")
         .expect("Failed to read expected fixture");
 
-    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
+    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
 
     assert_eq!(
         result.trim(),
@@ -165,7 +165,7 @@ fn golden_file_mixed_features() {
     let expected = fs::read_to_string("tests/golden/expected/mixed_features.md")
         .expect("Failed to read expected fixture");
 
-    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
+    let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
 
     assert_eq!(
         result.trim(),

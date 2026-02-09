@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-02-09
+
+### Added - Code Fence Boundary Validation and Repair
+
+**Code Fence Repair**
+- Detect and repair mismatched code fence lengths
+- Automatically close unclosed code fences
+- Preserve language specifiers (e.g., `python`, `javascript`)
+- Support for both backtick and tilde fences
+- Proper handling of nested fences (preserves intentional nesting)
+- Conservative approach: skips ambiguous cases (type mismatches)
+
+**CLI Enhancements**
+- New `--fences` flag to enable fence repair independently
+- New `--all` flag as shorthand for `--fences --mode=diagram`
+- Works with `--check` mode for CI/CD validation
+
+**Testing**
+- 12 integration tests for fence repair
+- 23 unit tests for detection, pairing, and validation
+- Golden file tests for common fence scenarios
+- Idempotence verification
+
+### Fixed
+- Integration with existing table and diagram repair pipeline
+
 ## [0.2.0] - 2026-02-06
 
 ### Added - Major Feature Expansion

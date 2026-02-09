@@ -18,8 +18,8 @@ fn idempotent_simple_box() {
     let input = fs::read_to_string("tests/golden/input/simple_box.txt")
         .expect("Failed to read input fixture");
 
-    let result1 = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
-    let result2 = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &result1);
+    let result1 = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
+    let result2 = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &result1, false);
 
     assert_eq!(
         result1.trim(),
@@ -33,8 +33,8 @@ fn idempotent_box_with_arrow() {
     let input = fs::read_to_string("tests/golden/input/box_with_arrow.txt")
         .expect("Failed to read input fixture");
 
-    let result1 = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input);
-    let result2 = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &result1);
+    let result1 = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false);
+    let result2 = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &result1, false);
 
     assert_eq!(
         result1.trim(),

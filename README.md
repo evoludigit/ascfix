@@ -20,6 +20,7 @@ Ideal for:
 
 - **Safe mode**: Normalize Markdown tables (default)
 - **Diagram mode**: Repair ASCII boxes and arrows
+- **Fence repair**: Fix code fence boundary issues (mismatched lengths, unclosed fences)
 - **Check mode**: Validate files without modifying (exit codes for CI/CD)
 - **Conservative**: Only fixes well-understood structures
 - **Idempotent**: Running twice produces identical output
@@ -51,8 +52,14 @@ ascfix README.md
 # Fix a file in place (default: safe mode)
 ascfix README.md --in-place
 
+# Repair code fence boundaries
+ascfix README.md --in-place --fences
+
 # Enable diagram mode for box/arrow repair
 ascfix README.md --in-place --mode=diagram
+
+# Repair everything (fences + diagrams) - shorthand for --fences --mode=diagram
+ascfix README.md --in-place --all
 
 # Validate without modifying (check mode)
 ascfix README.md --check --mode=diagram
@@ -69,6 +76,17 @@ ascfix docs/*.md --in-place --mode=diagram
 | `safe` | Fix only Markdown tables | Conservative, safe for any file |
 | `diagram` | Fix boxes and arrows | For files with ASCII diagrams |
 | `check` | Validate without writing | CI/CD validation |
+
+### Flags
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--in-place` | Modify files instead of printing to stdout | Off |
+| `--check` | Validate files without modifying (returns exit code 1 if changes needed) | Off |
+| `--fences` | Repair code fence boundaries | Off |
+| `--all` | Shorthand for `--fences --mode=diagram` | Off |
+| `--mode` | Processing mode (safe, diagram, check) | safe |
+| `--max-size` | Maximum file size to process (e.g., "100MB", "1GB") | Unlimited |
 
 ## Examples
 
@@ -95,6 +113,37 @@ ascfix docs/*.md --in-place --mode=diagram
 **Command:**
 ```bash
 ascfix table.md --in-place
+```
+
+---
+
+### Code Fence Repair
+
+**Before** (mismatched fence lengths):
+```markdown
+```python
+def hello():
+    print("Hello, World!")
+`````
+```
+
+**After** (balanced fences):
+```markdown
+`````python
+def hello():
+    print("Hello, World!")
+`````
+```
+
+**Also handles:**
+- Unclosed fences (adds closing fence)
+- Inconsistent lengths (uses longest)
+- Preserves language specifiers
+- Skips type mismatches (conservative approach)
+
+**Command:**
+```bash
+ascfix docs/*.md --in-place --fences
 ```
 
 ---
