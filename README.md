@@ -120,20 +120,20 @@ ascfix table.md --in-place
 ### Code Fence Repair
 
 **Before** (mismatched fence lengths):
-```markdown
+~~~markdown
 ```python
 def hello():
     print("Hello, World!")
 `````
-```
+~~~
 
 **After** (balanced fences):
-```markdown
+~~~markdown
 `````python
 def hello():
     print("Hello, World!")
 `````
-```
+~~~
 
 **Also handles:**
 - Unclosed fences (adds closing fence)
