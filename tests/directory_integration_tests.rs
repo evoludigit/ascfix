@@ -149,11 +149,8 @@ mod directory_processing {
         fs::create_dir(temp_dir.path().join("src")).expect("Failed to create dir");
         fs::create_dir(temp_dir.path().join("target")).expect("Failed to create dir");
 
-        fs::write(
-            temp_dir.path().join(".gitignore"),
-            "target/\n*.tmp\n",
-        )
-        .expect("Failed to write gitignore");
+        fs::write(temp_dir.path().join(".gitignore"), "target/\n*.tmp\n")
+            .expect("Failed to write gitignore");
 
         fs::write(temp_dir.path().join("README.md"), "# Root").expect("Failed to write");
         fs::write(temp_dir.path().join("src/main.md"), "# Main").expect("Failed to write");

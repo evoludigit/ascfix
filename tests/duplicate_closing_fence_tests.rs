@@ -5,7 +5,7 @@
 
 #[test]
 fn test_duplicate_closing_fence_basic() {
-    let input = r#"Simple example with duplicate closing fence:
+    let input = r"Simple example with duplicate closing fence:
 
 ```python
 def example():
@@ -13,24 +13,23 @@ def example():
 ```
 ```
 
-After the code."#;
+After the code.";
 
-    let expected = r#"Simple example with duplicate closing fence:
+    let expected = r"Simple example with duplicate closing fence:
 
 ```python
 def example():
     pass
 ```
 
-After the code."#;
+After the code.";
 
     // Get the ascfix library - we'll use the modes directly
     let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
 
     assert_eq!(
         processed, expected,
-        "Duplicate closing fence should be removed.\nExpected:\n{}\n\nGot:\n{}",
-        expected, processed
+        "Duplicate closing fence should be removed.\nExpected:\n{expected}\n\nGot:\n{processed}",
     );
 }
 
@@ -86,8 +85,7 @@ End of document."#;
 
     assert_eq!(
         processed, expected,
-        "All duplicate closing fences should be removed.\nExpected:\n{}\n\nGot:\n{}",
-        expected, processed
+        "All duplicate closing fences should be removed.\nExpected:\n{expected}\n\nGot:\n{processed}",
     );
 }
 
@@ -117,14 +115,13 @@ This should have all duplicates removed."#;
 
     assert_eq!(
         processed, expected,
-        "Consecutive duplicate closing fences should be removed.\nExpected:\n{}\n\nGot:\n{}",
-        expected, processed
+        "Consecutive duplicate closing fences should be removed.\nExpected:\n{expected}\n\nGot:\n{processed}",
     );
 }
 
 #[test]
 fn test_duplicate_closing_fence_with_indentation() {
-    let input = r#"Code with indented duplicate fence:
+    let input = r"Code with indented duplicate fence:
 
 ```python
 def test():
@@ -132,29 +129,28 @@ def test():
 ```
   ```
 
-After code."#;
+After code.";
 
-    let expected = r#"Code with indented duplicate fence:
+    let expected = r"Code with indented duplicate fence:
 
 ```python
 def test():
     return True
 ```
 
-After code."#;
+After code.";
 
     let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
 
     assert_eq!(
         processed, expected,
-        "Indented duplicate closing fence should be removed.\nExpected:\n{}\n\nGot:\n{}",
-        expected, processed
+        "Indented duplicate closing fence should be removed.\nExpected:\n{expected}\n\nGot:\n{processed}",
     );
 }
 
 #[test]
 fn test_duplicate_closing_fence_tildes() {
-    let input = r#"Code block with tildes:
+    let input = r"Code block with tildes:
 
 ~~~python
 def example():
@@ -162,51 +158,49 @@ def example():
 ~~~
 ~~~
 
-After."#;
+After.";
 
-    let expected = r#"Code block with tildes:
+    let expected = r"Code block with tildes:
 
 ~~~python
 def example():
     pass
 ~~~
 
-After."#;
+After.";
 
     let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
 
     assert_eq!(
         processed, expected,
-        "Duplicate closing fence with tildes should be removed.\nExpected:\n{}\n\nGot:\n{}",
-        expected, processed
+        "Duplicate closing fence with tildes should be removed.\nExpected:\n{expected}\n\nGot:\n{processed}",
     );
 }
 
 #[test]
 fn test_no_duplicate_closing_fence_normal_code_blocks() {
     // Verify we don't break normal code blocks
-    let input = r#"Normal code block:
+    let input = r"Normal code block:
 
 ```python
 def example():
     pass
 ```
 
-After code."#;
+After code.";
 
     let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
 
     assert_eq!(
         processed, input,
-        "Normal code blocks without duplicates should not be modified.\nGot:\n{}",
-        processed
+        "Normal code blocks without duplicates should not be modified.\nGot:\n{processed}",
     );
 }
 
 #[test]
 fn test_no_duplicate_closing_fence_nested_code_blocks() {
     // Verify we don't break nested/longer fences
-    let input = r#"Longer fence for nesting:
+    let input = r"Longer fence for nesting:
 
 `````python
 ```
@@ -214,13 +208,12 @@ code here
 ```
 `````
 
-After code."#;
+After code.";
 
     let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
 
     assert_eq!(
         processed, input,
-        "Nested code blocks with longer fences should not be modified.\nGot:\n{}",
-        processed
+        "Nested code blocks with longer fences should not be modified.\nGot:\n{processed}",
     );
 }

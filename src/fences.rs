@@ -163,15 +163,13 @@ pub fn pair_fences(markers: Vec<FenceMarker>) -> Vec<CodeBlock> {
             // Stack is empty - this might open a new fence OR be an orphaned closing
             // Heuristic: if the last marker was a closing fence of the same type
             // and this fence is very close (within 1 line), it's likely orphaned
-            let is_orphaned = if !blocks.is_empty() {
-                if let Some(last_block) = blocks.last() {
-                    if let Some(closing) = &last_block.closing {
-                        // Check if this is immediately after a closing fence of the same type
-                        closing.fence_type == marker.fence_type &&
-                        lines_are_close(marker.line_num, closing.line_num, 1)
-                    } else {
-                        false
-                    }
+            let is_orphaned = if blocks.is_empty() {
+                false
+            } else if let Some(last_block) = blocks.last() {
+                if let Some(closing) = &last_block.closing {
+                    // Check if this is immediately after a closing fence of the same type
+                    closing.fence_type == marker.fence_type
+                        && lines_are_close(marker.line_num, closing.line_num, 1)
                 } else {
                     false
                 }
@@ -183,10 +181,10 @@ pub fn pair_fences(markers: Vec<FenceMarker>) -> Vec<CodeBlock> {
                 // This is an orphaned closing fence
                 // Create a block with it as "opening" (for tracking purposes)
                 // so validate_fences can detect it
-                marker.is_opening = false;  // Mark as closing, not opening
+                marker.is_opening = false; // Mark as closing, not opening
                 blocks.push(CodeBlock {
                     opening: marker,
-                    closing: None,  // No matching closing
+                    closing: None, // No matching closing
                 });
             } else {
                 // Normal opening fence
@@ -234,25 +232,34 @@ pub fn validate_fences(blocks: &[CodeBlock]) -> Vec<FenceIssue> {
             // No closing fence - check if this is actually an orphaned closing fence
             // An orphaned closing fence is a fence with no opening that appears
             // right after a properly closed block of the same type
-            let is_orphaned = if idx > 0 {
+            let is_orphaned = if idx == 0 {
+                false
+            } else {
                 let prev_block = &blocks[idx - 1];
                 // Check if previous block has a proper closing (not an orphaned opening marker)
-                if let Some(prev_closing) = &prev_block.closing {
-                    // Check if this "opening" is the same type as the previous closing
-                    // and very close in line number (within 2 lines, allowing blank lines)
-                    block.opening.fence_type == prev_closing.fence_type
-                        && lines_are_close(block.opening.line_num, prev_closing.line_num, 2)
-                } else if !prev_block.opening.is_opening {
-                    // Previous block's "opening" is actually a closing marker (orphaned)
-                    // If this block also is a fence of the same type and very close,
-                    // it's also an orphaned closing
-                    block.opening.fence_type == prev_block.opening.fence_type
-                        && lines_are_close(block.opening.line_num, prev_block.opening.line_num, 1)
-                } else {
-                    false
-                }
-            } else {
-                false
+                prev_block.closing.as_ref().map_or_else(
+                    || {
+                        if prev_block.opening.is_opening {
+                            false
+                        } else {
+                            // Previous block's "opening" is actually a closing marker (orphaned)
+                            // If this block also is a fence of the same type and very close,
+                            // it's also an orphaned closing
+                            block.opening.fence_type == prev_block.opening.fence_type
+                                && lines_are_close(
+                                    block.opening.line_num,
+                                    prev_block.opening.line_num,
+                                    1,
+                                )
+                        }
+                    },
+                    |prev_closing| {
+                        // Check if this "opening" is the same type as the previous closing
+                        // and very close in line number (within 2 lines, allowing blank lines)
+                        block.opening.fence_type == prev_closing.fence_type
+                            && lines_are_close(block.opening.line_num, prev_closing.line_num, 2)
+                    },
+                )
             };
 
             if is_orphaned {
@@ -310,13 +317,11 @@ fn repair_fences(content: &str, _blocks: &[CodeBlock], issues: &[FenceIssue]) ->
 
     // Process issues
     let mut sorted_issues = issues.to_vec();
-    sorted_issues.sort_by_key(|issue| {
-        match issue {
-            FenceIssue::Unclosed { opening } => opening.line_num,
-            FenceIssue::LengthMismatch { opening, .. } => opening.line_num,
-            FenceIssue::TypeMismatch { opening, .. } => opening.line_num,
-            FenceIssue::OrphanedClosing { marker } => marker.line_num,
-        }
+    sorted_issues.sort_by_key(|issue| match issue {
+        FenceIssue::Unclosed { opening }
+        | FenceIssue::LengthMismatch { opening, .. }
+        | FenceIssue::TypeMismatch { opening, .. } => opening.line_num,
+        FenceIssue::OrphanedClosing { marker } => marker.line_num,
     });
     sorted_issues.reverse();
 
@@ -368,7 +373,7 @@ fn repair_fences(content: &str, _blocks: &[CodeBlock], issues: &[FenceIssue]) ->
     }
 
     // Remove orphaned closing fences in reverse order to maintain line numbers
-    orphaned_line_nums.sort();
+    orphaned_line_nums.sort_unstable();
     orphaned_line_nums.reverse();
     for line_num in orphaned_line_nums {
         if line_num < result_lines.len() {
@@ -390,7 +395,7 @@ const fn fence_chars(fence_type: FenceType) -> &'static str {
 /// Check if two line numbers are within a certain distance.
 /// This avoids casting issues between usize and i32.
 #[allow(dead_code)] // Used in multiple places
-fn lines_are_close(line1: usize, line2: usize, max_distance: usize) -> bool {
+const fn lines_are_close(line1: usize, line2: usize, max_distance: usize) -> bool {
     if line1 >= line2 {
         line1 - line2 <= max_distance
     } else {
@@ -625,6 +630,9 @@ mod tests {
         let content = "Code:\n\n```python\ncode\n```\n```\n\nAfter";
         let normalized = normalize_fences(content);
         // Should remove the duplicate closing fence
-        assert!(!normalized.contains("```\n```"), "Duplicate closing fence should be removed");
+        assert!(
+            !normalized.contains("```\n```"),
+            "Duplicate closing fence should be removed"
+        );
     }
 }

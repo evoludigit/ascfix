@@ -140,11 +140,7 @@ mod directory_discovery {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
         fs::create_dir(temp_dir.path().join("nested")).expect("Failed to create dir");
         fs::write(temp_dir.path().join("test1.md"), "# Test 1").expect("Failed to write");
-        fs::write(
-            temp_dir.path().join("nested/test2.md"),
-            "# Test 2",
-        )
-        .expect("Failed to write");
+        fs::write(temp_dir.path().join("nested/test2.md"), "# Test 2").expect("Failed to write");
 
         let discovery = FileDiscovery::new(vec![".md".to_string()], true);
         let results = discovery

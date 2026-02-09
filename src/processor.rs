@@ -57,10 +57,7 @@ impl Processor {
     /// Returns an error if file discovery fails or if there are fatal I/O errors.
     pub fn process_all(&self) -> Result<i32> {
         // Create file discovery with configured extensions and gitignore setting
-        let discovery = FileDiscovery::new(
-            self.args.ext.clone(),
-            !self.args.no_gitignore,
-        );
+        let discovery = FileDiscovery::new(self.args.ext.clone(), !self.args.no_gitignore);
 
         // Discover files matching the criteria
         let file_paths = discovery.discover(&self.args.paths)?;

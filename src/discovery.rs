@@ -81,7 +81,10 @@ impl FileDiscovery {
                 // Directory: walk recursively
                 self.walk_directory(path, &mut results)?;
             } else {
-                return Err(anyhow!("path does not exist or is not accessible: {}", path.display()));
+                return Err(anyhow!(
+                    "path does not exist or is not accessible: {}",
+                    path.display()
+                ));
             }
         }
 

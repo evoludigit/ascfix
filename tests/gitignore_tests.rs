@@ -108,7 +108,8 @@ mod gitignore_support {
         fs::write(temp_dir.path().join("subdir/nested.md"), "# Nested").expect("Failed to write");
 
         // Create a .tmp file that should be ignored
-        fs::write(temp_dir.path().join("subdir/ignored.tmp"), "# Ignored").expect("Failed to write");
+        fs::write(temp_dir.path().join("subdir/ignored.tmp"), "# Ignored")
+            .expect("Failed to write");
 
         // Stage files
         std::process::Command::new("git")
@@ -125,7 +126,10 @@ mod gitignore_support {
 
         // Should find both .md files but not the .tmp file
         assert_eq!(results.len(), 2);
-        let md_count = results.iter().filter(|p| p.extension().is_some_and(|e| e == "md")).count();
+        let md_count = results
+            .iter()
+            .filter(|p| p.extension().is_some_and(|e| e == "md"))
+            .count();
         assert_eq!(md_count, 2);
     }
 
@@ -184,7 +188,8 @@ mod gitignore_support {
         fs::write(temp_dir.path().join("temp.tmp"), "Temp").expect("Failed to write");
 
         fs::create_dir(temp_dir.path().join("build")).expect("Failed to create dir");
-        fs::write(temp_dir.path().join("build/artifact.md"), "# Artifact").expect("Failed to write");
+        fs::write(temp_dir.path().join("build/artifact.md"), "# Artifact")
+            .expect("Failed to write");
 
         // Stage files
         std::process::Command::new("git")
