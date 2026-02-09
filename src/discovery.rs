@@ -16,6 +16,7 @@ use std::path::{Path, PathBuf};
 /// # Errors
 ///
 /// Returns an error if the string is empty or contains only whitespace/commas.
+#[allow(dead_code)] // Reason: Part of public API for potential use by tests/library consumers
 pub fn parse_extensions(s: &str) -> Result<Vec<String>> {
     let trimmed = s.trim();
     if trimmed.is_empty() {

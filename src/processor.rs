@@ -1,9 +1,10 @@
 //! Main processing pipeline for ascfix.
 
 use crate::cli::Args;
+use crate::discovery::FileDiscovery;
 use crate::io;
 use anyhow::Result;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// Exit code for when check mode detects differences.
 pub const CHECK_FAILED_EXIT_CODE: i32 = 1;
@@ -46,60 +47,45 @@ impl Processor {
 
     /// Process all files specified in arguments.
     ///
+    /// Uses `FileDiscovery` to find files matching configured extensions.
+    /// Collects errors and continues processing, reporting all at the end.
     /// In check mode, returns `CHECK_FAILED_EXIT_CODE` if any file needs fixing.
-    /// In other modes, writes files and returns `SUCCESS_EXIT_CODE`.
+    /// In other modes, writes files and returns appropriate exit code.
     ///
     /// # Errors
     ///
-    /// Returns an error if any file processing fails.
+    /// Returns an error if file discovery fails or if there are fatal I/O errors.
     pub fn process_all(&self) -> Result<i32> {
+        // Create file discovery with configured extensions and gitignore setting
+        let discovery = FileDiscovery::new(
+            self.args.ext.clone(),
+            !self.args.no_gitignore,
+        );
+
+        // Discover files matching the criteria
+        let file_paths = discovery.discover(&self.args.paths)?;
+
+        if file_paths.is_empty() {
+            eprintln!("No files matching extensions found");
+            return Ok(SUCCESS_EXIT_CODE);
+        }
+
         let mut any_needs_fixing = false;
+        let mut errors: Vec<(PathBuf, String)> = Vec::new();
 
-        for file_path in &self.args.paths {
-            // Check file size if max_size is set
-            if let Some(max_size) = self.args.max_size {
-                let file_size = file_path.metadata()?.len();
-                if file_size > max_size {
-                    eprintln!(
-                        "File exceeds maximum size: {} ({} bytes, max: {} bytes)",
-                        file_path.display(),
-                        file_size,
-                        max_size
-                    );
-                    continue;
-                }
+        for file_path in file_paths {
+            if let Err(e) = self.process_single_file(&file_path, &mut any_needs_fixing) {
+                errors.push((file_path, e.to_string()));
             }
+        }
 
-            let content = io::read_markdown(file_path)?;
-            // Determine if we should repair fences (--all implies --fences)
-            let repair_fences = self.args.fences || self.args.all;
-            // Determine the mode (--all implies --mode=diagram)
-            let mode = if self.args.all {
-                &crate::cli::Mode::Diagram
-            } else {
-                &self.args.mode
-            };
-            let processed = crate::modes::process_by_mode(mode, &content, repair_fences);
-
-            // Check if file needs fixing
-            if crate::modes::content_needs_fixing(&content, &processed) {
-                any_needs_fixing = true;
-
-                if self.args.check {
-                    // In check mode, just report without writing
-                    eprintln!("File needs fixing: {}", file_path.display());
-                } else {
-                    // Normal mode: write the file
-                    if self.args.in_place {
-                        io::write_markdown(file_path, &processed)?;
-                    } else {
-                        println!("{processed}");
-                    }
-                }
-            } else if !self.args.check && !self.args.in_place {
-                // File doesn't need fixing and we're in normal output mode
-                println!("{processed}");
+        // Report all errors at the end
+        if !errors.is_empty() {
+            for (path, error) in errors {
+                eprintln!("Error processing {}: {}", path.display(), error);
             }
+            // Return error code 1 if there were any errors
+            return Ok(CHECK_FAILED_EXIT_CODE);
         }
 
         // Return appropriate exit code
@@ -108,6 +94,60 @@ impl Processor {
         } else {
             Ok(SUCCESS_EXIT_CODE)
         }
+    }
+
+    /// Process a single file and report if it needs fixing.
+    ///
+    /// Returns Ok(()) if processing succeeded, Err if there was a fatal error.
+    /// Updates `any_needs_fixing` if the file needs to be fixed.
+    /// Skips files that exceed `max_size` without error.
+    fn process_single_file(&self, file_path: &Path, any_needs_fixing: &mut bool) -> Result<()> {
+        // Check file size if max_size is set
+        if let Some(max_size) = self.args.max_size {
+            let file_size = file_path.metadata()?.len();
+            if file_size > max_size {
+                eprintln!(
+                    "Skipping file (exceeds maximum size: {} bytes, max: {} bytes): {}",
+                    file_size,
+                    max_size,
+                    file_path.display()
+                );
+                return Ok(());
+            }
+        }
+
+        let content = io::read_markdown(file_path)?;
+        // Determine if we should repair fences (--all implies --fences)
+        let repair_fences = self.args.fences || self.args.all;
+        // Determine the mode (--all implies --mode=diagram)
+        let mode = if self.args.all {
+            &crate::cli::Mode::Diagram
+        } else {
+            &self.args.mode
+        };
+        let processed = crate::modes::process_by_mode(mode, &content, repair_fences);
+
+        // Check if file needs fixing
+        if crate::modes::content_needs_fixing(&content, &processed) {
+            *any_needs_fixing = true;
+
+            if self.args.check {
+                // In check mode, just report without writing
+                eprintln!("File needs fixing: {}", file_path.display());
+            } else {
+                // Normal mode: write the file
+                if self.args.in_place {
+                    io::write_markdown(file_path, &processed)?;
+                } else {
+                    println!("{processed}");
+                }
+            }
+        } else if !self.args.check && !self.args.in_place {
+            // File doesn't need fixing and we're in normal output mode
+            println!("{processed}");
+        }
+
+        Ok(())
     }
 }
 
