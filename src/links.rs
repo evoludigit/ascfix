@@ -118,6 +118,23 @@ fn find_closing_parenthesis_balanced(chars: &[char], start: usize) -> Option<usi
     None
 }
 
+/// Check if a position in content is inside any link URL.
+///
+/// This is useful for table parsing to avoid splitting on `|` characters
+/// that appear inside link URLs.
+#[must_use]
+pub fn is_inside_link_url(_content: &str, pos: usize, links: &[Link]) -> bool {
+    for link in links {
+        // URL starts after the ]( and ends before the )
+        let url_start = link.start_pos + link.text.len() + 2; // +2 for ](
+        let url_end = link.end_pos;
+        if pos >= url_start && pos < url_end {
+            return true;
+        }
+    }
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -141,5 +158,20 @@ mod tests {
         assert_eq!(links.len(), 1);
         assert_eq!(links[0].text, "Example");
         assert_eq!(links[0].url, "https://example.com");
+    }
+
+    #[test]
+    fn is_inside_link_url_detects_position() {
+        let content = "[Link](https://example.com/path) text";
+        let links = detect_links(content);
+        assert_eq!(links.len(), 1);
+
+        // Position inside URL
+        let url_pos = content.find("example").unwrap();
+        assert!(is_inside_link_url(content, url_pos, &links));
+
+        // Position outside URL
+        let outside_pos = content.find("text").unwrap();
+        assert!(!is_inside_link_url(content, outside_pos, &links));
     }
 }

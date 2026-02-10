@@ -1,6 +1,7 @@
 //! Mode-specific processing implementations.
 
 use crate::cli::Mode;
+use crate::links::{detect_links, is_inside_link_url};
 use std::fmt::Write;
 
 /// Process content according to the specified mode.
@@ -220,6 +221,9 @@ fn normalize_table(header: &str, _separator: &str, rows: &[&str]) -> Option<Stri
 }
 
 /// Parse a table row into cells.
+///
+/// This function is link-aware and will not split on `|` characters that appear
+/// inside markdown link URLs.
 #[allow(dead_code)] // Reason: Used in tests
 fn parse_table_row(row: &str) -> Option<Vec<String>> {
     let trimmed = row.trim();
@@ -227,13 +231,42 @@ fn parse_table_row(row: &str) -> Option<Vec<String>> {
         return None;
     }
 
-    let cells: Vec<String> = trimmed
-        .split('|')
-        .skip(1) // Skip the first empty element before the opening |
-        .map(|cell| cell.trim().to_string())
-        .filter(|cell| !cell.is_empty()) // Remove trailing empty cell
-        .collect();
+    // Detect links in the row to avoid splitting on | inside link URLs
+    let links = detect_links(trimmed);
 
+    let mut cells: Vec<String> = Vec::new();
+    let mut current_cell = String::new();
+    let mut in_cell = false;
+
+    for (pos, ch) in trimmed.chars().enumerate() {
+        if ch == '|' {
+            // Check if this | is inside a link URL
+            if is_inside_link_url(trimmed, pos, &links) {
+                // This | is part of a link URL, include it in the cell
+                current_cell.push(ch);
+            } else {
+                // This | is a cell delimiter
+                if in_cell {
+                    // End of current cell
+                    let trimmed_cell = current_cell.trim().to_string();
+                    if !trimmed_cell.is_empty() {
+                        cells.push(trimmed_cell);
+                    }
+                    current_cell = String::new();
+                }
+                in_cell = true;
+            }
+        } else if in_cell {
+            current_cell.push(ch);
+        }
+    }
+
+    // Don't forget the last cell if there is one
+    if in_cell && !current_cell.trim().is_empty() {
+        cells.push(current_cell.trim().to_string());
+    }
+
+    // Remove the trailing empty cell from the final |
     if cells.is_empty() {
         None
     } else {
@@ -425,5 +458,30 @@ mod tests {
         let result = process_by_mode(&Mode::Diagram, content, true);
         // Fences should be normalized before diagram processing
         assert!(result.contains('`'));
+    }
+
+    #[test]
+    fn test_link_in_table_cell_preserved() {
+        // Test that links with parentheses in URLs are preserved in table cells
+        let content = "| [API](https://example.com/api(v2)) | Description |\n|-----------------------------------|-------------|\n| Link | Value |";
+        let result = process_safe_mode(content);
+        // The URL with parentheses should be preserved
+        assert!(
+            result.contains("https://example.com/api(v2)"),
+            "Link URL with parentheses should be preserved in table cell. Result:\n{result}"
+        );
+    }
+
+    #[test]
+    fn test_link_with_pipe_in_table_cell() {
+        // Test that links containing | character don't break table parsing
+        // This is a more challenging case that requires link-aware parsing
+        let content = "| [Docs](https://example.com/doc|section) | Description |\n|------------------------------------------|-------------|\n| Link | Value |";
+        let result = process_safe_mode(content);
+        // The link should be preserved with its full URL
+        assert!(
+            result.contains("https://example.com/doc|section"),
+            "Link URL with pipe should be preserved. Result:\n{result}"
+        );
     }
 }

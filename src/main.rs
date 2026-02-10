@@ -11,6 +11,7 @@ mod discovery;
 mod fences;
 pub mod grid;
 mod io;
+mod links;
 mod modes;
 mod normalizer;
 mod parser;
