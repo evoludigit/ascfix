@@ -147,6 +147,120 @@ pub struct ReferenceLink {
     pub title: Option<String>,
 }
 
+/// Detect inline links that are outside of code blocks.
+///
+/// This function first identifies code block regions, then only detects
+/// links in the regions between code blocks.
+///
+/// # Examples
+///
+/// ```
+/// use ascfix::links::detect_links_outside_code_blocks;
+///
+/// let content = "```\n[inside](url)\n```\n[outside](url2)";
+/// let links = detect_links_outside_code_blocks(content);
+/// assert_eq!(links.len(), 1);
+/// assert_eq!(links[0].text, "outside");
+/// ```
+#[must_use]
+#[allow(dead_code)] // Reason: Used in tests, will be used in production soon
+pub fn detect_links_outside_code_blocks(content: &str) -> Vec<Link> {
+    // First, detect all links in the content
+    let all_links = detect_links(content);
+
+    // Get code block regions
+    let code_regions = get_code_block_regions(content);
+
+    // Filter out links that are inside code blocks
+    all_links
+        .into_iter()
+        .filter(|link| !is_in_code_region(link.start_pos, &code_regions))
+        .collect()
+}
+
+/// Represents a region of content inside a code block (`start_pos`, `end_pos`).
+type CodeRegion = (usize, usize);
+
+/// Get all code block regions as (start, end) character positions.
+fn get_code_block_regions(content: &str) -> Vec<CodeRegion> {
+    let mut regions = Vec::new();
+    let lines: Vec<&str> = content.lines().collect();
+    let mut in_code_block = false;
+    let mut block_start_pos = 0;
+    let mut current_pos = 0;
+
+    for line in &lines {
+        let line_start = current_pos;
+        let line_end = current_pos + line.len();
+
+        let trimmed = line.trim();
+
+        // Check for fence markers
+        if is_fence_line(trimmed) {
+            if in_code_block {
+                // Closing fence - end the region (include the newline after)
+                let block_end = line_end;
+                regions.push((block_start_pos, block_end));
+                in_code_block = false;
+            } else {
+                // Opening fence
+                in_code_block = true;
+                block_start_pos = line_start;
+            }
+        }
+
+        // Move to next line (+1 for newline character)
+        current_pos = line_end + 1;
+    }
+
+    // Handle unclosed code blocks
+    if in_code_block {
+        regions.push((block_start_pos, content.len()));
+    }
+
+    regions
+}
+
+/// Check if a line is a code fence marker (triple backtick or tilde).
+fn is_fence_line(line: &str) -> bool {
+    if line.len() < 3 {
+        return false;
+    }
+
+    // Check for backtick fence - 3+ backticks at start
+    if line.starts_with("```") {
+        // Count consecutive backticks from start
+        let backtick_count = line.chars().take_while(|&c| c == '`').count();
+        if backtick_count >= 3 {
+            // Everything after the backticks should be the language specifier or empty
+            let after_fences = &line[backtick_count..];
+            // Language specifier can't contain backticks
+            return !after_fences.contains('`');
+        }
+    }
+
+    // Check for tilde fence - 3+ tildes at start
+    if line.starts_with("~~~") {
+        // Count consecutive tildes from start
+        let tilde_count = line.chars().take_while(|&c| c == '~').count();
+        if tilde_count >= 3 {
+            // Everything after the tildes should be the language specifier or empty
+            let after_fences = &line[tilde_count..];
+            // Language specifier can't contain tildes
+            return !after_fences.contains('~');
+        }
+    }
+
+    false
+}
+
+/// Check if a position falls within any code block region.
+fn is_in_code_region(pos: usize, regions: &[CodeRegion]) -> bool {
+    regions
+        .iter()
+        .any(|(start, end)| pos >= *start && pos < *end)
+}
+
 /// Detect all reference-style link definitions in content.
 ///
 /// Reference links have the format:
@@ -393,5 +507,38 @@ mod tests {
         assert_eq!(refs[0].label, "ref");
         assert_eq!(refs[0].url, "https://example.com");
         assert_eq!(refs[0].title, Some("title here".to_string()));
+    }
+
+    #[test]
+    fn detect_links_outside_code_blocks_only() {
+        let content =
+            "```\n[text](https://inside.code.block)\n```\n\n[Outside](https://outside.link)";
+        let links = detect_links_outside_code_blocks(content);
+        // Should only find the outside link
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].text, "Outside");
+        assert_eq!(links[0].url, "https://outside.link");
+    }
+
+    #[test]
+    fn detect_links_skips_backtick_fence() {
+        let content = "Some text\n\n```python\n# [Link](https://example.com)\n```\n\nMore text";
+        let links = detect_links_outside_code_blocks(content);
+        // Should not detect the link inside the code fence
+        assert!(
+            links.is_empty(),
+            "Links inside code blocks should be skipped"
+        );
+    }
+
+    #[test]
+    fn detect_links_skips_tilde_fence() {
+        let content = "Some text\n\n~~~\n[Link](https://example.com)\n~~~\n\nMore text";
+        let links = detect_links_outside_code_blocks(content);
+        // Should not detect the link inside the tilde fence
+        assert!(
+            links.is_empty(),
+            "Links inside tilde code blocks should be skipped"
+        );
     }
 }
