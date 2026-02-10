@@ -541,4 +541,42 @@ mod tests {
             "Links inside tilde code blocks should be skipped"
         );
     }
+
+    #[test]
+    fn detect_multiple_links_on_one_line() {
+        let content = "[First](https://a.com) and [Second](https://b.com/path(1))";
+        let links = detect_links(content);
+        assert_eq!(links.len(), 2);
+        assert_eq!(links[0].text, "First");
+        assert_eq!(links[0].url, "https://a.com");
+        assert_eq!(links[1].text, "Second");
+        assert_eq!(links[1].url, "https://b.com/path(1)");
+    }
+
+    #[test]
+    fn detect_link_with_deeply_nested_parens() {
+        let content = "[Link](https://example.com/a(b(c(d))))";
+        let links = detect_links(content);
+        assert_eq!(links.len(), 1);
+        // URL has 3 opening and 3 closing parens inside, 4th ) closes the link
+        assert_eq!(links[0].url, "https://example.com/a(b(c(d)))");
+    }
+
+    #[test]
+    fn detect_link_with_special_chars_in_url() {
+        let content = "[API](https://api.example.com/v1?foo=bar&baz=qux)";
+        let links = detect_links(content);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].url, "https://api.example.com/v1?foo=bar&baz=qux");
+    }
+
+    #[test]
+    fn detect_link_with_parens_in_text() {
+        // Parentheses in link text should not affect URL parsing
+        let content = "[click (here)](https://example.com)";
+        let links = detect_links(content);
+        assert_eq!(links.len(), 1);
+        assert_eq!(links[0].text, "click (here)");
+        assert_eq!(links[0].url, "https://example.com");
+    }
 }
