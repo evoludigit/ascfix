@@ -579,4 +579,37 @@ mod tests {
         assert_eq!(links[0].text, "click (here)");
         assert_eq!(links[0].url, "https://example.com");
     }
+
+    #[test]
+    fn link_detection_is_idempotent() {
+        // Running detect_links twice should produce identical results
+        let content = "[Link](https://example.com/path(1)) and [Another](https://test.org)";
+
+        let first_pass = detect_links(content);
+        // Create a new content string from the detected links (simulating processing)
+        let processed: String = first_pass
+            .iter()
+            .map(|l| format!("[{}]({})", l.text, l.url))
+            .collect::<Vec<_>>()
+            .join(" and ");
+
+        let second_pass = detect_links(&processed);
+
+        // Should have same number of links
+        assert_eq!(first_pass.len(), second_pass.len());
+
+        // Each link should have same text and URL
+        for (first, second) in first_pass.iter().zip(second_pass.iter()) {
+            assert_eq!(first.text, second.text);
+            assert_eq!(first.url, second.url);
+        }
+    }
+
+    #[test]
+    fn link_detection_preserves_content_unchanged() {
+        // Content without links should be unchanged
+        let content = "Just plain text without any links";
+        let links = detect_links(content);
+        assert!(links.is_empty());
+    }
 }
