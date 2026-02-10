@@ -5,6 +5,7 @@
 
 pub mod cli;
 pub mod discovery;
+pub mod links;
 pub mod modes;
 
 // Internal modules (not part of public API)
