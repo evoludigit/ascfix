@@ -4,9 +4,9 @@ use std::fs;
 
 #[test]
 fn fence_repair_mismatched_lengths() {
-    let input = fs::read_to_string("tests/golden/input/mismatched_fences.md")
+    let input = fs::read_to_string("tests/data/unit/input/mismatched_fences.md")
         .expect("Failed to read input fixture");
-    let expected = fs::read_to_string("tests/golden/expected/mismatched_fences.md")
+    let expected = fs::read_to_string("tests/data/unit/expected/mismatched_fences.md")
         .expect("Failed to read expected fixture");
 
     // Process with fence repair enabled
@@ -21,9 +21,9 @@ fn fence_repair_mismatched_lengths() {
 
 #[test]
 fn fence_repair_nested_fences() {
-    let input = fs::read_to_string("tests/golden/input/nested_fences.md")
+    let input = fs::read_to_string("tests/data/unit/input/nested_fences.md")
         .expect("Failed to read input fixture");
-    let expected = fs::read_to_string("tests/golden/expected/nested_fences.md")
+    let expected = fs::read_to_string("tests/data/unit/expected/nested_fences.md")
         .expect("Failed to read expected fixture");
 
     // Process with fence repair enabled
@@ -38,7 +38,7 @@ fn fence_repair_nested_fences() {
 
 #[test]
 fn fence_repair_idempotent_mismatched() {
-    let input = fs::read_to_string("tests/golden/input/mismatched_fences.md")
+    let input = fs::read_to_string("tests/data/unit/input/mismatched_fences.md")
         .expect("Failed to read input fixture");
 
     // Process twice
@@ -54,7 +54,7 @@ fn fence_repair_idempotent_mismatched() {
 
 #[test]
 fn fence_repair_idempotent_nested() {
-    let input = fs::read_to_string("tests/golden/input/nested_fences.md")
+    let input = fs::read_to_string("tests/data/unit/input/nested_fences.md")
         .expect("Failed to read input fixture");
 
     // Process twice

@@ -132,7 +132,7 @@ fn edge_case_broken_arrow_chain() {
 #[test]
 fn edge_case_text_rows_preservation() {
     // Text outside boxes should be preserved
-    let golden_input = fs::read_to_string("tests/golden/input/markdown_with_diagram.md")
+    let golden_input = fs::read_to_string("tests/data/unit/input/markdown_with_diagram.md")
         .expect("Failed to read fixture");
     let result = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &golden_input, false, &ascfix::config::Config::default());
     // Should preserve surrounding text

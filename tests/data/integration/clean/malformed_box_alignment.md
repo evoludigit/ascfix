@@ -1,7 +1,7 @@
-# Dirty: Malformed Box Alignment Issues
+# Malformed: Box Alignment Issues
 # Tests boxes with alignment problems, especially right border artifacts
 
-   Box with misaligned right border and inconsistent padding   text touching border
+   Box with misaligned right border
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                  SYSTEM ARCHITECTURE OVERVIEW                              ║
 ║                                                                            ║
@@ -10,7 +10,7 @@
 ║                        Implementation Guide                                ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
-   Box with inconsistent spacing on right side and cramped text
+   Box with inconsistent spacing on right side
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                DATABASE MIGRATION STRATEGY                                 ║
 ║                                                                            ║
@@ -19,7 +19,7 @@
 ║                      Migration Execution Plan                              ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
-   Box with potential right border artifacts and text touching borders
+   Box with potential right border artifacts
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║             API INTEGRATION FRAMEWORK                                      ║
 ║                                                                            ║

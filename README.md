@@ -538,7 +538,7 @@ cargo clippy --all-targets --all-features -- -D warnings
 cargo build --release
 ```
 
-All code is tested with TDD discipline - unit tests, integration tests, and golden file tests.
+All code is tested with TDD discipline - unit tests, integration tests, and golden file tests. Test data is organized in `tests/data/` with clear separation between unit and integration test cases.
 
 ## Documentation
 
@@ -546,6 +546,7 @@ All code is tested with TDD discipline - unit tests, integration tests, and gold
 - **[SECURITY.md](SECURITY.md)** - Security policies, audit status, and best practices
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development guidelines and contribution process
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+- **[tests/README.md](tests/README.md)** - Test data organization and testing approach
 
 ## License
 

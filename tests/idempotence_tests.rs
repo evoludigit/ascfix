@@ -15,7 +15,7 @@ use std::fs;
 
 #[test]
 fn idempotent_simple_box() {
-    let input = fs::read_to_string("tests/golden/input/simple_box.txt")
+    let input = fs::read_to_string("tests/data/unit/input/simple_box.txt")
         .expect("Failed to read input fixture");
 
     let result1 = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false, &ascfix::config::Config::default());
@@ -30,7 +30,7 @@ fn idempotent_simple_box() {
 
 #[test]
 fn idempotent_box_with_arrow() {
-    let input = fs::read_to_string("tests/golden/input/box_with_arrow.txt")
+    let input = fs::read_to_string("tests/data/unit/input/box_with_arrow.txt")
         .expect("Failed to read input fixture");
 
     let result1 = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false, &ascfix::config::Config::default());
