@@ -15,12 +15,15 @@ pub const SUCCESS_EXIT_CODE: i32 = 0;
 /// Main processor for handling file transformations.
 pub struct Processor {
     args: Args,
+    config: crate::config::Config,
 }
 
 impl Processor {
     /// Create a new processor with the given arguments.
-    pub const fn new(args: Args) -> Self {
-        Self { args }
+    pub fn new(args: Args) -> Result<Self> {
+        let config = crate::config::Config::load_from_cwd()
+            .map_err(|e| anyhow::anyhow!("Failed to load config: {e}"))?;
+        Ok(Self { args, config })
     }
 
     /// Process a single file.
@@ -41,7 +44,7 @@ impl Processor {
         } else {
             &self.args.mode
         };
-        let processed = crate::modes::process_by_mode(mode, &content, repair_fences);
+        let processed = crate::modes::process_by_mode(mode, &content, repair_fences, &self.config);
         Ok(processed)
     }
 
@@ -122,7 +125,7 @@ impl Processor {
         } else {
             &self.args.mode
         };
-        let processed = crate::modes::process_by_mode(mode, &content, repair_fences);
+        let processed = crate::modes::process_by_mode(mode, &content, repair_fences, &self.config);
 
         // Check if file needs fixing
         if crate::modes::content_needs_fixing(&content, &processed) {
@@ -177,7 +180,7 @@ mod tests {
     fn test_processor_creates_instance() {
         use clap::Parser;
         let args = Args::try_parse_from(["ascfix", "test.md"]).expect("Failed to parse args");
-        let processor = Processor::new(args);
+        let processor = Processor::new(args).unwrap();
         assert_eq!(processor.args.paths.len(), 1);
     }
 
@@ -197,7 +200,7 @@ mod tests {
             "5",
         ])
         .expect("Failed to parse args");
-        let processor = Processor::new(args);
+        let processor = Processor::new(args)?;
 
         // Process should skip the file due to size limit
         let exit_code = processor.process_all()?;
@@ -221,7 +224,7 @@ mod tests {
             "1000",
         ])
         .expect("Failed to parse args");
-        let processor = Processor::new(args);
+        let processor = Processor::new(args)?;
 
         // Process should handle the file normally
         let exit_code = processor.process_all()?;

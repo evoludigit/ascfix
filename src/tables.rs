@@ -196,4 +196,13 @@ mod tests {
         let content = "| Name | Description |\n|------|-------------|\n| Item | This is a very |\n|      | long description |";
         assert!(has_wrapped_cells(content), "Should detect wrapped cells");
     }
+
+    #[test]
+    fn unwrap_multiple_wrapped_columns() {
+        // Test table where multiple columns have wrapped content
+        let rows = vec!["| x | very | z |", "|   | long |   |", "|   | text |   |"];
+        let unwrapped = unwrap_table_rows(&rows);
+        assert_eq!(unwrapped.len(), 1);
+        assert_eq!(unwrapped[0], "| x | very long text | z |");
+    }
 }

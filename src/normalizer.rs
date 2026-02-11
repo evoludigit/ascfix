@@ -204,28 +204,36 @@ pub fn align_vertical_arrows(inventory: &PrimitiveInventory) -> PrimitiveInvento
     normalized
 }
 
-/// Find the nearest box column alignment for a given column position.
-fn find_alignment_column(boxes: &[crate::primitives::Box], col: usize) -> Option<usize> {
-    let mut closest_col = None;
-    let mut min_distance = usize::MAX;
+/// Find the best box column alignment for a vertical arrow.
+/// Prioritizes centering under the most appropriate box.
+fn find_alignment_column(boxes: &[crate::primitives::Box], arrow_col: usize) -> Option<usize> {
+    if boxes.is_empty() {
+        return None;
+    }
+
+    // Find the box that this arrow is most likely intended for
+    // Based on horizontal proximity to box centers
+    let mut best_box: Option<&crate::primitives::Box> = None;
+    let mut best_score = usize::MAX;
 
     for b in boxes {
-        // Consider three alignment points: left edge, center, right edge
-        let left_col = b.top_left.1;
-        let center_col = usize::midpoint(b.top_left.1, b.bottom_right.1);
-        let right_col = b.bottom_right.1;
+        let box_center = usize::midpoint(b.top_left.1, b.bottom_right.1);
+        let distance_to_center = box_center.abs_diff(arrow_col);
 
-        let candidates = [left_col, center_col, right_col];
-        for &candidate in &candidates {
-            let distance = candidate.abs_diff(col);
-            if distance < min_distance {
-                min_distance = distance;
-                closest_col = Some(candidate);
-            }
+        // Also consider if the arrow is within the box's horizontal bounds
+        let arrow_in_box_range = arrow_col >= b.top_left.1 && arrow_col <= b.bottom_right.1;
+
+        // Score combines distance to center and bonus for being within box bounds
+        let score = distance_to_center + if arrow_in_box_range { 0 } else { 10 };
+
+        if score < best_score {
+            best_score = score;
+            best_box = Some(b);
         }
     }
 
-    closest_col
+    // Return the center column of the best matching box
+    best_box.map(|b| usize::midpoint(b.top_left.1, b.bottom_right.1))
 }
 
 /// Normalize box widths to fit their content.
@@ -647,8 +655,8 @@ mod tests {
 
         let normalized = align_vertical_arrows(&inventory);
         let arrow = &normalized.vertical_arrows[0];
-        // Should snap to left edge (5)
-        assert_eq!(arrow.col, 5);
+        // Should snap to center (10) for better visual alignment
+        assert_eq!(arrow.col, 10);
     }
 
     #[test]

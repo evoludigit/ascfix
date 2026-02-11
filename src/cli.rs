@@ -3,211 +3,350 @@
 use clap::{Parser, ValueEnum};
 use std::path::PathBuf;
 
-/// Parse a size string with optional suffix (B, KB, MB, GB).
-/// Examples: "100", "50MB", "1GB", "500KB"
-#[allow(dead_code)] // Used by clap's value_parser
+const KB: u64 = 1024;
+const MB: u64 = 1024 * KB;
+const GB: u64 = 1024 * MB;
+
 fn parse_size(s: &str) -> Result<u64, String> {
-    let s = s.trim().to_uppercase();
+    let original = s.trim();
+    if original.is_empty() {
+        return Err("size cannot be empty".into());
+    }
 
-    let (num_str, multiplier) = match s.as_str() {
-        _ if s.ends_with("GB") => (s.strip_suffix("GB").unwrap(), 1024 * 1024 * 1024),
-        _ if s.ends_with("MB") => (s.strip_suffix("MB").unwrap(), 1024 * 1024),
-        _ if s.ends_with("KB") => (s.strip_suffix("KB").unwrap(), 1024),
-        _ if s.ends_with('B') => (s.strip_suffix('B').unwrap(), 1),
-        _ => (s.as_str(), 1),
-    };
+    let s = original.to_uppercase();
 
-    num_str
+    let (num_str, multiplier) = s.strip_suffix("GB").map_or_else(
+        || {
+            s.strip_suffix("MB").map_or_else(
+                || {
+                    s.strip_suffix("KB").map_or_else(
+                        || {
+                            s.strip_suffix('B')
+                                .map_or_else(|| (s.as_str(), 1), |n| (n, 1))
+                        },
+                        |n| (n, KB),
+                    )
+                },
+                |n| (n, MB),
+            )
+        },
+        |n| (n, GB),
+    );
+
+    let value: u64 = num_str
         .trim()
-        .parse::<u64>()
-        .map(|n| n * multiplier)
-        .map_err(|_| format!("invalid size: {s}"))
+        .parse()
+        .map_err(|_| format!("invalid size value: '{original}'"))?;
+
+    value
+        .checked_mul(multiplier)
+        .ok_or_else(|| format!("size too large: '{original}'"))
 }
 
 #[derive(Parser, Debug, Clone)]
 #[command(name = "ascfix")]
-#[command(about = "Repair ASCII diagrams in Markdown files", long_about = None)]
-#[allow(clippy::struct_excessive_bools)]
+#[command(about = "Repair ASCII diagrams in Markdown and text files")]
+#[allow(clippy::struct_excessive_bools)] // CLI flags are naturally boolean
 pub struct Args {
-    /// Files or directories to process
+    #[arg(required = true)]
     pub paths: Vec<PathBuf>,
 
-    /// Processing mode
     #[arg(long, value_enum, default_value = "safe")]
     pub mode: Mode,
 
-    /// Modify files in place instead of printing to stdout
     #[arg(short, long)]
     pub in_place: bool,
 
-    /// Check if files need fixing (exit 1 if yes, 0 if no)
-    #[arg(long, short = 'c')]
+    #[arg(long, conflicts_with = "in_place")]
     pub check: bool,
 
-    /// Maximum file size to process (e.g., "100MB", "1GB", default: unlimited)
     #[arg(long, value_parser = parse_size)]
     pub max_size: Option<u64>,
 
-    /// Repair code fence boundaries
     #[arg(long)]
     pub fences: bool,
 
-    /// Repair everything (fences + diagrams) - shorthand for --fences --mode=diagram
     #[arg(long)]
     pub all: bool,
 
-    /// File extensions to process (comma-separated, default: .md,.mdx)
-    #[arg(long, short = 'e', value_delimiter = ',', default_value = ".md,.mdx")]
+    #[arg(
+        long,
+        short = 'e',
+        value_delimiter = ',',
+        default_value = ".md,.mdx,.txt"
+    )]
     pub ext: Vec<String>,
 
-    /// Do not respect .gitignore files
     #[arg(long)]
     pub no_gitignore: bool,
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq, Eq)]
 pub enum Mode {
-    /// Only fix Markdown tables (safe mode, default)
-    #[value(name = "safe")]
     Safe,
-    /// Enable box and arrow normalization
-    #[value(name = "diagram")]
     Diagram,
-    /// Validate without checking content
-    #[value(name = "check")]
     Check,
 }
 
-impl Args {
-    /// Parse command-line arguments.
-    #[must_use]
-    pub fn parse_args() -> Self {
-        let mut args: Self = Parser::parse();
-        // Normalize extensions to have leading dots
-        args.ext = args
-            .ext
-            .iter()
-            .map(|ext: &String| {
-                let trimmed = ext.trim();
-                if trimmed.starts_with('.') {
-                    trimmed.to_string()
-                } else {
-                    format!(".{trimmed}")
-                }
-            })
-            .collect();
-        args
+#[derive(Debug)]
+#[allow(clippy::struct_excessive_bools)] // Configuration flags are naturally boolean
+#[allow(dead_code)] // Used in main and tests, not in lib
+pub struct Config {
+    pub paths: Vec<PathBuf>,
+    pub mode: Mode,
+    pub in_place: bool,
+    pub check: bool,
+    pub max_size: Option<u64>,
+    pub fences: bool,
+    pub extensions: Vec<String>,
+    pub no_gitignore: bool,
+}
+
+/// Normalize extension list: deduplicate, trim, lowercase, ensure leading dot.
+#[allow(dead_code)] // Used in Config From impl, which is used in main and tests
+fn normalize_exts(exts: &[String]) -> Vec<String> {
+    let mut normalized: Vec<String> = exts
+        .iter()
+        .map(|s| {
+            let trimmed = s.trim();
+            let mut ext = if trimmed.starts_with('.') {
+                trimmed.to_lowercase()
+            } else {
+                format!(".{}", trimmed.to_lowercase())
+            };
+            // Remove trailing dots if any
+            while ext.ends_with('.') && ext.len() > 1 {
+                ext.pop();
+            }
+            ext
+        })
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    // Remove duplicates while preserving order
+    let mut seen = std::collections::HashSet::new();
+    normalized.retain(|e| seen.insert(e.clone()));
+
+    normalized
+}
+
+impl From<Args> for Config {
+    fn from(args: Args) -> Self {
+        let mode = if args.all { Mode::Diagram } else { args.mode };
+        let fences = if args.all { true } else { args.fences };
+
+        Self {
+            paths: args.paths,
+            mode,
+            in_place: args.in_place,
+            check: args.check,
+            max_size: args.max_size,
+            fences,
+            extensions: normalize_exts(&args.ext),
+            no_gitignore: args.no_gitignore,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use clap::error::ErrorKind;
+    use std::path::PathBuf;
+
+    // ------------------------------------------------------------
+    // Size parsing tests
+    // ------------------------------------------------------------
 
     #[test]
-    fn test_args_parse_single_file() {
-        let args = Args::try_parse_from(["ascfix", "test.md"]);
-        assert!(args.is_ok());
-        let parsed = args.unwrap();
-        assert_eq!(parsed.paths.len(), 1);
-        assert_eq!(&parsed.paths[0], &PathBuf::from("test.md"));
-        assert_eq!(parsed.mode, Mode::Safe);
-        assert!(!parsed.in_place);
-        assert!(!parsed.check);
+    fn parse_size_bytes() {
+        assert_eq!(parse_size("1024").unwrap(), 1024);
+        assert_eq!(parse_size("10B").unwrap(), 10);
     }
 
     #[test]
-    fn test_args_parse_mode_diagram() {
-        let args = Args::try_parse_from(["ascfix", "--mode", "diagram", "test.md"]);
-        assert!(args.is_ok());
-        assert_eq!(args.unwrap().mode, Mode::Diagram);
+    fn parse_size_kb_mb_gb() {
+        assert_eq!(parse_size("1KB").unwrap(), 1024);
+        assert_eq!(parse_size("2MB").unwrap(), 2 * 1024 * 1024);
+        assert_eq!(parse_size("3GB").unwrap(), 3 * 1024 * 1024 * 1024);
     }
 
     #[test]
-    fn test_args_parse_in_place() {
-        let args = Args::try_parse_from(["ascfix", "--in-place", "test.md"]);
-        assert!(args.is_ok());
-        assert!(args.unwrap().in_place);
+    fn parse_size_lowercase_and_whitespace() {
+        assert_eq!(parse_size(" 2mb ").unwrap(), 2 * 1024 * 1024);
     }
 
     #[test]
-    fn test_args_parse_check() {
-        let args = Args::try_parse_from(["ascfix", "--check", "test.md"]);
-        assert!(args.is_ok());
-        assert!(args.unwrap().check);
+    fn parse_size_invalid() {
+        assert!(parse_size("").is_err());
+        assert!(parse_size("abc").is_err());
+        assert!(parse_size("10XB").is_err());
     }
 
     #[test]
-    fn test_args_parse_max_size_mb() {
-        let args = Args::try_parse_from(["ascfix", "--max-size", "100MB", "test.md"]);
-        assert!(args.is_ok());
-        assert_eq!(args.unwrap().max_size, Some(100 * 1024 * 1024));
+    fn parse_size_overflow() {
+        // Large enough to overflow when multiplied
+        let result = parse_size("18446744073709551615GB");
+        assert!(result.is_err());
+    }
+
+    // ------------------------------------------------------------
+    // Basic parsing tests
+    // ------------------------------------------------------------
+
+    #[test]
+    fn parse_requires_path() {
+        let result = Args::try_parse_from(["ascfix"]);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().kind(),
+            ErrorKind::MissingRequiredArgument
+        );
     }
 
     #[test]
-    fn test_args_parse_max_size_gb() {
-        let args = Args::try_parse_from(["ascfix", "--max-size", "2GB", "test.md"]);
-        assert!(args.is_ok());
-        assert_eq!(args.unwrap().max_size, Some(2 * 1024 * 1024 * 1024));
+    fn parse_single_file_defaults() {
+        let args = Args::try_parse_from(["ascfix", "test.md"]).unwrap();
+
+        assert_eq!(args.paths, vec![PathBuf::from("test.md")]);
+        assert_eq!(args.mode, Mode::Safe);
+        assert!(!args.in_place);
+        assert!(!args.check);
+        assert!(!args.fences);
+        assert!(!args.all);
     }
 
     #[test]
-    fn test_args_parse_max_size_kb() {
-        let args = Args::try_parse_from(["ascfix", "--max-size", "500KB", "test.md"]);
-        assert!(args.is_ok());
-        assert_eq!(args.unwrap().max_size, Some(500 * 1024));
+    fn parse_mode_diagram() {
+        let args = Args::try_parse_from(["ascfix", "--mode", "diagram", "file.md"]).unwrap();
+
+        assert_eq!(args.mode, Mode::Diagram);
     }
 
     #[test]
-    fn test_args_parse_max_size_bytes() {
-        let args = Args::try_parse_from(["ascfix", "--max-size", "1024", "test.md"]);
-        assert!(args.is_ok());
-        assert_eq!(args.unwrap().max_size, Some(1024));
+    fn parse_in_place() {
+        let args = Args::try_parse_from(["ascfix", "--in-place", "file.md"]).unwrap();
+
+        assert!(args.in_place);
     }
 
     #[test]
-    fn test_args_parse_max_size_invalid() {
-        let args = Args::try_parse_from(["ascfix", "--max-size", "invalid", "test.md"]);
-        assert!(args.is_err());
+    fn parse_check_flag() {
+        let args = Args::try_parse_from(["ascfix", "--check", "file.md"]).unwrap();
+
+        assert!(args.check);
     }
 
     #[test]
-    fn test_args_parse_no_max_size() {
-        let args = Args::try_parse_from(["ascfix", "test.md"]);
-        assert!(args.is_ok());
-        assert_eq!(args.unwrap().max_size, None);
+    fn parse_max_size() {
+        let args = Args::try_parse_from(["ascfix", "--max-size", "5MB", "file.md"]).unwrap();
+
+        assert_eq!(args.max_size, Some(5 * 1024 * 1024));
+    }
+
+    // ------------------------------------------------------------
+    // Conflict handling
+    // ------------------------------------------------------------
+
+    #[test]
+    fn check_conflicts_with_in_place() {
+        let result = Args::try_parse_from(["ascfix", "--check", "--in-place", "file.md"]);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind(), ErrorKind::ArgumentConflict);
+    }
+
+    // ------------------------------------------------------------
+    // Extension normalization
+    // ------------------------------------------------------------
+
+    #[test]
+    fn default_extensions_include_txt() {
+        let args = Args::try_parse_from(["ascfix", "file.md"]).unwrap();
+        let config: Config = args.into();
+
+        assert!(config.extensions.contains(&".md".to_string()));
+        assert!(config.extensions.contains(&".mdx".to_string()));
+        assert!(config.extensions.contains(&".txt".to_string()));
     }
 
     #[test]
-    fn test_args_parse_fences() {
-        let args = Args::try_parse_from(["ascfix", "--fences", "test.md"]);
-        assert!(args.is_ok());
-        assert!(args.unwrap().fences);
+    fn extension_normalization_trim_lowercase_dot() {
+        let args =
+            Args::try_parse_from(["ascfix", "--ext", "md,.MD, txt ,.txt", "file.md"]).unwrap();
+
+        let config: Config = args.into();
+
+        assert_eq!(
+            config.extensions,
+            vec![".md".to_string(), ".txt".to_string()]
+        );
     }
 
     #[test]
-    fn test_args_parse_all() {
-        let args = Args::try_parse_from(["ascfix", "--all", "test.md"]);
-        assert!(args.is_ok());
-        assert!(args.unwrap().all);
+    fn extension_order_preserved() {
+        let args = Args::try_parse_from(["ascfix", "--ext", "txt,md", "file.md"]).unwrap();
+
+        let config: Config = args.into();
+
+        assert_eq!(
+            config.extensions,
+            vec![".txt".to_string(), ".md".to_string()]
+        );
+    }
+
+    // ------------------------------------------------------------
+    // --all semantic expansion
+    // ------------------------------------------------------------
+
+    #[test]
+    fn all_expands_to_diagram_and_fences() {
+        let args = Args::try_parse_from(["ascfix", "--all", "file.md"]).unwrap();
+
+        let config: Config = args.into();
+
+        assert_eq!(config.mode, Mode::Diagram);
+        assert!(config.fences);
     }
 
     #[test]
-    fn test_args_parse_fences_and_mode() {
-        let args = Args::try_parse_from(["ascfix", "--fences", "--mode", "diagram", "test.md"]);
-        assert!(args.is_ok());
-        let parsed = args.unwrap();
-        assert!(parsed.fences);
-        assert_eq!(parsed.mode, Mode::Diagram);
+    fn all_overrides_safe_mode() {
+        let args = Args::try_parse_from(["ascfix", "--mode", "safe", "--all", "file.md"]).unwrap();
+
+        let config: Config = args.into();
+
+        assert_eq!(config.mode, Mode::Diagram);
+        assert!(config.fences);
     }
 
+    // ------------------------------------------------------------
+    // Combined realistic scenario
+    // ------------------------------------------------------------
+
     #[test]
-    fn test_args_parse_all_flag_defaults() {
-        let args = Args::try_parse_from(["ascfix", "--all", "test.md"]);
-        assert!(args.is_ok());
-        let parsed = args.unwrap();
-        assert!(parsed.all);
-        // --all doesn't automatically change mode, that's handled in processor
-        assert_eq!(parsed.mode, Mode::Safe);
+    fn complex_configuration() {
+        let args = Args::try_parse_from([
+            "ascfix",
+            "--mode",
+            "diagram",
+            "--max-size",
+            "10MB",
+            "--ext",
+            "md,txt",
+            "--no-gitignore",
+            "docs/",
+        ])
+        .unwrap();
+
+        let config: Config = args.into();
+
+        assert_eq!(config.mode, Mode::Diagram);
+        assert_eq!(config.max_size, Some(10 * 1024 * 1024));
+        assert_eq!(
+            config.extensions,
+            vec![".md".to_string(), ".txt".to_string()]
+        );
+        assert!(config.no_gitignore);
+        assert_eq!(config.paths, vec![PathBuf::from("docs/")]);
     }
 }

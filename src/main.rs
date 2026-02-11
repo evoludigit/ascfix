@@ -6,6 +6,7 @@
 //! - Text row formatting
 
 mod cli;
+mod config;
 mod detector;
 mod discovery;
 mod fences;
@@ -21,12 +22,13 @@ mod renderer;
 mod scanner;
 
 use anyhow::Result;
+use clap::Parser;
 use cli::Args;
 use processor::Processor;
 
 fn main() -> Result<()> {
-    let args = Args::parse_args();
-    let processor = Processor::new(args);
+    let args = Args::parse();
+    let processor = Processor::new(args)?;
     let exit_code = processor.process_all()?;
 
     // Exit with appropriate code (0 for success, 1 for check mode failures)

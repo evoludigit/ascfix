@@ -1,0 +1,15 @@
+# Performance: Very Large Table
+# Tests handling of extremely wide tables with many columns
+
+| Component | Description | CPU Usage | Memory Usage | Disk I/O | Network I/O | Response Time | Error Rate | Availability | Scalability | Maintainability | Test Coverage | Documentation | Security | Performance | Reliability | Monitoring | Alerting | Backup | Recovery | Compliance | Cost Efficiency |
+|-----------|-------------|-----------|--------------|----------|-------------|---------------|------------|--------------|--------------|-----------------|---------------|----------------|----------|-------------|--------------|------------|-----------|--------|----------|------------|-----------------|
+| Web Server | Handles HTTP requests and serves static/dynamic content | High | Medium | Low | High | <100ms | <0.1% | 99.9% | Horizontal | Good | 85% | Comprehensive | Secure | Excellent | High | Full | Configurable | Daily | <4hrs | SOC2 | High |
+| API Gateway | Routes requests, handles authentication and rate limiting | Medium | Low | None | Very High | <50ms | <0.05% | 99.95% | Horizontal | Excellent | 92% | Extensive | Very Secure | Excellent | Very High | Advanced | Intelligent | Real-time | <1hr | GDPR/HIPAA | Medium |
+| Database | Stores and retrieves application data with ACID compliance | Low | High | Very High | Low | <20ms | <0.01% | 99.999% | Vertical | Good | 78% | Good | Encrypted | Good | Very High | Comprehensive | Critical | Continuous | <15min | PCI DSS | Low |
+| Cache Layer | Provides fast data access and reduces database load | Very Low | High | None | None | <5ms | <0.001% | 99.99% | Horizontal | Excellent | 95% | Excellent | Secure | Outstanding | High | Full | Smart | Automatic | <30min | None | High |
+| Message Queue | Handles asynchronous communication between services | Low | Medium | None | Medium | <10ms | <0.1% | 99.9% | Horizontal | Good | 88% | Good | Encrypted | Excellent | High | Good | Configurable | Automatic | <2hrs | None | Medium |
+| Load Balancer | Distributes traffic across multiple instances | Medium | Low | None | Very High | <10ms | <0.01% | 99.999% | Built-in | Excellent | 96% | Comprehensive | Secure | Excellent | Very High | Advanced | Intelligent | N/A | <30min | None | High |
+| CDN | Delivers static content globally with edge caching | N/A | N/A | N/A | Very High | <50ms | <0.001% | 99.99% | Global | N/A | N/A | Good | Secure | Outstanding | High | Basic | Limited | N/A | N/A | None | High |
+| Monitoring | Observability platform for metrics and logs | Low | Medium | Medium | Low | <100ms | <0.1% | 99.5% | Horizontal | Good | 82% | Good | Secure | Good | Medium | Self | Excellent | Daily | <8hrs | None | Medium |
+| Logging | Centralized log aggregation and analysis | Low | High | High | Low | <200ms | <0.5% | 99.0% | Horizontal | Good | 75% | Adequate | Encrypted | Adequate | Medium | Full | Configurable | Daily | <12hrs | None | Low |
+| Security | Authentication, authorization, and threat detection | Medium | Medium | Low | Medium | <150ms | <0.05% | 99.9% | Horizontal | Good | 90% | Extensive | Critical | Good | High | Advanced | Immediate | Hourly | <2hrs | All | Medium |

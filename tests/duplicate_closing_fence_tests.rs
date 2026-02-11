@@ -25,7 +25,7 @@ def example():
 After the code.";
 
     // Get the ascfix library - we'll use the modes directly
-    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
+    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true, &ascfix::config::Config::default());
 
     assert_eq!(
         processed, expected,
@@ -81,7 +81,7 @@ fn main() {
 
 End of document."#;
 
-    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
+    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true, &ascfix::config::Config::default());
 
     assert_eq!(
         processed, expected,
@@ -111,7 +111,7 @@ echo "test"
 
 This should have all duplicates removed."#;
 
-    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
+    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true, &ascfix::config::Config::default());
 
     assert_eq!(
         processed, expected,
@@ -140,7 +140,7 @@ def test():
 
 After code.";
 
-    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
+    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true, &ascfix::config::Config::default());
 
     assert_eq!(
         processed, expected,
@@ -169,7 +169,7 @@ def example():
 
 After.";
 
-    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
+    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true, &ascfix::config::Config::default());
 
     assert_eq!(
         processed, expected,
@@ -189,7 +189,7 @@ def example():
 
 After code.";
 
-    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
+    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true, &ascfix::config::Config::default());
 
     assert_eq!(
         processed, input,
@@ -210,7 +210,7 @@ code here
 
 After code.";
 
-    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true);
+    let processed = ascfix::modes::process_by_mode(&ascfix::cli::Mode::Safe, input, true, &ascfix::config::Config::default());
 
     assert_eq!(
         processed, input,

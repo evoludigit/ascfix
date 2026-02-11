@@ -1,0 +1,19 @@
+# ascfix Configuration File
+# Place this file as .ascfix.toml in your project root or any parent directory
+
+[formatting]
+# Maximum line length for text wrapping
+max_line_length = 100
+
+# Padding inside boxes (0 = no padding, 1 = single space, etc.)
+box_padding = 1
+
+# Whether to preserve Unicode characters in diagrams
+preserve_unicode = true
+
+# Whether to validate diagrams for common issues
+validate_diagrams = false
+
+# Feature toggles
+enable_flowcharts = false
+enable_sequence_diagrams = false
