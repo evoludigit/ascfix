@@ -1,10 +1,35 @@
-# ascfix
+<!-- ascfix:ignore -->
+```
+ .----------------.  .----------------.  .----------------.  .----------------.  .----------------.  .----------------.
+| .--------------. || .--------------. || .--------------. || .--------------. || .--------------. || .--------------. |
+| |      __      | || |    _______   | || |     ______   | || |  _________   | || |     _____    | || |  ____  ____  | |
+| |     /  \     | || |   /  ___  |  | || |   .' ___  |  | || | |_   ___  |  | || |    |_   _|   | || | |_  _||_  _| | |
+| |    / /\ \    | || |  |  (__ \_|  | || |  / .'   \_|  | || |   | |_  \_|  | || |      | |     | || |   \ \  / /   | |
+| |   / ____ \   | || |   '.___`-.   | || |  | |         | || |   |  _|      | || |      | |     | || |    > `' <    | |
+| | _/ /    \ \_ | || |  |`\____) |  | || |  \ `.___.'\  | || |  _| |_       | || |     _| |_    | || |  _/ /'`\ \_  | |
+| ||____|  |____|| || |  |_______.'  | || |   `._____.'  | || | |_____|      | || |    |_____|   | || | |____||____| | |
+| |              | || |              | || |              | || |              | || |              | || |              | |
+| '--------------' || '--------------' || '--------------' || '--------------' || '--------------' || '--------------' |
+ '----------------'  '----------------'  '----------------'  '----------------'  '----------------'  '----------------'
+        ║                     ║                   ║                   ║                    ║                  ║
+        ╚═════════════════════╩═══════════════════╩═══════════════════╩════════════════════╩══════════════════╝
+```
+<!-- /ascfix:ignore -->
 
+_Automatic ASCII diagram repair tool for Markdown files_
+
+<!-- Build & Quality -->
 [![Tests & Lints](https://github.com/evoludigit/ascfix/actions/workflows/test.yml/badge.svg)](https://github.com/evoludigit/ascfix/actions/workflows/test.yml)
 [![Security Audit](https://github.com/evoludigit/ascfix/actions/workflows/audit.yml/badge.svg)](https://github.com/evoludigit/ascfix/actions/workflows/audit.yml)
-[![Crates.io](https://img.shields.io/crates/v/ascfix.svg)](https://crates.io/crates/ascfix)
 
-Automatic ASCII diagram repair tool for Markdown files.
+<!-- Package Info -->
+[![Crates.io](https://img.shields.io/crates/v/ascfix.svg)](https://crates.io/crates/ascfix)
+[![docs.rs](https://img.shields.io/docsrs/ascfix)](https://docs.rs/ascfix)
+[![Downloads](https://img.shields.io/crates/d/ascfix)](https://crates.io/crates/ascfix)
+
+<!-- Project Info -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org)
 
 ## Overview
 
@@ -21,18 +46,21 @@ Ideal for:
 **ascfix** prioritizes safety and reliability with a conservative approach:
 
 ### Zero Data Loss
+
 - **Content preservation** - designed to never delete or modify unintended text
 - **Non-destructive processing** - safe to run on Markdown files
 - **Idempotent operations** - running multiple times produces consistent results
 - **Conservative default** - when uncertain, preserves original formatting
 
 ### Intelligent Quality Assurance
+
 - **Automated quality validation** - comprehensive test suite with 10+ passing unit fixtures
 - **Semantic transformation analysis** - distinguishes beneficial improvements from potential corruption
 - **Context-aware processing** - understands diagram elements vs. regular text
 - **Active development** - complex nested structures handled conservatively
 
 ### Professional Output
+
 - **Consistent formatting** - uniform spacing, proper alignment for simple and moderate diagrams
 - **Basic nested box support** - single-level nesting works reliably
 - **Arrow alignment** - intelligent positioning for standard workflows
@@ -41,12 +69,14 @@ Ideal for:
 ## Features
 
 ### Processing Modes
+
 - **Safe mode** (default): Normalize Markdown tables only - safest for any file
 - **Diagram mode**: Repair ASCII boxes, arrows, and diagram structures
 - **Check mode**: Validate without modifying (exit code 1 if changes needed - perfect for CI/CD)
 - **All mode**: Shorthand for `--fences --mode=diagram` to repair everything
 
 ### Diagram Repair
+
 - **Box style preservation**: Single-line (`┌┐└┘│─`), double-line (`╔╗╚╝║═`), and rounded (`╭╮╰╯│─`) boxes
 - **Box width normalization**: Expands boxes to fit content with uniform padding
 - **Side-by-side balancing**: Equalizes widths of adjacent boxes for visual consistency
@@ -56,12 +86,14 @@ Ideal for:
 - **Label preservation**: Maintains text labels attached to primitives
 
 ### Markdown Repair
+
 - **Table normalization**: Aligns columns and fixes hard-wrapped cells
 - **List normalization**: Standardizes bullet styles (`- * +` → `-`), fixes indentation, adds spacing
 - **Link preservation**: Handles URLs with parentheses and reference-style links
 - **Fence repair**: Fixes mismatched fence lengths, unclosed blocks, duplicate closing fences
 
 ### File Operations
+
 - **Directory processing**: Recursively process directories with automatic file discovery
 - **Multiple extensions**: Process `.md`, `.mdx`, `.txt` files (customizable with `--ext`)
 - **Gitignore respect**: Automatically respects `.gitignore` (can be disabled with `--no-gitignore`)
@@ -70,6 +102,7 @@ Ideal for:
 - **Error resilience**: Continue processing remaining files on individual errors
 
 ### Safety & Quality
+
 - **Conservative**: Only fixes well-understood structures; unknown patterns preserved unchanged
 - **Idempotent**: Running twice produces identical output (safe for repeated application)
 - **No panics**: Handles malformed input gracefully without crashes
@@ -78,6 +111,7 @@ Ideal for:
 - **Fast**: Linear O(n) processing time suitable for large files and CI/CD
 
 ### Integration
+
 - **Exit codes**: 0 = success/no changes needed, 1 = check failed or error (CI/CD friendly)
 - **GitHub Actions ready**: Verified workflows for testing, linting, security auditing
 - **Configuration file support**: `.ascfix.toml` for project-wide settings
@@ -164,6 +198,66 @@ ascfix docs/ -c
 | `--ext`          | `-e`  | File extensions to process (comma-separated, e.g., `.md,.mdx`)           | `.md,.mdx`                |
 | `--no-gitignore` |       | Do not respect .gitignore files                                          | Off (respects .gitignore) |
 | `--max-size`     |       | Maximum file size to process (e.g., "100MB", "1GB")                      | Unlimited                 |
+
+### Output & Formatting Flags
+
+| Flag             | Short | Description                                                              | Use Case                  |
+|------------------|-------|--------------------------------------------------------------------------|---------------------------|
+| `--summary`      |       | Print processing statistics (files processed, modified, errors)          | Quick overview            |
+| `--list-files`   |       | Output only filenames that need fixing (one per line)                    | CI/CD, scripting          |
+| `--verbose`      | `-v`  | Show detailed processing information with colored output                 | Debugging, understanding  |
+| `--json`         |       | Output results as JSON (machine-readable)                                | AI/programmatic use       |
+| `--diff`         |       | Show unified diff of changes without modifying files                     | Preview changes           |
+
+### Ignore Markers
+
+ascfix supports HTML comment markers to exclude specific content from processing. This is useful for:
+- Preserving intentional ASCII art that shouldn't be "fixed"
+- Protecting decorative elements like logos or banners
+- Excluding complex diagrams that should remain unchanged
+
+**Supported marker syntax:**
+
+```markdown
+<!-- ascfix:ignore -->
+[content to ignore]
+<!-- /ascfix:ignore -->
+```
+
+Or alternatively:
+
+```markdown
+<!-- ascfix-ignore-start -->
+[content to ignore]
+<!-- ascfix-ignore-end -->
+```
+
+**Example:**
+
+```markdown
+<!-- ascfix:ignore -->
+```
+ .----------------.  .----------------.
+| .--------------. || .--------------. |
+| |    LOGO      | || |    HERE      | |
+| '--------------' || '--------------' |
+ '----------------'  '----------------'
+```
+<!-- /ascfix:ignore -->
+
+This box will be processed:
+┌──────┐
+│ Test │
+└──────┘
+```
+
+Content inside ignore markers is completely skipped by ascfix, regardless of mode. Ignore markers work with:
+- Code fences (content inside fences within ignore blocks is preserved)
+- Inline diagrams
+- Tables
+- Any other Markdown content
+
+**Important:** Ignore markers are removed from the output (they're HTML comments, so they won't appear in rendered Markdown).
 
 ## Examples
 
@@ -448,6 +542,89 @@ Perfect for GitHub Actions:
 - name: Check diagram alignment
   run: ascfix docs/*.md --check --mode=diagram
   # Fails the build if any diagrams need fixing
+```
+
+---
+
+### Output Modes: Enhanced DX & AX
+
+**Summary mode** - quick statistics:
+```bash
+ascfix docs/ --summary --in-place --mode=diagram
+```
+```
+Summary:
+  Total files processed: 15
+  Modified: 8
+  Unchanged: 7
+  Errors: 0
+```
+
+**List files mode** - for CI/CD scripts:
+```bash
+# Get list of files that need fixing
+files=$(ascfix docs/ --check --list-files --mode=diagram)
+if [ -n "$files" ]; then
+  echo "Files need fixing:"
+  echo "$files"
+  exit 1
+fi
+```
+
+**JSON mode** - for AI/programmatic use:
+```bash
+ascfix docs/ --json --check --mode=diagram
+```
+```json
+{
+  "files": [
+    {
+      "status": "modified",
+      "file": "docs/api.md"
+    },
+    {
+      "status": "unchanged",
+      "file": "docs/guide.md"
+    }
+  ],
+  "stats": {
+    "total": 2,
+    "modified": 1,
+    "unchanged": 1,
+    "errors": 0,
+    "skipped": 0
+  }
+}
+```
+
+**Diff mode** - preview changes:
+```bash
+ascfix workflow.md --diff --mode=diagram
+```
+```diff
+diff workflow.md
+  # Workflow
+
+  ┌──────┐
+-│Process│
++│ Process │
+  └──────┘
+```
+
+**Verbose mode** - debugging:
+```bash
+ascfix docs/ --verbose --in-place --mode=diagram
+```
+```
+[verbose] Found 3 files to process
+[success] Modified: docs/api.md
+[verbose] Unchanged: docs/guide.md
+[success] Modified: docs/workflow.md
+```
+
+**Combined modes** - maximum visibility:
+```bash
+ascfix docs/ --verbose --summary --in-place --mode=diagram
 ```
 
 ---
@@ -751,6 +928,108 @@ cargo build --release
 ```
 
 All code is tested with TDD discipline - unit tests, integration tests, and golden file tests. Test data is organized in `tests/data/` with clear separation between unit and integration test cases.
+
+## Programmatic Usage
+
+ascfix is designed for easy integration into scripts, AI agents, and CI/CD pipelines.
+
+### For AI Agents
+
+Use JSON mode for structured output:
+
+```bash
+# Get machine-readable results
+ascfix docs/ --json --check --mode=diagram > results.json
+```
+
+Parse the JSON to understand what changed:
+
+```json
+{
+  "files": [
+    {
+      "status": "modified",
+      "file": "docs/workflow.md"
+    },
+    {
+      "status": "error",
+      "file": "docs/broken.md",
+      "error": "Failed to read: Permission denied"
+    }
+  ],
+  "stats": {
+    "total": 2,
+    "modified": 1,
+    "errors": 1
+  }
+}
+```
+
+### For Shell Scripts
+
+Use list-files mode for simple pipelines:
+
+```bash
+#!/bin/bash
+# Fix all files that need it
+for file in $(ascfix docs/ --list-files --check --mode=diagram); do
+  echo "Fixing: $file"
+  ascfix "$file" --in-place --mode=diagram
+done
+```
+
+Use exit codes for CI/CD:
+
+```bash
+# Exit 0 if all files are clean, 1 if fixes needed
+ascfix docs/ --check --mode=diagram
+if [ $? -ne 0 ]; then
+  echo "⚠️  Diagrams need normalization"
+  exit 1
+fi
+```
+
+### For Python Scripts
+
+```python
+import subprocess
+import json
+
+result = subprocess.run(
+    ["ascfix", "docs/", "--json", "--check", "--mode=diagram"],
+    capture_output=True,
+    text=True
+)
+
+data = json.loads(result.stdout)
+modified_files = [f["file"] for f in data["files"] if f["status"] == "modified"]
+print(f"Files needing fixes: {modified_files}")
+```
+
+### GitHub Actions Integration
+
+```yaml
+name: Validate Diagrams
+
+on: [pull_request]
+
+jobs:
+  check-diagrams:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install ascfix
+        run: cargo install ascfix
+
+      - name: Check diagrams
+        run: |
+          ascfix docs/ --check --summary --mode=diagram
+          if [ $? -ne 0 ]; then
+            echo "::error::Diagrams need normalization. Run: ascfix docs/ --in-place --mode=diagram"
+            exit 1
+          fi
+```
 
 ## Documentation
 

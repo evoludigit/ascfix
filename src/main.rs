@@ -16,12 +16,15 @@ mod links;
 mod lists;
 mod modes;
 mod normalizer;
+mod output;
 mod parser;
 mod primitives;
 mod processor;
+mod quality;
 mod renderer;
 mod scanner;
 mod tables;
+mod transformation_analysis;
 
 use anyhow::Result;
 use clap::Parser;

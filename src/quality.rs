@@ -4,6 +4,8 @@
 //! ensuring that all transformations maintain high quality standards and preserve
 //! original content integrity.
 
+#![allow(dead_code)] // Reason: Framework for future quality validation features
+
 // Quality validation module
 use crate::cli::Mode;
 use crate::config::Config;
@@ -128,6 +130,7 @@ impl Default for QualityConfig {
 
 impl QualityReport {
     /// Check if the quality meets acceptable standards
+    #[must_use]
     pub fn is_acceptable(&self, config: &QualityConfig) -> bool {
         self.score >= 0.8
             && self.metrics.text_preservation >= config.min_text_preservation
@@ -139,6 +142,7 @@ impl QualityReport {
 }
 
 /// Validate the quality of diagram processing with intelligent transformation analysis
+#[must_use]
 pub fn validate_quality(input: &str, output: &str) -> QualityReport {
     let mut report = QualityReport {
         score: 1.0,
@@ -157,7 +161,10 @@ pub fn validate_quality(input: &str, output: &str) -> QualityReport {
     let output_lines: Vec<&str> = output.lines().collect();
 
     // Basic metrics
-    report.metrics.line_count_delta = output_lines.len() as i32 - input_lines.len() as i32;
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+    {
+        report.metrics.line_count_delta = output_lines.len() as i32 - input_lines.len() as i32;
+    }
 
     // Advanced transformation analysis
     let transformation_analysis = analyze_transformations(input, output);
@@ -173,6 +180,7 @@ pub fn validate_quality(input: &str, output: &str) -> QualityReport {
     // Calculate text preservation considering constructive transformations
     let original_text_chars = count_text_chars(&input_lines);
     let output_text_chars = count_text_chars(&output_lines);
+    #[allow(clippy::cast_precision_loss)]
     let base_preservation = if original_text_chars > 0 {
         output_text_chars as f32 / original_text_chars as f32
     } else {
@@ -181,6 +189,7 @@ pub fn validate_quality(input: &str, output: &str) -> QualityReport {
 
     // Adjust preservation score based on constructive transformations
     // Constructive changes (like arrow duplication) shouldn't penalize preservation
+    #[allow(clippy::cast_precision_loss)]
     let constructive_bonus = transformation_analysis.summary.constructive_count as f32 * 0.02;
     report.metrics.text_preservation = (base_preservation + constructive_bonus).min(1.0);
 
@@ -250,11 +259,14 @@ fn check_text_corruption(input_lines: &[&str], output_lines: &[&str], report: &m
     // Calculate text preservation score
     let original_text_chars = count_text_chars(input_lines);
     let output_text_chars = count_text_chars(output_lines);
-    report.metrics.text_preservation = if original_text_chars > 0 {
-        output_text_chars as f32 / original_text_chars as f32
-    } else {
-        1.0
-    };
+    #[allow(clippy::cast_precision_loss)]
+    {
+        report.metrics.text_preservation = if original_text_chars > 0 {
+            output_text_chars as f32 / original_text_chars as f32
+        } else {
+            1.0
+        };
+    }
 }
 
 /// Check for data loss
@@ -302,6 +314,7 @@ fn check_visual_consistency(output_lines: &[&str], report: &mut QualityReport) {
         // Check for inconsistent spacing (simplified)
         let spaces = line.chars().filter(|&c| c == ' ').count();
         let non_spaces = line.chars().filter(|&c| c != ' ').count();
+        #[allow(clippy::cast_precision_loss)]
         if non_spaces > 0 && spaces as f32 / non_spaces as f32 > 5.0 {
             report.metrics.visual_consistency -= 0.05;
         }
@@ -311,6 +324,7 @@ fn check_visual_consistency(output_lines: &[&str], report: &mut QualityReport) {
 }
 
 /// Calculate structure preservation based on transformation analysis
+#[allow(clippy::cast_precision_loss)]
 fn calculate_structure_preservation(
     analysis: &crate::transformation_analysis::TransformationAnalysis,
 ) -> f32 {
@@ -329,6 +343,7 @@ fn calculate_structure_preservation(
 }
 
 /// Calculate enhanced overall score with transformation awareness
+#[allow(clippy::cast_precision_loss)]
 fn calculate_enhanced_overall_score(
     metrics: &QualityMetrics,
     analysis: &crate::transformation_analysis::TransformationAnalysis,
@@ -354,7 +369,7 @@ fn calculate_enhanced_overall_score(
     let constructive_bonus = analysis.summary.constructive_count as f32 * 0.05;
     score += constructive_bonus.min(0.2); // Cap the bonus
 
-    score.max(0.0).min(1.0)
+    score.clamp(0.0, 1.0)
 }
 
 /// Check if an arrow appears to be corrupting text (replacing a letter)
@@ -401,6 +416,10 @@ fn count_text_chars(lines: &[&str]) -> usize {
 }
 
 /// Validate a fixture against quality standards
+///
+/// # Errors
+///
+/// Returns an error if the fixture files cannot be read or if quality validation fails.
 pub fn validate_fixture(
     input_path: &str,
     expected_path: &str,
@@ -410,6 +429,10 @@ pub fn validate_fixture(
 }
 
 /// Validate a fixture against quality standards with fence repair option
+///
+/// # Errors
+///
+/// Returns an error if the fixture files cannot be read or if quality validation fails.
 pub fn validate_fixture_with_fences(
     input_path: &str,
     expected_path: &str,
@@ -426,10 +449,10 @@ fn validate_fixture_with_options(
     repair_fences: bool,
 ) -> Result<(), String> {
     let input = std::fs::read_to_string(input_path)
-        .map_err(|e| format!("Failed to read input {}: {}", input_path, e))?;
+        .map_err(|e| format!("Failed to read input {input_path}: {e}"))?;
 
     let expected = std::fs::read_to_string(expected_path)
-        .map_err(|e| format!("Failed to read expected {}: {}", expected_path, e))?;
+        .map_err(|e| format!("Failed to read expected {expected_path}: {e}"))?;
 
     // Process the input
     let processed =
@@ -486,7 +509,7 @@ fn validate_fixture_with_options(
 fn normalize_output(output: &str) -> String {
     output
         .lines()
-        .map(|line| line.trim_end())
+        .map(str::trim_end)
         .collect::<Vec<_>>()
         .join("\n")
         .trim()

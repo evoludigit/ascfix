@@ -247,3 +247,23 @@ fn golden_files_directory_exists() {
         "Expected directory tests/data/unit/expected does not exist"
     );
 }
+
+#[test]
+fn golden_file_ignore_ascii_art() {
+    let input = fs::read_to_string("tests/data/unit/input/ignore_ascii_art.md")
+        .expect("Failed to read input fixture");
+    let expected = fs::read_to_string("tests/data/unit/expected/ignore_ascii_art.md")
+        .expect("Failed to read expected fixture");
+
+    // Process the input
+    let config = ascfix::config::Config::default();
+    let result =
+        ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false, &config);
+
+    // Compare
+    assert_eq!(
+        result.trim(),
+        expected.trim(),
+        "Output does not match expected for ignore_ascii_art - the ASCII art in ignore block should be preserved unchanged, but the box below should be normalized"
+    );
+}

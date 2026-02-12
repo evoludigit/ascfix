@@ -79,6 +79,21 @@ pub struct Args {
 
     #[arg(long)]
     pub no_gitignore: bool,
+
+    #[arg(long)]
+    pub summary: bool,
+
+    #[arg(long)]
+    pub list_files: bool,
+
+    #[arg(short, long)]
+    pub verbose: bool,
+
+    #[arg(long)]
+    pub json: bool,
+
+    #[arg(long)]
+    pub diff: bool,
 }
 
 #[derive(ValueEnum, Clone, Debug, PartialEq, Eq)]

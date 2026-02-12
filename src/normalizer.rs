@@ -301,7 +301,7 @@ pub fn normalize_box_widths(inventory: &PrimitiveInventory) -> PrimitiveInventor
 ///
 /// Algorithm:
 /// 1. For each box, check if it contains other boxes (children)
-/// 2. Calculate required parent size: max(child_right + margin, current_parent_size)
+/// 2. Calculate required parent size: `max(child_right + margin, current_parent_size)`
 /// 3. Expand parent boxes as needed
 /// 4. Mark child areas as no-draw zones for parent borders
 #[allow(dead_code)] // Reason: Used by main processing pipeline

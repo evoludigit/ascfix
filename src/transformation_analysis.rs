@@ -4,10 +4,12 @@
 //! between destructive changes (bad), constructive changes (good), and neutral
 //! changes (acceptable).
 
+#![allow(dead_code)] // Reason: Framework for future transformation analysis features
+
 // Transformation analysis module
 
 /// Classification of transformation types
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TransformationType {
     /// Destructive changes that must be prevented
     Destructive(DestructiveReason),
@@ -18,7 +20,7 @@ pub enum TransformationType {
 }
 
 /// Reasons for destructive transformations
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DestructiveReason {
     ContentDeletion,
     CharacterCorruption,
@@ -27,7 +29,7 @@ pub enum DestructiveReason {
 }
 
 /// Reasons for constructive transformations
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConstructiveReason {
     ArrowDuplication, // ↓ → ↓↓ for alignment
     BoxExpansion,     // Parent boxes grow to contain children
@@ -37,7 +39,8 @@ pub enum ConstructiveReason {
 }
 
 /// Reasons for neutral transformations
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(clippy::enum_variant_names)] // Reason: Descriptive names for transformation types
 pub enum NeutralReason {
     CaseNormalization,
     EncodingNormalization,
@@ -80,6 +83,7 @@ pub struct TransformationSummary {
 }
 
 /// Analyze transformations between input and output
+#[must_use]
 pub fn analyze_transformations(input: &str, output: &str) -> TransformationAnalysis {
     let input_lines: Vec<&str> = input.lines().collect();
     let output_lines: Vec<&str> = output.lines().collect();
@@ -144,7 +148,10 @@ fn analyze_line_transformations(
     let mut j = 0;
 
     while i < input_chars.len() && j < output_chars.len() {
-        if input_chars[i] != output_chars[j] {
+        if input_chars[i] == output_chars[j] {
+            i += 1;
+            j += 1;
+        } else {
             // Found a difference - analyze the transformation
             analyze_character_difference(
                 line_idx,
@@ -163,9 +170,6 @@ fn analyze_line_transformations(
                 i += 1;
                 j += 1;
             }
-        } else {
-            i += 1;
-            j += 1;
         }
     }
 
@@ -217,7 +221,7 @@ fn analyze_character_difference(
             col_start: input_pos,
             col_end: output_pos + 1,
         },
-        description: format!("'{}' → '{}'", input_char, output_char),
+        description: format!("'{input_char}' → '{output_char}'"),
         impact_score,
     });
 }
@@ -383,7 +387,7 @@ fn is_arrow_duplication(
 
 /// Check if this is box expansion (constructive)
 /// Currently simplified - could be enhanced to detect specific expansion patterns
-fn is_box_expansion(
+const fn is_box_expansion(
     _input_char: char,
     _output_char: char,
     _input_chars: &[char],
@@ -398,7 +402,7 @@ fn is_box_expansion(
 
 /// Check if whitespace change is diagram-related (not destructive)
 /// Currently conservative - could be enhanced for diagram alignment detection
-fn is_diagram_whitespace_change(
+const fn is_diagram_whitespace_change(
     _input_chars: &[char],
     _output_chars: &[char],
     _input_pos: usize,
@@ -418,7 +422,7 @@ fn is_in_text_content(chars: &[char], pos: usize) -> bool {
     let context: String = chars[start..end].iter().collect();
 
     // Look for text patterns (letters, spaces, punctuation)
-    context.chars().any(|c| c.is_alphabetic()) && !context.contains("┌┐└┘│─") // Not in box borders
+    context.chars().any(char::is_alphabetic) && !context.contains("┌┐└┘│─") // Not in box borders
 }
 
 /// Calculate transformation summary
@@ -439,7 +443,9 @@ fn calculate_summary(transformations: &[Transformation]) -> TransformationSummar
     }
 
     // Calculate risk score based on destructive transformations
+    #[allow(clippy::cast_precision_loss)]
     let total_transformations = transformations.len() as f32;
+    #[allow(clippy::cast_precision_loss)]
     let risk_score = if total_transformations > 0.0 {
         destructive_count as f32 / total_transformations
     } else {

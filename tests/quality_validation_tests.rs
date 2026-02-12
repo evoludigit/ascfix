@@ -71,28 +71,27 @@ fn validate_all_golden_fixtures() {
 
     for (input_path, expected_path) in fixtures {
         if !Path::new(input_path).exists() || !Path::new(expected_path).exists() {
-            println!("Skipping {} (files not found)", input_path);
+            println!("Skipping {input_path} (files not found)");
             continue;
         }
 
         match validate_fixture(input_path, expected_path, &config) {
             Ok(()) => {
-                println!("✓ {} passed quality validation", input_path);
+                println!("✓ {input_path} passed quality validation");
             }
             Err(error) => {
-                println!("✗ {} failed quality validation:\n{}", input_path, error);
+                println!("✗ {input_path} failed quality validation:\n{error}");
                 failed_fixtures.push(input_path.to_string());
             }
         }
     }
 
-    if !failed_fixtures.is_empty() {
-        panic!(
-            "Quality validation failed for {} fixtures: {:?}",
-            failed_fixtures.len(),
-            failed_fixtures
-        );
-    }
+    assert!(
+        failed_fixtures.is_empty(),
+        "Quality validation failed for {} fixtures: {:?}",
+        failed_fixtures.len(),
+        failed_fixtures
+    );
 }
 
 #[test]
@@ -133,16 +132,16 @@ fn validate_integration_fixtures() {
 
     for (input_path, expected_path) in fixtures {
         if !Path::new(input_path).exists() || !Path::new(expected_path).exists() {
-            println!("Skipping {} (files not found)", input_path);
+            println!("Skipping {input_path} (files not found)");
             continue;
         }
 
         match validate_fixture(input_path, expected_path, &config) {
             Ok(()) => {
-                println!("✓ {} passed quality validation", input_path);
+                println!("✓ {input_path} passed quality validation");
             }
             Err(error) => {
-                println!("✗ {} failed quality validation:\n{}", input_path, error);
+                println!("✗ {input_path} failed quality validation:\n{error}");
                 failed_fixtures.push(input_path.to_string());
             }
         }
@@ -160,7 +159,7 @@ fn validate_integration_fixtures() {
 }
 
 #[test]
-#[ignore] // TODO: Fence repair quality validation needs refinement
+#[ignore = "Fence repair quality validation needs refinement"]
 fn validate_fence_repair_quality() {
     let config = QualityConfig {
         min_text_preservation: 0.98, // Fence repair should preserve almost all content
@@ -183,26 +182,23 @@ fn validate_fence_repair_quality() {
 
     for (input_path, expected_path) in fixtures {
         if Path::new(input_path).exists() && Path::new(expected_path).exists() {
-            validate_fixture_with_fences(input_path, expected_path, &config).unwrap_or_else(|e| {
-                panic!(
-                    "Fence repair quality validation failed for {}: {}",
-                    input_path, e
-                )
-            });
+            validate_fixture_with_fences(input_path, expected_path, &config)
+                .unwrap_or_else(|e| panic!("Fence repair quality validation failed for {input_path}: {e}"));
         }
     }
 }
 
 #[test]
-#[ignore] // TODO: Complex nested diagrams have rendering issues - conservative mode active
+#[ignore = "Complex nested diagrams have rendering issues - conservative mode active"]
 fn validate_complex_nested_diagrams() {
-    let _config = QualityConfig {
-        min_text_preservation: 0.90, // Complex diagrams may have some acceptable changes
-        min_structure_preservation: 0.85,
-        max_line_count_delta: 10, // Allow more changes for complex formatting
-        allow_text_corruption: false,
-        allow_data_loss: false,
-    };
+    // TODO: Add quality config validation when this test is enabled
+    // let config = QualityConfig {
+    //     min_text_preservation: 0.90,
+    //     min_structure_preservation: 0.85,
+    //     max_line_count_delta: 10,
+    //     allow_text_corruption: false,
+    //     allow_data_loss: false,
+    // };
 
     let complex_fixtures = vec![
         "tests/data/integration/complex_nested_with_labels.md",
@@ -213,10 +209,10 @@ fn validate_complex_nested_diagrams() {
 
     for fixture_path in complex_fixtures {
         if Path::new(fixture_path).exists() {
-            println!("Validating complex fixture: {}", fixture_path);
+            println!("Validating complex fixture: {fixture_path}");
 
             let input = std::fs::read_to_string(fixture_path)
-                .unwrap_or_else(|_| panic!("Failed to read {}", fixture_path));
+                .unwrap_or_else(|_| panic!("Failed to read {fixture_path}"));
 
             // Process the fixture
             let processed = ascfix::modes::process_by_mode(
@@ -232,19 +228,17 @@ fn validate_complex_nested_diagrams() {
             // For complex fixtures, we're mainly checking for major issues
             assert!(
                 report.metrics.text_corruption_count == 0,
-                "Text corruption in complex fixture {}: {:?}",
-                fixture_path,
+                "Text corruption in complex fixture {fixture_path}: {:?}",
                 report.issues
             );
 
             assert!(
                 report.metrics.data_loss_count == 0,
-                "Data loss in complex fixture {}: {:?}",
-                fixture_path,
+                "Data loss in complex fixture {fixture_path}: {:?}",
                 report.issues
             );
 
-            println!("✓ {} passed basic quality checks", fixture_path);
+            println!("✓ {fixture_path} passed basic quality checks");
         }
     }
 }

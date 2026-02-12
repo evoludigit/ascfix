@@ -10,6 +10,7 @@ pub mod fences;
 pub mod links;
 pub mod lists;
 pub mod modes;
+pub mod output;
 pub mod tables;
 
 // Internal modules (not part of public API)

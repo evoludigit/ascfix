@@ -3,8 +3,9 @@
 use crate::cli::Args;
 use crate::discovery::FileDiscovery;
 use crate::io;
+use crate::output::{FileResult, ProcessingResults, ProcessingStats, StatsOutput};
 use anyhow::Result;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// Exit code for when check mode detects differences.
 pub const CHECK_FAILED_EXIT_CODE: i32 = 1;
@@ -20,6 +21,10 @@ pub struct Processor {
 
 impl Processor {
     /// Create a new processor with the given arguments.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the configuration file cannot be loaded or parsed.
     pub fn new(args: Args) -> Result<Self> {
         let config = crate::config::Config::load_from_cwd()
             .map_err(|e| anyhow::anyhow!("Failed to load config: {e}"))?;
@@ -66,33 +71,164 @@ impl Processor {
         let file_paths = discovery.discover(&self.args.paths)?;
 
         if file_paths.is_empty() {
-            eprintln!("No files matching extensions found");
+            if self.args.verbose {
+                crate::output::log_warning("No files matching extensions found");
+            } else {
+                eprintln!("No files matching extensions found");
+            }
             return Ok(SUCCESS_EXIT_CODE);
         }
 
+        if self.args.verbose {
+            crate::output::log_verbose(&format!("Found {} files to process", file_paths.len()));
+        }
+
+        let mut stats = ProcessingStats::new();
+        let mut file_results: Vec<FileResult> = Vec::new();
         let mut any_needs_fixing = false;
-        let mut errors: Vec<(PathBuf, String)> = Vec::new();
 
         for file_path in file_paths {
-            if let Err(e) = self.process_single_file(&file_path, &mut any_needs_fixing) {
-                errors.push((file_path, e.to_string()));
+            let result = self.process_single_file_enhanced(&file_path, &mut any_needs_fixing, &mut stats);
+            file_results.push(result);
+        }
+
+        // Handle different output modes
+        if self.args.json {
+            // JSON output mode
+            let results = ProcessingResults {
+                files: file_results,
+                stats: StatsOutput::from(&stats),
+            };
+            println!("{}", serde_json::to_string_pretty(&results)?);
+        } else if self.args.list_files {
+            // List files mode - output only files that need fixing
+            for result in &file_results {
+                if result.is_modified() {
+                    println!("{}", result.file_path());
+                }
             }
         }
 
-        // Report all errors at the end
-        if !errors.is_empty() {
-            for (path, error) in errors {
-                eprintln!("Error processing {}: {}", path.display(), error);
-            }
-            // Return error code 1 if there were any errors
-            return Ok(CHECK_FAILED_EXIT_CODE);
+        // Print summary if requested
+        if self.args.summary && !self.args.json {
+            stats.print_summary();
         }
 
         // Return appropriate exit code
-        if self.args.check && any_needs_fixing {
+        if stats.error_files > 0 || (self.args.check && any_needs_fixing) {
             Ok(CHECK_FAILED_EXIT_CODE)
         } else {
             Ok(SUCCESS_EXIT_CODE)
+        }
+    }
+
+    /// Process a single file and return detailed result.
+    ///
+    /// Enhanced version that tracks statistics and supports all output modes.
+    fn process_single_file_enhanced(
+        &self,
+        file_path: &Path,
+        any_needs_fixing: &mut bool,
+        stats: &mut ProcessingStats,
+    ) -> FileResult {
+        let file_str = file_path.display().to_string();
+
+        // Check file size if max_size is set
+        if let Some(max_size) = self.args.max_size {
+            if let Ok(metadata) = file_path.metadata() {
+                let file_size = metadata.len();
+                if file_size > max_size {
+                    if self.args.verbose {
+                        crate::output::log_warning(&format!(
+                            "Skipping {} (exceeds maximum size: {} bytes, max: {} bytes)",
+                            file_path.display(),
+                            file_size,
+                            max_size
+                        ));
+                    }
+                    stats.record_skipped();
+                    return FileResult::Skipped {
+                        file: file_str,
+                        reason: format!("File size ({file_size} bytes) exceeds maximum ({max_size} bytes)"),
+                    };
+                }
+            }
+        }
+
+        // Read file content
+        let content = match io::read_markdown(file_path) {
+            Ok(c) => c,
+            Err(e) => {
+                if self.args.verbose {
+                    crate::output::log_error(&format!("Failed to read {}: {}", file_path.display(), e));
+                }
+                stats.record_error();
+                return FileResult::Error {
+                    file: file_str,
+                    error: e.to_string(),
+                };
+            }
+        };
+
+        // Process the content
+        let repair_fences = self.args.fences || self.args.all;
+        let mode = if self.args.all {
+            &crate::cli::Mode::Diagram
+        } else {
+            &self.args.mode
+        };
+        let processed = crate::modes::process_by_mode(mode, &content, repair_fences, &self.config);
+
+        // Check if file needs fixing
+        if crate::modes::content_needs_fixing(&content, &processed) {
+            *any_needs_fixing = true;
+            stats.record_modified();
+
+            if self.args.verbose {
+                crate::output::log_success(&format!("Modified: {}", file_path.display()));
+            }
+
+            // Handle different output modes
+            if self.args.diff {
+                crate::output::print_diff(file_path, &content, &processed);
+            } else if self.args.check {
+                // In check mode, just report without writing
+                if !self.args.list_files && !self.args.json {
+                    eprintln!("File needs fixing: {}", file_path.display());
+                }
+            } else if self.args.in_place {
+                // Write the file
+                if let Err(e) = io::write_markdown(file_path, &processed) {
+                    stats.record_error();
+                    return FileResult::Error {
+                        file: file_str,
+                        error: format!("Failed to write: {e}"),
+                    };
+                }
+            } else if !self.args.json && !self.args.list_files {
+                // Output to stdout
+                println!("{processed}");
+            }
+
+            FileResult::Modified {
+                file: file_str,
+                transformations: None,
+            }
+        } else {
+            stats.record_unchanged();
+
+            if self.args.verbose {
+                crate::output::log_verbose(&format!("Unchanged: {}", file_path.display()));
+            }
+
+            if !self.args.check && !self.args.in_place && !self.args.json && !self.args.list_files {
+                // File doesn't need fixing and we're in normal output mode
+                println!("{processed}");
+            }
+
+            FileResult::Unchanged {
+                file: file_str,
+            }
         }
     }
 
@@ -101,6 +237,7 @@ impl Processor {
     /// Returns Ok(()) if processing succeeded, Err if there was a fatal error.
     /// Updates `any_needs_fixing` if the file needs to be fixed.
     /// Skips files that exceed `max_size` without error.
+    #[allow(dead_code)] // Reason: Kept for backward compatibility
     fn process_single_file(&self, file_path: &Path, any_needs_fixing: &mut bool) -> Result<()> {
         // Check file size if max_size is set
         if let Some(max_size) = self.args.max_size {

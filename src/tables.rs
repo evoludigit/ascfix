@@ -91,7 +91,7 @@ fn is_continuation_row(line: &str) -> bool {
     // - First cell empty (continuation starts after the first column)
     non_empty_count <= 1
         && non_empty_count < cells.len()
-        && cells.first().map_or(false, |c| c.trim().is_empty())
+        && cells.first().is_some_and(|c| c.trim().is_empty())
 }
 
 /// Split a table row into cells, handling the | delimiters.

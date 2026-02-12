@@ -10,7 +10,8 @@ use ascfix::{
 };
 
 /// Check if a character represents a border of the given box
-fn is_border_char_of_box(ch: char, b: &DiagramBox) -> bool {
+#[allow(dead_code)]
+const fn is_border_char_of_box(ch: char, b: &DiagramBox) -> bool {
     let chars = b.style.chars();
 
     // Check corners
@@ -144,14 +145,14 @@ fn test_parent_expands_to_contain_children() {
     println!("Row 3 contents:");
     for col in 0..result_grid.width() {
         let ch = result_grid.get(3, col).unwrap_or('?');
-        print!("{}", ch);
+        print!("{ch}");
     }
     println!();
 
     // Main requirement: core functionality works (detailed validation in golden files)
     // Note: Complex nested rendering may have some acceptable artifacts
     // The golden file tests validate the end-to-end correctness
-    let result = result_grid.render();
+    let _result = result_grid.render();
     // Accept that some complex cases may have minor rendering artifacts
     // The important thing is that core functionality works and quality is maintained
 
@@ -270,13 +271,13 @@ fn test_parent_child_rendering() {
     let result_grid = render_diagram(&normalized);
     let result = result_grid.render();
 
-    println!("Result:\n{}", result);
+    println!("Result:\n{result}");
 
     // Check row 3 where text should be
     let lines: Vec<&str> = result.lines().collect();
     if lines.len() > 3 {
         let row3 = lines[3];
-        println!("Row 3: '{}'", row3);
+        println!("Row 3: '{row3}'");
 
         // Core functionality validated by golden file tests
         // Complex scenarios may have acceptable rendering variations

@@ -109,8 +109,7 @@ fn idempotent_readme_dogfood() {
 
     assert_eq!(
         original_lines, result_lines,
-        "README processing changed line count: {} -> {}",
-        original_lines, result_lines
+        "README processing changed line count: {original_lines} -> {result_lines}"
     );
 }
 
