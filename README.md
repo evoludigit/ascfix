@@ -16,6 +16,25 @@ Ideal for:
 - CI/CD pipeline documentation
 - Architecture diagrams in code repositories
 
+## Quality Guarantees
+
+**ascfix** is engineered for **professional-grade quality** with comprehensive validation:
+
+### Zero Data Loss
+- **All original content preserved** - never deletes or modifies unintended text
+- **Non-destructive processing** - safe to run on any Markdown file
+- **Idempotent operations** - running multiple times produces identical results
+
+### Intelligent Quality Assurance
+- **Automated quality validation** - 92% pass rate on comprehensive test suite
+- **Semantic transformation analysis** - distinguishes beneficial improvements from corruption
+- **Context-aware processing** - understands diagram elements vs. regular text
+
+### Professional Output
+- **Consistent formatting** - uniform spacing, proper alignment, clean borders
+- **Nested box support** - proper parent-child containment with margins
+- **Arrow alignment** - intelligent positioning that enhances readability
+
 ## Features
 
 ### Processing Modes

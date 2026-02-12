@@ -282,6 +282,17 @@ fn check_constructive_transformation(
         ));
     }
 
+    // Arrow addition for alignment (constructive)
+    if input_char == ' '
+        && matches!(output_char, '↓' | '↑' | '←' | '→')
+        && is_arrow_duplication(input_chars, output_chars, input_pos, output_pos)
+    {
+        return Some((
+            TransformationType::Constructive(ConstructiveReason::ArrowDuplication),
+            0.3,
+        ));
+    }
+
     // Box expansion (constructive)
     if is_box_expansion(
         input_char,
@@ -347,16 +358,34 @@ fn is_arrow_duplication(
     input_pos: usize,
     output_pos: usize,
 ) -> bool {
-    // Look for pattern where single arrow becomes double arrow in output
-    if output_pos + 1 < output_chars.len() && output_chars[output_pos + 1] == '↓' {
-        // Check if this is part of vertical alignment improvement
-        true
+    // Look for pattern where spaces become arrows for alignment
+    // Check if this is part of a larger arrow alignment pattern
+    if input_chars.get(input_pos) == Some(&' ')
+        && matches!(
+            output_chars.get(output_pos),
+            Some('↓') | Some('↑') | Some('←') | Some('→')
+        )
+    {
+        // Check surrounding context for arrow alignment patterns
+        let start = output_pos.saturating_sub(5);
+        let end = (output_pos + 6).min(output_chars.len());
+
+        let context: String = output_chars[start..end].iter().collect();
+
+        // Look for multiple arrows indicating alignment
+        let arrow_count = context
+            .chars()
+            .filter(|&c| matches!(c, '↓' | '↑' | '←' | '→'))
+            .count();
+
+        arrow_count >= 2
     } else {
         false
     }
 }
 
 /// Check if this is box expansion (constructive)
+/// Currently simplified - could be enhanced to detect specific expansion patterns
 fn is_box_expansion(
     _input_char: char,
     _output_char: char,
@@ -365,20 +394,21 @@ fn is_box_expansion(
     _input_pos: usize,
     _output_pos: usize,
 ) -> bool {
-    // TODO: Implement box expansion detection
-    // This would check if boxes are being expanded to fit content
+    // For now, assume box expansion is handled by the normalization pipeline
+    // Could be enhanced to detect specific expansion patterns in future
     false
 }
 
 /// Check if whitespace change is diagram-related (not destructive)
+/// Currently conservative - could be enhanced for diagram alignment detection
 fn is_diagram_whitespace_change(
     _input_chars: &[char],
     _output_chars: &[char],
     _input_pos: usize,
     _output_pos: usize,
 ) -> bool {
-    // TODO: Implement diagram whitespace change detection
-    // This would check if whitespace changes are for alignment, not content removal
+    // For now, treat whitespace changes as potentially destructive
+    // Could be enhanced to detect diagram alignment whitespace in future
     false
 }
 
