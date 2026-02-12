@@ -124,7 +124,8 @@ pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid
                     if col_idx < original_width {
                         let ch = original.get(row_idx, col_idx).unwrap_or(' ');
                         // Remove arrow characters - they'll be redrawn by the inventory at aligned positions
-                        if matches!(ch, '↓' | '↑' | '→' | '←') {
+                        // Support standard (↓ ↑ → ←), double (⇓ ⇑ ⇒ ⇐), and extended (⟶ ⟹) arrows
+                        if matches!(ch, '↓' | '↑' | '→' | '←' | '⇓' | '⇑' | '⇒' | '⇐' | '⟶' | '⟹') {
                             row.push(' ');
                         } else {
                             row.push(ch);
@@ -150,7 +151,8 @@ pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid
             for col_idx in 0..required_width {
                 let ch = grid.get(row_idx, col_idx).unwrap_or(' ');
                 // Remove arrow characters - they'll be redrawn by the inventory at aligned positions
-                if matches!(ch, '↓' | '↑' | '→' | '←') {
+                // Support standard (↓ ↑ → ←), double (⇓ ⇑ ⇒ ⇐), and extended (⟶ ⟹) arrows
+                if matches!(ch, '↓' | '↑' | '→' | '←' | '⇓' | '⇑' | '⇒' | '⇐' | '⟶' | '⟹') {
                     row.push(' ');
                 } else {
                     row.push(ch);
