@@ -2,8 +2,27 @@
 
 use crate::cli::Mode;
 use crate::links::{detect_links, is_inside_link_url};
+use crate::scanner::InlineCodeSpan;
 use crate::tables::{has_wrapped_cells, unwrap_table_rows};
 use std::fmt::Write;
+
+/// Restore masked inline code content.
+fn restore_inline_code(masked_line: &str, spans: &[InlineCodeSpan]) -> String {
+    if spans.is_empty() {
+        return masked_line.to_string();
+    }
+    let mut restored_chars: Vec<char> = masked_line.chars().collect();
+    for span in spans {
+        let content_chars: Vec<char> = span.content.chars().collect();
+        for (i, ch) in content_chars.iter().enumerate() {
+            let pos = span.start_col + i;
+            if pos < restored_chars.len() {
+                restored_chars[pos] = *ch;
+            }
+        }
+    }
+    restored_chars.iter().collect::<String>()
+}
 
 /// Process content according to the specified mode.
 ///
@@ -151,6 +170,19 @@ fn process_diagram_mode(content: &str, _config: &crate::config::Config) -> Strin
             let rendered_grid = crate::renderer::render_onto_grid(&grid, &normalized);
             let rendered = rendered_grid.render_trimmed();
 
+            // Restore inline code in the rendered output
+            let rendered_lines: Vec<String> = rendered
+                .lines()
+                .enumerate()
+                .map(|(i, line)| {
+                    if i < block.inline_code_spans.len() {
+                        restore_inline_code(line, &block.inline_code_spans[i])
+                    } else {
+                        line.to_string()
+                    }
+                })
+                .collect();
+
             // Replace the block in the original content (in reverse to maintain indices)
             let block_len = block.lines.len();
 
@@ -161,8 +193,8 @@ fn process_diagram_mode(content: &str, _config: &crate::config::Config) -> Strin
                 }
             }
             // Insert new lines
-            for (i, line) in rendered.lines().map(String::from).enumerate() {
-                lines.insert(block.start_line + i, line);
+            for (i, line) in rendered_lines.iter().enumerate() {
+                lines.insert(block.start_line + i, line.clone());
             }
         }
         // If no primitives found, leave the block unchanged
