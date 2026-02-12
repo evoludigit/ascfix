@@ -515,6 +515,112 @@ pub fn normalize_bullet_styles(content: &str, target_bullet: char) -> String {
     result.join("\n")
 }
 
+/// Normalize lists in content with both indentation and bullet style fixes.
+///
+/// Combines indentation normalization (2-space increments) and bullet style
+/// normalization (consistent `-` style) in a single pass.
+///
+/// # Examples
+///
+/// ```
+/// use ascfix::lists::normalize_lists;
+///
+/// let content = "- Item 1\n    * Nested with 4 spaces\n+ Item 2";
+/// let normalized = normalize_lists(content);
+/// assert!(normalized.contains("- Item 1"));
+/// assert!(normalized.contains("  - Nested with 4 spaces")); // 2 spaces, normalized
+/// assert!(normalized.contains("- Item 2")); // + changed to -
+/// ```
+#[must_use]
+#[allow(dead_code)]
+pub fn normalize_lists(content: &str) -> String {
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.is_empty() {
+        return String::new();
+    }
+
+    // Get code block regions to skip
+    let code_ranges = get_code_block_line_ranges(content);
+
+    let mut result = Vec::new();
+    let mut list_stack: Vec<usize> = Vec::new(); // Stack of indentation levels for each list level
+    let target_bullet = '-';
+
+    for (i, line) in lines.iter().enumerate() {
+        // Skip lines inside code blocks
+        if is_in_code_region(i, &code_ranges) {
+            result.push(line.to_string());
+            // Reset stack when entering code block
+            list_stack.clear();
+            continue;
+        }
+
+        // Check if this line is a list item
+        if let Some(item) = parse_list_item(line, i) {
+            let current_indent = line.len() - line.trim_start().len();
+
+            // Determine the nesting level based on indentation
+            let level = if list_stack.is_empty() {
+                // First item in a list
+                list_stack.push(current_indent);
+                0
+            } else {
+                // Find the appropriate level based on indentation
+                let mut level = list_stack.len();
+                for (idx, &indent) in list_stack.iter().enumerate() {
+                    if current_indent <= indent {
+                        level = idx;
+                        break;
+                    }
+                }
+
+                // Trim stack to current level
+                list_stack.truncate(level);
+
+                // If this is a new nesting level, add it
+                if level == list_stack.len() {
+                    list_stack.push(current_indent);
+                }
+
+                level
+            };
+
+            // Calculate normalized indentation: 2 spaces per level
+            let normalized_indent = "  ".repeat(level);
+
+            // Reconstruct with normalized bullet and indentation
+            let reconstructed = if item.is_task && ["-", "*", "+"].contains(&item.marker.as_str()) {
+                format!(
+                    "{}{} [{}] {}",
+                    normalized_indent,
+                    target_bullet,
+                    if item.checked.unwrap_or(false) {
+                        "x"
+                    } else {
+                        " "
+                    },
+                    item.content
+                )
+            } else if ["-", "*", "+"].contains(&item.marker.as_str()) {
+                format!("{}{} {}", normalized_indent, target_bullet, item.content)
+            } else {
+                // Ordered list - keep as is but normalize indentation
+                format!("{}{}. {}", normalized_indent, item.marker, item.content)
+            };
+            result.push(reconstructed);
+        } else {
+            // Non-list line
+            if line.trim().is_empty() {
+                // Blank line resets the list stack
+                list_stack.clear();
+            }
+            result.push(line.to_string());
+        }
+    }
+
+    result.join("\n")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -682,5 +788,52 @@ mod tests {
         assert!(normalized.contains("1. First"));
         assert!(normalized.contains("2. Second"));
         assert!(normalized.contains("- Unordered"));
+    }
+
+    #[test]
+    fn normalize_complex_nested_list() {
+        // Mixed nesting with different bullets should normalize correctly
+        let content = "- Level 1\n  * Level 2\n    + Level 3\n- Back to 1";
+        let normalized = normalize_lists(content);
+        // All should use consistent bullet and indentation
+        assert!(normalized.contains("- Level 1"));
+        assert!(normalized.contains("  - Level 2"));
+        assert!(normalized.contains("    - Level 3"));
+        assert!(normalized.contains("- Back to 1"));
+    }
+
+    #[test]
+    fn normalize_deeply_nested_structure() {
+        // 4 levels deep
+        let content = "- A\n  - B\n    - C\n      - D\n- E";
+        let normalized = normalize_lists(content);
+        assert!(normalized.contains("- A"));
+        assert!(normalized.contains("  - B"));
+        assert!(normalized.contains("    - C"));
+        assert!(normalized.contains("      - D"));
+        assert!(normalized.contains("- E"));
+    }
+
+    #[test]
+    fn normalize_nested_with_inconsistent_indentation() {
+        // Mix of 2-space and 4-space nesting should become consistent 2-space
+        let content = "- Item 1\n    - Nested with 4\n      - Deeper\n- Item 2";
+        let normalized = normalize_lists(content);
+        assert!(normalized.contains("- Item 1"));
+        assert!(normalized.contains("  - Nested with 4")); // Now 2-space
+        assert!(normalized.contains("    - Deeper")); // 4-space (2nd level)
+        assert!(normalized.contains("- Item 2"));
+    }
+
+    #[test]
+    fn separate_adjacent_lists() {
+        // Two separate lists should not affect each other
+        let content =
+            "- First list A\n- First list B\n\nSome text\n\n* Second list A\n* Second list B";
+        let normalized = normalize_lists(content);
+        assert!(normalized.contains("- First list A"));
+        assert!(normalized.contains("- First list B"));
+        assert!(normalized.contains("- Second list A")); // Normalized to -
+        assert!(normalized.contains("- Second list B"));
     }
 }
