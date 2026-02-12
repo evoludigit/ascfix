@@ -179,10 +179,11 @@ pub fn detect_links_outside_code_blocks(content: &str) -> Vec<Link> {
 }
 
 /// Represents a region of content inside a code block (`start_pos`, `end_pos`).
-type CodeRegion = (usize, usize);
+pub type CodeRegion = (usize, usize);
 
 /// Get all code block regions as (start, end) character positions.
-fn get_code_block_regions(content: &str) -> Vec<CodeRegion> {
+#[must_use]
+pub fn get_code_block_regions(content: &str) -> Vec<CodeRegion> {
     let mut regions = Vec::new();
     let lines: Vec<&str> = content.lines().collect();
     let mut in_code_block = false;

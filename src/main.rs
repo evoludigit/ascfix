@@ -13,6 +13,7 @@ mod fences;
 pub mod grid;
 mod io;
 mod links;
+mod lists;
 mod modes;
 mod normalizer;
 mod parser;
