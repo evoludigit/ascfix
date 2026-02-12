@@ -334,6 +334,55 @@ mod malformed_fixture_tests {
     }
 
     #[test]
+    fn test_malformed_wrapped_cells() {
+        // Test that wrapped table cells are unwrapped in safe mode
+        let dirty_content = include_str!("data/integration/dirty/malformed_wrapped_cells.md");
+        let expected_clean = include_str!("data/integration/clean/malformed_wrapped_cells.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Safe, false);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
+    fn test_malformed_wrapped_with_code() {
+        // Test that code blocks in table cells are preserved (not unwrapped)
+        let content = include_str!("data/integration/dirty/malformed_wrapped_with_code.md");
+        let result = process_fixture_content(content, &Mode::Safe, false);
+
+        // Code blocks should be preserved
+        assert!(
+            result.contains("```python"),
+            "Python code block should be preserved"
+        );
+        assert!(
+            result.contains("```rust"),
+            "Rust code block should be preserved"
+        );
+        assert!(
+            result.contains("```sql"),
+            "SQL code block should be preserved"
+        );
+        // The structure should remain multi-line
+        assert!(
+            result.contains("def hello():"),
+            "Code content should be preserved"
+        );
+    }
+
+    #[test]
+    fn test_malformed_wrapped_with_links() {
+        // Test that links spanning wrap boundaries are preserved
+        let dirty_content = include_str!("data/integration/dirty/malformed_wrapped_with_links.md");
+        let expected_clean = include_str!("data/integration/clean/malformed_wrapped_with_links.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Safe, false);
+
+        // Links that span boundaries should be preserved (rows not unwrapped)
+        // Links that are complete should allow unwrapping
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
     fn test_all_fixtures_exist() {
         // Verify all fixture files can be read
         let fixtures = vec![
@@ -394,8 +443,10 @@ mod malformed_fixture_tests {
             let _clean_tables = include_str!("data/integration/clean/malformed_broken_tables.md");
             let _dirty_boxes = include_str!("data/integration/dirty/malformed_box_alignment.md");
             let _clean_boxes = include_str!("data/integration/clean/malformed_box_alignment.md");
-            let _dirty_nested = include_str!("data/integration/dirty/complex_nested_with_labels.md");
-            let _clean_nested = include_str!("data/integration/clean/complex_nested_with_labels.md");
+            let _dirty_nested =
+                include_str!("data/integration/dirty/complex_nested_with_labels.md");
+            let _clean_nested =
+                include_str!("data/integration/clean/complex_nested_with_labels.md");
         }
     }
 }
