@@ -351,6 +351,87 @@ fn is_in_code_region(line_num: usize, regions: &[(usize, usize)]) -> bool {
     false
 }
 
+/// Normalize list indentation to standard 2-space increments.
+///
+/// Takes content with lists and normalizes the indentation of nested items
+/// to use consistent 2-space increments per nesting level.
+///
+/// # Examples
+///
+/// ```
+/// use ascfix::lists::normalize_list_indentation;
+///
+/// let content = "- Item 1\n    - Nested item\n- Item 2";
+/// let normalized = normalize_list_indentation(content);
+/// assert!(normalized.contains("  - Nested item")); // 2 spaces, not 4
+/// ```
+#[must_use]
+#[allow(dead_code)]
+pub fn normalize_list_indentation(content: &str) -> String {
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.is_empty() {
+        return String::new();
+    }
+
+    // Get code block regions to skip
+    let code_ranges = get_code_block_line_ranges(content);
+
+    let mut result = Vec::new();
+    let mut list_stack: Vec<usize> = Vec::new(); // Stack of indentation levels for each list level
+
+    for (i, line) in lines.iter().enumerate() {
+        // Skip lines inside code blocks
+        if is_in_code_region(i, &code_ranges) {
+            result.push(line.to_string());
+            continue;
+        }
+
+        // Check if this line is a list item
+        if let Some(item) = parse_list_item(line, i) {
+            let current_indent = line.len() - line.trim_start().len();
+
+            // Determine the nesting level based on indentation
+            let level = if list_stack.is_empty() {
+                // First item in a list
+                list_stack.push(current_indent);
+                0
+            } else {
+                // Find the appropriate level based on indentation
+                let mut level = list_stack.len();
+                for (idx, &indent) in list_stack.iter().enumerate() {
+                    if current_indent <= indent {
+                        level = idx;
+                        break;
+                    }
+                }
+
+                // Trim stack to current level
+                list_stack.truncate(level);
+
+                // If this is a new nesting level, add it
+                if level == list_stack.len() {
+                    list_stack.push(current_indent);
+                }
+
+                level
+            };
+
+            // Calculate normalized indentation: 2 spaces per level
+            let normalized_indent = "  ".repeat(level);
+            let reconstructed = format!("{}{} {}", normalized_indent, item.marker, item.content);
+            result.push(reconstructed);
+        } else {
+            // Non-list line - reset the stack if it's not a continuation
+            if line.trim().is_empty() {
+                list_stack.clear();
+            }
+            result.push(line.to_string());
+        }
+    }
+
+    result.join("\n")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -419,5 +500,52 @@ mod tests {
         let content = "This is just a paragraph.\nNo lists here.\nJust text.";
         let lists = detect_lists(content);
         assert_eq!(lists.len(), 0);
+    }
+
+    #[test]
+    fn normalize_indentation_to_two_spaces() {
+        // 4-space indentation should become 2-space
+        let content = "- Item 1\n    - Nested item\n- Item 2";
+        let normalized = normalize_list_indentation(content);
+        assert!(normalized.contains("- Item 1"));
+        assert!(normalized.contains("  - Nested item")); // 2 spaces
+        assert!(!normalized.contains("    - Nested")); // No 4 spaces
+    }
+
+    #[test]
+    fn normalize_deeply_nested_list() {
+        // Mixed indentation should be normalized
+        let content = "- Level 1\n    - Level 2\n        - Level 3\n- Back to 1";
+        let normalized = normalize_list_indentation(content);
+        assert!(normalized.contains("- Level 1"));
+        assert!(normalized.contains("  - Level 2")); // 2 spaces
+        assert!(normalized.contains("    - Level 3")); // 4 spaces (2 per level)
+    }
+
+    #[test]
+    fn preserve_content_when_normalizing() {
+        // Content should remain unchanged, only indentation fixed
+        let content = "- First item with text\n    - Second item with more text";
+        let normalized = normalize_list_indentation(content);
+        assert!(normalized.contains("First item with text"));
+        assert!(normalized.contains("Second item with more text"));
+    }
+
+    #[test]
+    fn no_change_to_already_normalized() {
+        // Already 2-space indented lists should remain unchanged
+        let content = "- Item 1\n  - Nested\n  - Another nested\n- Item 2";
+        let normalized = normalize_list_indentation(content);
+        assert_eq!(normalized, content);
+    }
+
+    #[test]
+    fn normalize_mixed_indentation_styles() {
+        // Mixed 2-space and 4-space should become all 2-space relative
+        let content = "- Item 1\n  - Two space\n    - Four space (should be 4)\n- Item 2";
+        let normalized = normalize_list_indentation(content);
+        assert!(normalized.contains("- Item 1"));
+        assert!(normalized.contains("  - Two space"));
+        assert!(normalized.contains("    - Four space")); // 4 spaces is correct for 2nd level
     }
 }
