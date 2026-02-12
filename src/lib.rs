@@ -6,6 +6,7 @@
 pub mod cli;
 pub mod config;
 pub mod discovery;
+pub mod fences;
 pub mod links;
 pub mod lists;
 pub mod modes;
@@ -13,10 +14,12 @@ pub mod tables;
 
 // Internal modules (not part of public API)
 pub mod detector;
-pub mod fences;
 pub mod grid;
+pub mod io;
 pub mod normalizer;
 pub mod parser;
 pub mod primitives;
+pub mod processor;
+pub mod quality;
 pub mod renderer;
 pub mod scanner;

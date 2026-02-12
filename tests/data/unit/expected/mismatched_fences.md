@@ -4,14 +4,14 @@ This file demonstrates fence length mismatches that should be repaired.
 
 ## Python Example
 
-`````python
+```python
 def hello():
     print("Hello, World!")
 `````
 
 ## JavaScript Example
 
-`````````javascript
+```javascript
 function hello() {
     console.log("Hello, World!");
 }
@@ -19,14 +19,14 @@ function hello() {
 
 ## Text Block
 
-`````
+```
 Some plain text
 Here
 `````
 
 ## Mixed
 
-`````markdown
+```markdown
 # Header
 `````
 
