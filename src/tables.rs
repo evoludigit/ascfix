@@ -113,6 +113,9 @@ fn split_table_cells(line: &str) -> Vec<&str> {
 /// | ``` | cell |
 /// ```
 /// remains unchanged (preserved as 4 rows).
+///
+/// Links that span across wrap boundaries are also preserved to prevent
+/// breaking markdown link syntax.
 #[must_use]
 #[allow(dead_code)] // Reason: Used in tests, will be used in production soon
 pub fn unwrap_table_rows(rows: &[&str]) -> Vec<String> {
@@ -122,6 +125,11 @@ pub fn unwrap_table_rows(rows: &[&str]) -> Vec<String> {
 
     // Check if any row contains a code fence - if so, preserve all rows as-is
     if rows_contain_code_fence(rows) {
+        return rows.iter().map(|&s| s.to_string()).collect();
+    }
+
+    // Check if rows contain incomplete links that would be broken by unwrapping
+    if has_incomplete_link_across_rows(rows) {
         return rows.iter().map(|&s| s.to_string()).collect();
     }
 
@@ -205,6 +213,80 @@ fn rows_contain_code_fence(rows: &[&str]) -> bool {
     rows.iter().any(|row| contains_code_fence(row))
 }
 
+/// Check if rows contain an incomplete link that spans across the wrap boundary.
+///
+/// A link is incomplete if:
+/// - It has an opening `[text](` pattern on one row
+/// - But the closing `)` is not on the same row (it's on a continuation row)
+///
+/// This prevents unwrapping rows that would break a link across lines.
+fn has_incomplete_link_across_rows(rows: &[&str]) -> bool {
+    for (row_idx, row) in rows.iter().enumerate() {
+        let chars: Vec<char> = row.chars().collect();
+        let mut i = 0;
+
+        while i < chars.len() {
+            // Look for opening bracket '['
+            if chars[i] == '[' {
+                // Try to find the complete link pattern
+                if let Some(text_end) = find_closing_bracket(&chars, i + 1) {
+                    // Check for opening parenthesis immediately after ']'
+                    if text_end + 1 < chars.len() && chars[text_end + 1] == '(' {
+                        // Look for closing parenthesis with proper nesting
+                        if find_closing_parenthesis_balanced(&chars, text_end + 2).is_none() {
+                            // Opening pattern found but no closing on this row
+                            // Check if there are more rows (continuation)
+                            if row_idx < rows.len() - 1 {
+                                // Link spans across rows - don't unwrap
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            i += 1;
+        }
+    }
+
+    false
+}
+
+/// Find the closing bracket ']' starting from the given position.
+/// Handles escaped brackets '\[' and '\]'.
+fn find_closing_bracket(chars: &[char], start: usize) -> Option<usize> {
+    let mut i = start;
+    while i < chars.len() {
+        if chars[i] == ']' && (i == 0 || chars[i - 1] != '\\') {
+            return Some(i);
+        }
+        i += 1;
+    }
+    None
+}
+
+/// Find the closing parenthesis ')' with proper nesting.
+/// Returns None if no balanced closing parenthesis is found.
+fn find_closing_parenthesis_balanced(chars: &[char], start: usize) -> Option<usize> {
+    let mut depth = 1; // We're already inside one level of parentheses
+    let mut i = start;
+
+    while i < chars.len() {
+        match chars[i] {
+            '(' => depth += 1,
+            ')' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(i);
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+
+    None // No balanced closing parenthesis found
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -272,5 +354,50 @@ mod tests {
         assert!(contains_code_fence("| ~~~bash | script |"));
         assert!(!contains_code_fence("| normal text | here |"));
         assert!(!contains_code_fence("| no code | fence |"));
+    }
+
+    #[test]
+    fn preserve_incomplete_link_across_wrap() {
+        // Link that spans wrap boundary should NOT be unwrapped
+        let rows = vec![
+            "| Item | [Docs](https://example.com/very |",
+            "|      | long/path) more text |",
+        ];
+        let unwrapped = unwrap_table_rows(&rows);
+        // Should preserve both rows since link spans boundary
+        assert_eq!(
+            unwrapped.len(),
+            2,
+            "Should preserve rows when link spans boundary"
+        );
+        assert!(unwrapped[0].contains("[Docs]"));
+        assert!(unwrapped[1].contains("long/path)"));
+    }
+
+    #[test]
+    fn unwrap_complete_link_on_one_line() {
+        // Complete link on one line should allow unwrapping
+        let rows = vec![
+            "| Item | [Docs](https://example.com/path) |",
+            "|      | more description text |",
+        ];
+        let unwrapped = unwrap_table_rows(&rows);
+        // Should unwrap since link is complete on first line
+        assert_eq!(unwrapped.len(), 1);
+        assert!(unwrapped[0].contains("[Docs](https://example.com/path)"));
+        assert!(unwrapped[0].contains("more description text"));
+    }
+
+    #[test]
+    fn detect_incomplete_link_in_rows() {
+        // Test detection of incomplete links
+        assert!(has_incomplete_link_across_rows(&[
+            "| [Link](http://x |",
+            "| /path) |"
+        ]));
+        assert!(!has_incomplete_link_across_rows(&[
+            "| [Link](http://x/path) |",
+            "| more text |"
+        ]));
     }
 }
