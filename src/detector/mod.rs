@@ -67,6 +67,9 @@ pub fn detect_all_primitives(grid: &crate::grid::Grid) -> crate::primitives::Pri
         }
     }
 
+    // Establish parent-child relationships for boxes
+    let boxes = establish_parent_child_relationships(boxes);
+
     crate::primitives::PrimitiveInventory {
         boxes,
         horizontal_arrows,
@@ -75,6 +78,38 @@ pub fn detect_all_primitives(grid: &crate::grid::Grid) -> crate::primitives::Pri
         connection_lines: Vec::new(),
         labels,
     }
+}
+
+/// Establish parent-child relationships between boxes based on containment.
+fn establish_parent_child_relationships(
+    mut boxes: Vec<crate::primitives::Box>,
+) -> Vec<crate::primitives::Box> {
+    // For each pair of boxes, check containment
+    for i in 0..boxes.len() {
+        for j in 0..boxes.len() {
+            if i != j {
+                let parent = &boxes[i];
+                let child = &boxes[j];
+
+                // Check if parent completely contains child (with some margin for text)
+                let contains = child.top_left.0 > parent.top_left.0  // Child starts after parent top
+                    && child.bottom_right.0 < parent.bottom_right.0  // Child ends before parent bottom
+                    && child.top_left.1 > parent.top_left.1  // Child starts after parent left
+                    && child.bottom_right.1 < parent.bottom_right.1; // Child ends before parent right
+
+                if contains {
+                    // Mark child as having this parent
+                    boxes[j].parent_idx = Some(i);
+                    // Add child to parent's children list (if not already there)
+                    if !boxes[i].child_indices.contains(&j) {
+                        boxes[i].child_indices.push(j);
+                    }
+                }
+            }
+        }
+    }
+
+    boxes
 }
 
 /// Extract text rows from inside a box.

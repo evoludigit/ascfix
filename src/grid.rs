@@ -17,6 +17,15 @@ impl Grid {
         Self { rows }
     }
 
+    /// Create a grid from pre-constructed rows.
+    ///
+    /// This is used when resizing grids during rendering.
+    #[allow(dead_code)] // Reason: Used by main processing pipeline
+    #[must_use]
+    pub const fn from_rows(rows: Vec<Vec<char>>) -> Self {
+        Self { rows }
+    }
+
     /// Get the number of rows in the grid.
     #[allow(dead_code)] // Reason: Used by main processing pipeline
     #[must_use]

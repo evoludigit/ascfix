@@ -140,13 +140,15 @@ fn process_diagram_mode(content: &str, _config: &crate::config::Config) -> Strin
         {
             // Normalize
             let normalized = crate::normalizer::normalize_box_widths(&inventory);
+            let normalized = crate::normalizer::normalize_nested_boxes(&normalized);
             let normalized = crate::normalizer::align_horizontal_arrows(&normalized);
             let normalized = crate::normalizer::align_vertical_arrows(&normalized);
             let normalized = crate::normalizer::balance_horizontal_boxes(&normalized);
             let normalized = crate::normalizer::normalize_padding(&normalized);
 
-            // Render
-            let rendered_grid = crate::renderer::render_diagram(&normalized);
+            // Render onto a COPY of the original grid to preserve pass-through content
+            // This ensures lines without detected primitives are not lost
+            let rendered_grid = crate::renderer::render_onto_grid(&grid, &normalized);
             let rendered = rendered_grid.render_trimmed();
 
             // Replace the block in the original content (in reverse to maintain indices)

@@ -18,19 +18,47 @@ Ideal for:
 
 ## Features
 
-- **Safe mode**: Normalize Markdown tables (default)
-- **Diagram mode**: Repair ASCII boxes and arrows
-- **Fence repair**: Fix code fence boundary issues (mismatched lengths, unclosed fences)
-- **Check mode**: Validate files without modifying (exit codes for CI/CD)
-- **Directory processing**: Recursively process directories with file discovery
-- **MDX support**: Process both `.md` and `.mdx` files by default
-- **Gitignore respect**: Automatically respects `.gitignore` rules (can be disabled)
-- **Custom extensions**: Filter files by extension (`--ext .md,.mdx`)
-- **Error resilience**: Continue processing on individual file errors
-- **Conservative**: Only fixes well-understood structures
-- **Idempotent**: Running twice produces identical output
-- **Fast**: Linear processing time
-- **Safe**: No panics on untrusted input
+### Processing Modes
+- **Safe mode** (default): Normalize Markdown tables only - safest for any file
+- **Diagram mode**: Repair ASCII boxes, arrows, and diagram structures
+- **Check mode**: Validate without modifying (exit code 1 if changes needed - perfect for CI/CD)
+- **All mode**: Shorthand for `--fences --mode=diagram` to repair everything
+
+### Diagram Repair
+- **Box style preservation**: Single-line (`┌┐└┘│─`), double-line (`╔╗╚╝║═`), and rounded (`╭╮╰╯│─`) boxes
+- **Box width normalization**: Expands boxes to fit content with uniform padding
+- **Side-by-side balancing**: Equalizes widths of adjacent boxes for visual consistency
+- **Nested box support**: Parent boxes expand to properly contain children with margins
+- **Arrow alignment**: Aligns vertical arrows to box centers, horizontal arrows to edges
+- **Connection lines**: L-shaped paths with corner connectors
+- **Label preservation**: Maintains text labels attached to primitives
+
+### Markdown Repair
+- **Table normalization**: Aligns columns and fixes hard-wrapped cells
+- **List normalization**: Standardizes bullet styles (`- * +` → `-`), fixes indentation, adds spacing
+- **Link preservation**: Handles URLs with parentheses and reference-style links
+- **Fence repair**: Fixes mismatched fence lengths, unclosed blocks, duplicate closing fences
+
+### File Operations
+- **Directory processing**: Recursively process directories with automatic file discovery
+- **Multiple extensions**: Process `.md`, `.mdx`, `.txt` files (customizable with `--ext`)
+- **Gitignore respect**: Automatically respects `.gitignore` (can be disabled with `--no-gitignore`)
+- **Size limits**: Configurable max file size (`--max-size 5MB`)
+- **In-place editing**: Modify files directly with `--in-place` (default: stdout output)
+- **Error resilience**: Continue processing remaining files on individual errors
+
+### Safety & Quality
+- **Conservative**: Only fixes well-understood structures; unknown patterns preserved unchanged
+- **Idempotent**: Running twice produces identical output (safe for repeated application)
+- **No panics**: Handles malformed input gracefully without crashes
+- **Zero unsafe code**: Compile-time enforced with `#![forbid(unsafe_code)]`
+- **No data loss**: Never deletes or rewords content - only improves formatting
+- **Fast**: Linear O(n) processing time suitable for large files and CI/CD
+
+### Integration
+- **Exit codes**: 0 = success/no changes needed, 1 = check failed or error (CI/CD friendly)
+- **GitHub Actions ready**: Verified workflows for testing, linting, security auditing
+- **Configuration file support**: `.ascfix.toml` for project-wide settings
 
 ## Installation
 
@@ -398,6 +426,167 @@ Perfect for GitHub Actions:
 - name: Check diagram alignment
   run: ascfix docs/*.md --check --mode=diagram
   # Fails the build if any diagrams need fixing
+```
+
+---
+
+## Visual Examples Gallery
+
+All examples below are verified test fixtures from our test suite (see `tests/data/`). Each example demonstrates specific features with real before/after transformations.
+
+### Box Style Variants
+
+ascfix detects and preserves different box drawing styles:
+
+**Single-line boxes** (`┌ ┐ └ ┘ │ ─`):
+```
+┌────────┐
+│ Single │
+└────────┘
+```
+
+**Double-line boxes** (`╔ ╗ ╚ ╝ ║ ═`):
+```
+╔════════════════╗
+║ Double-Line    ║
+║ Box Style      ║
+╚════════════════╝
+```
+
+**Rounded-corner boxes** (`╭ ╮ ╰ ╯`):
+```
+╭────────────────╮
+│ Rounded        │
+│ Corner Box     │
+╰────────────────╯
+```
+
+---
+
+### Side-by-Side Box Balancing
+
+ascfix automatically normalizes widths of horizontally adjacent boxes:
+
+**Before:**
+```
+┌───────┐  ┌─────┐  ┌────────────┐
+│ Box 1 │  │ B2  │  │ Box Three  │
+└───────┘  └─────┘  └────────────┘
+```
+
+**After:**
+```
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│ Box 1       │ │ B2          │ │ Box Three   │
+└─────────────┘ └─────────────┘ └─────────────┘
+```
+
+---
+
+### Nested Box Hierarchies
+
+Parent boxes expand to properly contain children with appropriate margins:
+
+**Before:**
+```
+┌──────────────┐
+│ Parent       │
+│ ┌────────┐   │
+│ │ Child  │   │
+│ └────────┘   │
+└──────────────┘
+```
+
+**After:**
+```
+┌────────────────────┐
+│ Parent             │
+│                    │
+│  ┌──────────────┐  │
+│  │ Child        │  │
+│  └──────────────┘  │
+│                    │
+└────────────────────┘
+```
+
+---
+
+### CI/CD Pipeline Diagram
+
+Real-world pipeline with consistent arrow alignment:
+
+```
+┌──────────────┐
+│ Source Code  │
+└──────────────┘
+       ↓
+┌──────────────┐
+│  Build Job   │
+└──────────────┘
+       ↓
+┌──────────────┐
+│  Test Suite  │
+└──────────────┘
+       ↓
+┌──────────────┐
+│   Deploy     │
+└──────────────┘
+```
+
+---
+
+### Complex Real-World Example
+
+API documentation with mixed diagrams and tables:
+
+```
+┌─────────────────┐    ┌─────────────────┐
+│   Client App    │    │   API Gateway   │
+│                 │    │                 │
+│ - Mobile App    │    │ - Authentication  │
+│ - Web App       │    │ - Rate Limiting   │
+└─────────┬───────┘    └─────────┬───────┘
+          │                      │
+          ▼                      ▼
+```
+
+---
+
+### Test Suite & Fixtures
+
+The project includes **55+ test fixtures** organized in `tests/data/`:
+
+**Verified Working Examples:**
+- **Safe mode fixtures:** Table normalization, list formatting, link preservation
+- **Fence repair:** Mismatched lengths, unclosed blocks, duplicate fences
+- **Basic diagrams:** Simple boxes, arrows, side-by-side alignment
+
+**Edge Cases & Error Handling:**
+- **Malformed inputs:** Corrupted diagrams, broken tables, wrapped cells
+- **Stress tests:** Large diagrams, boundary conditions, mixed content
+- **Real-world patterns:** API docs, ML pipelines, database schemas
+
+**Note:** Some complex diagram fixtures (nested boxes, connection lines, mixed styles) are used to test the tool's **conservative behavior** - when structures are ambiguous, ascfix leaves them unchanged rather than risk corruption.
+
+**Verify examples yourself:**
+```bash
+# Run all tests to verify fixtures
+cargo test
+
+# Process a specific file
+ascfix README.md --mode=diagram
+```
+- `tests/data/unit/` - Simple, focused examples
+- `tests/data/integration/` - Complex real-world scenarios
+- `tests/data/integration/dirty/` - Malformed inputs and error cases
+
+Every example in this README can be verified:
+```bash
+# Run tests to verify all fixtures
+cargo test
+
+# Process a specific fixture
+ascfix tests/data/unit/input/ci_pipeline.md --mode=diagram
 ```
 
 ---

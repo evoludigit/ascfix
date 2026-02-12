@@ -13,7 +13,7 @@ pub struct ListItem {
     pub content: String,
     /// Indentation level (0 = top level, 1 = nested, etc.)
     pub level: usize,
-    /// Whether this is a task list item (- [ ], - [x])
+    /// Whether this is a task list item (- \[ \], - \[x\])
     pub is_task: bool,
     /// Checkbox state for task lists (Some(true) = checked, Some(false) = unchecked, None = not a task)
     pub checked: Option<bool>,

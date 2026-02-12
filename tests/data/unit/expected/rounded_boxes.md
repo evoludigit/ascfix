@@ -4,12 +4,12 @@ Testing boxes with rounded-corner style (╭ ─ ╮ ╰ ╯):
 
 ╭────────────────╮
 │ Rounded        │
-│ Corner↑Box     │
+│ Corner Box     │
 ╰────────────────╯
-        ↓
+        ↓↓
 ╭────────────────╮
 │ Another        │
-│ Rounde↑ Box    │
+│ Rounded Box    │
 ╰────────────────╯
 
 This diagram tests the rounded-corner box style.

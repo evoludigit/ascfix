@@ -165,13 +165,23 @@ pub fn normalize_padding(inventory: &PrimitiveInventory) -> PrimitiveInventory {
     let mut normalized = inventory.clone();
 
     for row in &mut normalized.text_rows {
-        // Find the box containing this row (must be inside both row and column ranges)
-        if let Some(b) = normalized.boxes.iter().find(|box_| {
-            row.row > box_.top_left.0
-                && row.row < box_.bottom_right.0
-                && row.start_col >= box_.top_left.1
-                && row.start_col <= box_.bottom_right.1
-        }) {
+        // Find the most specific (smallest) box containing this row
+        let containing_boxes: Vec<_> = normalized
+            .boxes
+            .iter()
+            .filter(|box_| {
+                row.row > box_.top_left.0
+                    && row.row < box_.bottom_right.0
+                    && row.start_col >= box_.top_left.1
+                    && row.start_col <= box_.bottom_right.1
+            })
+            .collect();
+
+        // Use the smallest containing box (most specific)
+        if let Some(b) = containing_boxes
+            .iter()
+            .min_by_key(|box_| box_.width() * box_.height())
+        {
             // Enforce 1-space padding: start at left+1, end at right-1
             row.start_col = b.top_left.1 + 1;
             row.end_col = b.bottom_right.1 - 1;
@@ -284,6 +294,201 @@ pub fn normalize_box_widths(inventory: &PrimitiveInventory) -> PrimitiveInventor
     normalized
 }
 
+/// Normalize nested box containment.
+///
+/// Expands parent boxes to properly contain children with appropriate margins.
+/// Marks no-draw zones around children to prevent border intersection.
+///
+/// Algorithm:
+/// 1. For each box, check if it contains other boxes (children)
+/// 2. Calculate required parent size: max(child_right + margin, current_parent_size)
+/// 3. Expand parent boxes as needed
+/// 4. Mark child areas as no-draw zones for parent borders
+#[allow(dead_code)] // Reason: Used by main processing pipeline
+#[must_use]
+pub fn normalize_nested_boxes(inventory: &PrimitiveInventory) -> PrimitiveInventory {
+    let mut normalized = inventory.clone();
+
+    // Find parent-child relationships
+    let mut parent_child_groups = Vec::new();
+
+    for (parent_idx, parent) in normalized.boxes.iter().enumerate() {
+        let mut children = Vec::new();
+
+        for (child_idx, child) in normalized.boxes.iter().enumerate() {
+            if child_idx != parent_idx {
+                // Check if child is contained within parent boundaries
+                let child_contained = child.top_left.0 > parent.top_left.0
+                    && child.bottom_right.0 < parent.bottom_right.0
+                    && child.top_left.1 > parent.top_left.1
+                    && child.bottom_right.1 < parent.bottom_right.1;
+
+                if child_contained {
+                    children.push(child_idx);
+                }
+            }
+        }
+
+        if !children.is_empty() {
+            parent_child_groups.push((parent_idx, children));
+        }
+    }
+
+    // Process each parent-child group
+    for (parent_idx, children) in parent_child_groups {
+        // Calculate required dimensions for parent
+        let mut required_right = normalized.boxes[parent_idx].bottom_right.1;
+        let mut required_bottom = normalized.boxes[parent_idx].bottom_right.0;
+
+        for &child_idx in &children {
+            let child = &normalized.boxes[child_idx];
+
+            // Add margin around child (1 space on each side)
+            required_right = required_right.max(child.bottom_right.1 + 2);
+            required_bottom = required_bottom.max(child.bottom_right.0 + 2);
+        }
+
+        // Expand parent if needed
+        let current_right = normalized.boxes[parent_idx].bottom_right.1;
+        let current_bottom = normalized.boxes[parent_idx].bottom_right.0;
+
+        if required_right > current_right {
+            normalized.boxes[parent_idx].bottom_right.1 = required_right;
+        }
+        if required_bottom > current_bottom {
+            normalized.boxes[parent_idx].bottom_right.0 = required_bottom;
+        }
+    }
+
+    // Find parent-child relationships
+    let mut parent_child_groups = Vec::new();
+
+    for (parent_idx, parent) in normalized.boxes.iter().enumerate() {
+        let mut children = Vec::new();
+
+        for (child_idx, child) in normalized.boxes.iter().enumerate() {
+            if child_idx != parent_idx {
+                // Check if child is contained within parent boundaries
+                let child_contained = child.top_left.0 > parent.top_left.0
+                    && child.bottom_right.0 < parent.bottom_right.0
+                    && child.top_left.1 > parent.top_left.1
+                    && child.bottom_right.1 < parent.bottom_right.1;
+
+                if child_contained {
+                    println!(
+                        "  Found child {} contained in parent {}",
+                        child_idx, parent_idx
+                    );
+                    children.push(child_idx);
+                }
+            }
+        }
+        if !children.is_empty() {
+            parent_child_groups.push((parent_idx, children));
+        }
+    }
+
+    // Process each parent-child group
+    for (parent_idx, children) in parent_child_groups {
+        // Calculate required dimensions for parent
+        let mut required_right = normalized.boxes[parent_idx].bottom_right.1;
+        let mut required_bottom = normalized.boxes[parent_idx].bottom_right.0;
+
+        println!(
+            "  Processing parent {} with {} children",
+            parent_idx,
+            children.len()
+        );
+
+        for &child_idx in &children {
+            let child = &normalized.boxes[child_idx];
+            println!(
+                "    Child {}: ({},{}) -> ({},{})",
+                child_idx,
+                child.top_left.0,
+                child.top_left.1,
+                child.bottom_right.0,
+                child.bottom_right.1
+            );
+
+            // Add margin around child (1 space on each side)
+            required_right = required_right.max(child.bottom_right.1 + 2);
+            required_bottom = required_bottom.max(child.bottom_right.0 + 2);
+        }
+
+        println!(
+            "    Required dimensions: right={}, bottom={}",
+            required_right, required_bottom
+        );
+
+        // Expand parent if needed
+        let current_right = normalized.boxes[parent_idx].bottom_right.1;
+        let current_bottom = normalized.boxes[parent_idx].bottom_right.0;
+
+        if required_right > current_right {
+            println!(
+                "    Expanding parent right from {} to {}",
+                current_right, required_right
+            );
+            normalized.boxes[parent_idx].bottom_right.1 = required_right;
+            println!(
+                "    After expansion: bottom_right.1 = {}",
+                normalized.boxes[parent_idx].bottom_right.1
+            );
+        }
+        if required_bottom > current_bottom {
+            println!(
+                "    Expanding parent bottom from {} to {}",
+                current_bottom, required_bottom
+            );
+            normalized.boxes[parent_idx].bottom_right.0 = required_bottom;
+            println!(
+                "    After expansion: bottom_right.0 = {}",
+                normalized.boxes[parent_idx].bottom_right.0
+            );
+        }
+    }
+
+    // Also process boxes that have parent_idx set but weren't found as parents
+    // This handles cases where children extend outside parents
+    let mut expansions = Vec::new();
+
+    // First pass: collect all required expansions
+    for i in 0..normalized.boxes.len() {
+        if let Some(parent_idx) = normalized.boxes[i].parent_idx {
+            let child = &normalized.boxes[i];
+
+            // Ensure parent is large enough for this child
+            let required_right = child.bottom_right.1 + 2;
+            let required_bottom = child.bottom_right.0 + 2;
+
+            expansions.push((parent_idx, required_right, required_bottom));
+        }
+    }
+
+    // Second pass: apply expansions
+    for (parent_idx, required_right, required_bottom) in expansions {
+        let parent = &mut normalized.boxes[parent_idx];
+
+        if required_right > parent.bottom_right.1 {
+            println!(
+                "    Expanding parent {}: right {} -> {}",
+                parent_idx, parent.bottom_right.1, required_right
+            );
+            parent.bottom_right.1 = required_right;
+        }
+        if required_bottom > parent.bottom_right.0 {
+            println!(
+                "    Expanding parent {}: bottom {} -> {}",
+                parent_idx, parent.bottom_right.0, required_bottom
+            );
+            parent.bottom_right.0 = required_bottom;
+        }
+    }
+
+    normalized
+}
+
 /// Normalize connection lines (snap to box edges, straighten segments).
 ///
 /// Algorithm:
@@ -314,54 +519,6 @@ pub fn normalize_connection_lines(inventory: &PrimitiveInventory) -> PrimitiveIn
 pub fn normalize_labels(inventory: &PrimitiveInventory) -> PrimitiveInventory {
     // For MVP, return unchanged (conservative approach)
     inventory.clone()
-}
-
-/// Normalize nested boxes by expanding parents to contain their children.
-///
-/// Algorithm:
-/// 1. Process boxes from innermost to outermost (by depth)
-/// 2. For each parent, expand to minimum size that contains all children
-/// 3. Add margin of 1 cell around children for padding
-/// 4. Only expands, never shrinks (idempotent)
-///
-/// Conservative: Skips if ambiguous nesting or >3 levels deep.
-#[allow(dead_code)] // Reason: Used by normalization pipeline
-#[must_use]
-pub fn normalize_nested_boxes(inventory: &PrimitiveInventory) -> PrimitiveInventory {
-    let mut result = inventory.clone();
-
-    // For each box with children, expand to fit them
-    for parent_idx in 0..result.boxes.len() {
-        let children_indices = result.boxes[parent_idx].child_indices.clone();
-        if !children_indices.is_empty() {
-            let mut min_row = result.boxes[parent_idx].top_left.0;
-            let mut min_col = result.boxes[parent_idx].top_left.1;
-            let mut max_row = result.boxes[parent_idx].bottom_right.0;
-            let mut max_col = result.boxes[parent_idx].bottom_right.1;
-
-            // Find bounds that encompass all children
-            for &child_idx in &children_indices {
-                if child_idx < result.boxes.len() {
-                    let child = &result.boxes[child_idx];
-                    // Need 1 cell margin around child
-                    min_row = min_row.min(child.top_left.0.saturating_sub(1));
-                    min_col = min_col.min(child.top_left.1.saturating_sub(1));
-                    max_row = max_row.max(child.bottom_right.0 + 1);
-                    max_col = max_col.max(child.bottom_right.1 + 1);
-                }
-            }
-
-            // Only expand, never shrink
-            result.boxes[parent_idx].top_left.0 = result.boxes[parent_idx].top_left.0.min(min_row);
-            result.boxes[parent_idx].top_left.1 = result.boxes[parent_idx].top_left.1.min(min_col);
-            result.boxes[parent_idx].bottom_right.0 =
-                result.boxes[parent_idx].bottom_right.0.max(max_row);
-            result.boxes[parent_idx].bottom_right.1 =
-                result.boxes[parent_idx].bottom_right.1.max(max_col);
-        }
-    }
-
-    result
 }
 
 #[cfg(test)]

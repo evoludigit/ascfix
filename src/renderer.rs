@@ -10,7 +10,10 @@ use crate::{grid::Grid, primitives::PrimitiveInventory};
 /// 1. Create a new grid large enough for all primitives (filled with spaces)
 /// 2. Draw all boxes (borders)
 /// 3. Draw text rows
-/// 4. Draw arrows
+/// 4. Draw arrows (skipping those inside box interiors to prevent text corruption)
+///
+/// Note: This creates a fresh grid. For preserving existing content, use
+/// `render_onto_grid()` instead.
 #[allow(dead_code)] // Reason: Used by main processing pipeline
 pub fn render_diagram(inventory: &PrimitiveInventory) -> Grid {
     // Calculate required grid dimensions
@@ -23,22 +26,144 @@ pub fn render_diagram(inventory: &PrimitiveInventory) -> Grid {
 
     // Draw boxes
     for b in &inventory.boxes {
-        draw_box(&mut grid, b);
+        draw_box(&mut grid, b, inventory);
     }
 
     // Draw text rows
     for row in &inventory.text_rows {
-        draw_text_row(&mut grid, row);
+        if !row.content.trim().is_empty() {
+            draw_text_row(&mut grid, row);
+        }
     }
 
-    // Draw horizontal arrows
+    // Draw horizontal arrows (skip if inside any box interior)
     for arrow in &inventory.horizontal_arrows {
-        draw_horizontal_arrow(&mut grid, arrow);
+        if !is_position_inside_any_box(&inventory.boxes, arrow.row, arrow.start_col)
+            && !is_position_inside_any_box(&inventory.boxes, arrow.row, arrow.end_col)
+        {
+            draw_horizontal_arrow(&mut grid, arrow);
+        }
     }
 
-    // Draw vertical arrows
+    // Draw vertical arrows (skip if inside any box interior to prevent text corruption)
     for arrow in &inventory.vertical_arrows {
-        draw_vertical_arrow(&mut grid, arrow);
+        if !is_position_inside_any_box(&inventory.boxes, arrow.start_row, arrow.col)
+            && !is_position_inside_any_box(&inventory.boxes, arrow.end_row, arrow.col)
+        {
+            draw_vertical_arrow(&mut grid, arrow);
+        }
+    }
+
+    // Draw connection lines
+    for conn in &inventory.connection_lines {
+        draw_connection_line(&mut grid, conn);
+    }
+
+    // Draw labels (rendered last to be on top)
+    for label in &inventory.labels {
+        draw_label(&mut grid, label);
+    }
+
+    grid
+}
+
+/// Check if a position (row, col) falls inside any box's interior.
+/// Interior means: between top and bottom borders, and between left and right borders.
+fn is_position_inside_any_box(boxes: &[crate::primitives::Box], row: usize, col: usize) -> bool {
+    boxes.iter().any(|b| {
+        row > b.top_left.0 && row < b.bottom_right.0 && col > b.top_left.1 && col < b.bottom_right.1
+    })
+}
+
+/// Render primitives onto an existing grid, preserving pass-through content.
+///
+/// This is the key fix for data loss issues. Instead of creating a fresh grid
+/// with only detected primitives, we start with the original grid (which has
+/// all content including lines without detected primitives) and overlay
+/// primitives on top. This ensures that lines with text content but no
+/// detected primitives (like "│ Start    │") are preserved.
+///
+/// Algorithm:
+/// 1. Clone the original grid (contains all original content)
+/// 2. Draw boxes (borders will overwrite original borders - this is intentional)
+/// 3. Draw text rows extracted from boxes (these replace original interior content)
+/// 4. Draw arrows (only if outside box interiors, to prevent text corruption)
+/// 5. Draw connection lines and labels
+///
+/// This approach preserves:
+/// - Lines with content but no detected primitives
+/// - Empty lines
+/// - Comments and annotations
+#[must_use]
+#[allow(dead_code)] // Reason: Used by main processing pipeline
+pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid {
+    // Calculate required dimensions for normalized boxes
+    let (max_row, max_col) = calculate_bounds(inventory);
+    let original_height = original.height();
+    let original_width = original.width();
+
+    // Create a grid that can accommodate both original content AND expanded boxes
+    let required_height = max_row.max(original_height.saturating_sub(1)) + 1;
+    let required_width = max_col.max(original_width.saturating_sub(1)) + 1;
+
+    // Clone the original grid and resize if necessary
+    let mut grid = if required_height > original_height || required_width > original_width {
+        // Need to resize - create new grid with original content padded
+        let mut new_rows: Vec<Vec<char>> = Vec::with_capacity(required_height);
+
+        // Copy original rows
+        for row_idx in 0..required_height {
+            if row_idx < original_height {
+                let mut row: Vec<char> = Vec::with_capacity(required_width);
+                // Copy original columns
+                for col_idx in 0..required_width {
+                    if col_idx < original_width {
+                        row.push(original.get(row_idx, col_idx).unwrap_or(' '));
+                    } else {
+                        row.push(' ');
+                    }
+                }
+                new_rows.push(row);
+            } else {
+                // New row - fill with spaces
+                new_rows.push(vec![' '; required_width]);
+            }
+        }
+        Grid::from_rows(new_rows)
+    } else {
+        // No resize needed - just clone
+        original.clone()
+    };
+
+    // Draw boxes - borders overwrite original, which is correct
+    for b in &inventory.boxes {
+        draw_box(&mut grid, b, inventory);
+    }
+
+    // Draw text rows extracted from boxes - these replace original content
+    // Only draw if the text row has actual content (preserves spacing)
+    for row in &inventory.text_rows {
+        if !row.content.trim().is_empty() {
+            draw_text_row(&mut grid, row);
+        }
+    }
+
+    // Draw horizontal arrows (skip if inside any box interior)
+    for arrow in &inventory.horizontal_arrows {
+        if !is_position_inside_any_box(&inventory.boxes, arrow.row, arrow.start_col)
+            && !is_position_inside_any_box(&inventory.boxes, arrow.row, arrow.end_col)
+        {
+            draw_horizontal_arrow(&mut grid, arrow);
+        }
+    }
+
+    // Draw vertical arrows (skip if inside any box interior)
+    for arrow in &inventory.vertical_arrows {
+        if !is_position_inside_any_box(&inventory.boxes, arrow.start_row, arrow.col)
+            && !is_position_inside_any_box(&inventory.boxes, arrow.end_row, arrow.col)
+        {
+            draw_vertical_arrow(&mut grid, arrow);
+        }
     }
 
     // Draw connection lines
@@ -113,7 +238,7 @@ fn calculate_bounds(inventory: &PrimitiveInventory) -> (usize, usize) {
 }
 
 /// Draw a box on the grid.
-fn draw_box(grid: &mut Grid, b: &crate::primitives::Box) {
+fn draw_box(grid: &mut Grid, b: &crate::primitives::Box, _inventory: &PrimitiveInventory) {
     let chars = b.style.chars();
 
     // Top and bottom borders
@@ -149,6 +274,34 @@ fn draw_box(grid: &mut Grid, b: &crate::primitives::Box) {
     if let Some(cell) = grid.get_mut(b.bottom_right.0, b.bottom_right.1) {
         *cell = chars.bottom_right;
     }
+}
+
+/// Check if a position would be occupied by a child box's border
+/// This checks coordinates rather than rendered content to avoid order dependencies
+fn is_child_border_at(
+    inventory: &PrimitiveInventory,
+    parent: &crate::primitives::Box,
+    row: usize,
+    col: usize,
+) -> bool {
+    for &child_idx in &parent.child_indices {
+        let child = &inventory.boxes[child_idx];
+
+        // Check if position is on child's border coordinates
+        let on_top_border =
+            row == child.top_left.0 && col >= child.top_left.1 && col <= child.bottom_right.1;
+        let on_bottom_border =
+            row == child.bottom_right.0 && col >= child.top_left.1 && col <= child.bottom_right.1;
+        let on_left_border =
+            col == child.top_left.1 && row >= child.top_left.0 && row <= child.bottom_right.0;
+        let on_right_border =
+            col == child.bottom_right.1 && row >= child.top_left.0 && row <= child.bottom_right.0;
+
+        if on_top_border || on_bottom_border || on_left_border || on_right_border {
+            return true;
+        }
+    }
+    false
 }
 
 /// Draw a text row on the grid.
