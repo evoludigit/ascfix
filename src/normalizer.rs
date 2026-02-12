@@ -375,10 +375,6 @@ pub fn normalize_nested_boxes(inventory: &PrimitiveInventory) -> PrimitiveInvent
                     && child.bottom_right.1 < parent.bottom_right.1;
 
                 if child_contained {
-                    println!(
-                        "  Found child {} contained in parent {}",
-                        child_idx, parent_idx
-                    );
                     children.push(child_idx);
                 }
             }
@@ -394,58 +390,23 @@ pub fn normalize_nested_boxes(inventory: &PrimitiveInventory) -> PrimitiveInvent
         let mut required_right = normalized.boxes[parent_idx].bottom_right.1;
         let mut required_bottom = normalized.boxes[parent_idx].bottom_right.0;
 
-        println!(
-            "  Processing parent {} with {} children",
-            parent_idx,
-            children.len()
-        );
-
         for &child_idx in &children {
             let child = &normalized.boxes[child_idx];
-            println!(
-                "    Child {}: ({},{}) -> ({},{})",
-                child_idx,
-                child.top_left.0,
-                child.top_left.1,
-                child.bottom_right.0,
-                child.bottom_right.1
-            );
 
             // Add margin around child (1 space on each side)
             required_right = required_right.max(child.bottom_right.1 + 2);
             required_bottom = required_bottom.max(child.bottom_right.0 + 2);
         }
 
-        println!(
-            "    Required dimensions: right={}, bottom={}",
-            required_right, required_bottom
-        );
-
         // Expand parent if needed
         let current_right = normalized.boxes[parent_idx].bottom_right.1;
         let current_bottom = normalized.boxes[parent_idx].bottom_right.0;
 
         if required_right > current_right {
-            println!(
-                "    Expanding parent right from {} to {}",
-                current_right, required_right
-            );
             normalized.boxes[parent_idx].bottom_right.1 = required_right;
-            println!(
-                "    After expansion: bottom_right.1 = {}",
-                normalized.boxes[parent_idx].bottom_right.1
-            );
         }
         if required_bottom > current_bottom {
-            println!(
-                "    Expanding parent bottom from {} to {}",
-                current_bottom, required_bottom
-            );
             normalized.boxes[parent_idx].bottom_right.0 = required_bottom;
-            println!(
-                "    After expansion: bottom_right.0 = {}",
-                normalized.boxes[parent_idx].bottom_right.0
-            );
         }
     }
 
@@ -471,17 +432,9 @@ pub fn normalize_nested_boxes(inventory: &PrimitiveInventory) -> PrimitiveInvent
         let parent = &mut normalized.boxes[parent_idx];
 
         if required_right > parent.bottom_right.1 {
-            println!(
-                "    Expanding parent {}: right {} -> {}",
-                parent_idx, parent.bottom_right.1, required_right
-            );
             parent.bottom_right.1 = required_right;
         }
         if required_bottom > parent.bottom_right.0 {
-            println!(
-                "    Expanding parent {}: bottom {} -> {}",
-                parent_idx, parent.bottom_right.0, required_bottom
-            );
             parent.bottom_right.0 = required_bottom;
         }
     }

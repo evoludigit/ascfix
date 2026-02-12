@@ -238,7 +238,7 @@ fn calculate_bounds(inventory: &PrimitiveInventory) -> (usize, usize) {
 }
 
 /// Draw a box on the grid.
-fn draw_box(grid: &mut Grid, b: &crate::primitives::Box, _inventory: &PrimitiveInventory) {
+fn draw_box(grid: &mut Grid, b: &crate::primitives::Box, inventory: &PrimitiveInventory) {
     let chars = b.style.chars();
 
     // Top and bottom borders
