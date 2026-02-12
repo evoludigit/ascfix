@@ -432,6 +432,89 @@ pub fn normalize_list_indentation(content: &str) -> String {
     result.join("\n")
 }
 
+/// Normalize bullet styles to a consistent character.
+///
+/// Converts all bullet list markers (`-`, `*`, `+`) to the specified style.
+/// Ordered lists are not affected. Task list syntax is preserved.
+///
+/// # Arguments
+///
+/// * `content` - The content containing lists to normalize
+/// * `target_bullet` - The bullet character to use (`-`, `*`, or `+`)
+///
+/// # Examples
+///
+/// ```
+/// use ascfix::lists::normalize_bullet_styles;
+///
+/// let content = "- Item 1\n* Item 2\n+ Item 3";
+/// let normalized = normalize_bullet_styles(content, '-');
+/// assert!(normalized.contains("- Item 1"));
+/// assert!(normalized.contains("- Item 2"));
+/// assert!(normalized.contains("- Item 3"));
+/// ```
+#[must_use]
+#[allow(dead_code)]
+pub fn normalize_bullet_styles(content: &str, target_bullet: char) -> String {
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.is_empty() {
+        return String::new();
+    }
+
+    // Validate target bullet
+    let target = match target_bullet {
+        '-' | '*' | '+' => target_bullet,
+        _ => '-', // Default to dash if invalid
+    };
+
+    // Get code block regions to skip
+    let code_ranges = get_code_block_line_ranges(content);
+
+    let mut result = Vec::new();
+
+    for (i, line) in lines.iter().enumerate() {
+        // Skip lines inside code blocks
+        if is_in_code_region(i, &code_ranges) {
+            result.push(line.to_string());
+            continue;
+        }
+
+        // Check if this line is a list item
+        if let Some(item) = parse_list_item(line, i) {
+            // Only modify bullet lists (not ordered lists)
+            if ["-", "*", "+"].contains(&item.marker.as_str()) {
+                let indent = line.len() - line.trim_start().len();
+                let indent_str = " ".repeat(indent);
+
+                // Reconstruct with target bullet
+                let reconstructed = if item.is_task {
+                    format!(
+                        "{}{} [{}] {}",
+                        indent_str,
+                        target,
+                        if item.checked.unwrap_or(false) {
+                            "x"
+                        } else {
+                            " "
+                        },
+                        item.content
+                    )
+                } else {
+                    format!("{}{} {}", indent_str, target, item.content)
+                };
+                result.push(reconstructed);
+            } else {
+                // Ordered list - keep as is
+                result.push(line.to_string());
+            }
+        } else {
+            result.push(line.to_string());
+        }
+    }
+
+    result.join("\n")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -547,5 +630,57 @@ mod tests {
         assert!(normalized.contains("- Item 1"));
         assert!(normalized.contains("  - Two space"));
         assert!(normalized.contains("    - Four space")); // 4 spaces is correct for 2nd level
+    }
+
+    #[test]
+    fn normalize_bullet_styles_to_dash() {
+        // Mixed bullet styles should become dashes
+        let content = "- Item 1\n* Item 2\n+ Item 3";
+        let normalized = normalize_bullet_styles(content, '-');
+        assert!(normalized.contains("- Item 1"));
+        assert!(normalized.contains("- Item 2"));
+        assert!(normalized.contains("- Item 3"));
+        assert!(!normalized.contains("* Item"));
+        assert!(!normalized.contains("+ Item"));
+    }
+
+    #[test]
+    fn normalize_bullet_styles_to_asterisk() {
+        // Can normalize to any bullet style
+        let content = "- Item 1\n* Item 2\n+ Item 3";
+        let normalized = normalize_bullet_styles(content, '*');
+        assert!(normalized.contains("* Item 1"));
+        assert!(normalized.contains("* Item 2"));
+        assert!(normalized.contains("* Item 3"));
+    }
+
+    #[test]
+    fn bullet_normalization_preserves_indentation() {
+        // Bullet style change should not affect indentation
+        let content = "- Item 1\n  * Nested\n    + Deep";
+        let normalized = normalize_bullet_styles(content, '-');
+        assert!(normalized.contains("- Item 1"));
+        assert!(normalized.contains("  - Nested"));
+        assert!(normalized.contains("    - Deep"));
+    }
+
+    #[test]
+    fn bullet_normalization_preserves_task_lists() {
+        // Task list syntax should be preserved
+        let content = "- [ ] Todo\n* [x] Done\n+ [ ] Another";
+        let normalized = normalize_bullet_styles(content, '-');
+        assert!(normalized.contains("- [ ] Todo"));
+        assert!(normalized.contains("- [x] Done"));
+        assert!(normalized.contains("- [ ] Another"));
+    }
+
+    #[test]
+    fn bullet_normalization_preserves_ordered_lists() {
+        // Ordered lists should not be affected
+        let content = "1. First\n2. Second\n- Unordered";
+        let normalized = normalize_bullet_styles(content, '-');
+        assert!(normalized.contains("1. First"));
+        assert!(normalized.contains("2. Second"));
+        assert!(normalized.contains("- Unordered"));
     }
 }
