@@ -23,3 +23,4 @@ pub mod processor;
 pub mod quality;
 pub mod renderer;
 pub mod scanner;
+pub mod transformation_analysis;

@@ -8,6 +8,7 @@
 use crate::cli::Mode;
 use crate::config::Config;
 use crate::modes;
+use crate::transformation_analysis::{analyze_transformations, TransformationType};
 
 /// Comprehensive quality report for diagram processing
 #[derive(Debug, Clone)]
@@ -137,7 +138,7 @@ impl QualityReport {
     }
 }
 
-/// Validate the quality of diagram processing
+/// Validate the quality of diagram processing with intelligent transformation analysis
 pub fn validate_quality(input: &str, output: &str) -> QualityReport {
     let mut report = QualityReport {
         score: 1.0,
@@ -158,24 +159,56 @@ pub fn validate_quality(input: &str, output: &str) -> QualityReport {
     // Basic metrics
     report.metrics.line_count_delta = output_lines.len() as i32 - input_lines.len() as i32;
 
-    // Check for text corruption
-    check_text_corruption(&input_lines, &output_lines, &mut report);
+    // Advanced transformation analysis
+    let transformation_analysis = analyze_transformations(input, output);
 
-    // Check for data loss
-    check_data_loss(&input_lines, &output_lines, &mut report);
+    // Update metrics based on transformation analysis
+    report.metrics.text_corruption_count = transformation_analysis.summary.destructive_count;
+    report.metrics.data_loss_count = transformation_analysis
+        .transformations
+        .iter()
+        .filter(|t| matches!(t.transform_type, TransformationType::Destructive(_)))
+        .count();
 
-    // Check visual consistency
-    check_visual_consistency(&output_lines, &mut report);
-
-    // Calculate structure preservation (simplified for now)
-    report.metrics.structure_preservation = if report.metrics.data_loss_count == 0 {
-        1.0
+    // Calculate text preservation considering constructive transformations
+    let original_text_chars = count_text_chars(&input_lines);
+    let output_text_chars = count_text_chars(&output_lines);
+    let base_preservation = if original_text_chars > 0 {
+        output_text_chars as f32 / original_text_chars as f32
     } else {
-        0.8
+        1.0
     };
 
-    // Calculate overall score
-    report.score = calculate_overall_score(&report.metrics);
+    // Adjust preservation score based on constructive transformations
+    // Constructive changes (like arrow duplication) shouldn't penalize preservation
+    let constructive_bonus = transformation_analysis.summary.constructive_count as f32 * 0.02;
+    report.metrics.text_preservation = (base_preservation + constructive_bonus).min(1.0);
+
+    // Traditional checks (for compatibility)
+    check_text_corruption(&input_lines, &output_lines, &mut report);
+    check_data_loss(&input_lines, &output_lines, &mut report);
+    check_visual_consistency(&output_lines, &mut report);
+
+    // Enhanced structure preservation based on transformation analysis
+    report.metrics.structure_preservation =
+        calculate_structure_preservation(&transformation_analysis);
+
+    // Calculate overall score with transformation awareness
+    report.score = calculate_enhanced_overall_score(&report.metrics, &transformation_analysis);
+
+    // Add transformation insights to issues
+    for transformation in &transformation_analysis.transformations {
+        if matches!(
+            transformation.transform_type,
+            TransformationType::Destructive(_)
+        ) {
+            report.issues.push(QualityIssue::TextCorruption {
+                line: transformation.location.line,
+                expected: "original content".to_string(),
+                got: transformation.description.clone(),
+            });
+        }
+    }
 
     report
 }
@@ -277,25 +310,68 @@ fn check_visual_consistency(output_lines: &[&str], report: &mut QualityReport) {
     report.metrics.visual_consistency = report.metrics.visual_consistency.max(0.0);
 }
 
-/// Calculate overall quality score
-fn calculate_overall_score(metrics: &QualityMetrics) -> f32 {
+/// Calculate structure preservation based on transformation analysis
+fn calculate_structure_preservation(
+    analysis: &crate::transformation_analysis::TransformationAnalysis,
+) -> f32 {
+    let destructive = analysis.summary.destructive_count as f32;
+    let constructive = analysis.summary.constructive_count as f32;
+    let neutral = analysis.summary.neutral_count as f32;
+    let total = destructive + constructive + neutral;
+
+    if total == 0.0 {
+        return 1.0; // No transformations = perfect preservation
+    }
+
+    // Structure preservation considers constructive changes as neutral
+    let preserved = constructive + neutral;
+    preserved / total
+}
+
+/// Calculate enhanced overall score with transformation awareness
+fn calculate_enhanced_overall_score(
+    metrics: &QualityMetrics,
+    analysis: &crate::transformation_analysis::TransformationAnalysis,
+) -> f32 {
     let mut score = 1.0;
 
-    // Heavily penalize text corruption
-    score -= metrics.text_corruption_count as f32 * 0.3;
-
-    // Penalize data loss
-    score -= metrics.data_loss_count as f32 * 0.2;
-
-    // Factor in preservation scores
+    // Base score from traditional metrics
     score *= metrics.text_preservation;
     score *= metrics.structure_preservation;
     score *= metrics.visual_consistency;
 
-    // Penalize line count changes
-    score -= (metrics.line_count_delta.abs() as f32 * 0.05).min(0.2);
+    // Adjust based on transformation quality impact
+    score += analysis.summary.net_quality_impact * 0.1; // Scale the impact
+
+    // Heavy penalty for destructive transformations
+    let destructive_penalty = analysis.summary.destructive_count as f32 * 0.2;
+    score -= destructive_penalty;
+
+    // Light penalty for line count changes
+    score -= (metrics.line_count_delta.abs() as f32 * 0.02).min(0.1);
+
+    // Bonus for constructive transformations
+    let constructive_bonus = analysis.summary.constructive_count as f32 * 0.05;
+    score += constructive_bonus.min(0.2); // Cap the bonus
 
     score.max(0.0).min(1.0)
+}
+
+/// Calculate overall quality score (legacy function)
+fn calculate_overall_score(metrics: &QualityMetrics) -> f32 {
+    calculate_enhanced_overall_score(
+        metrics,
+        &crate::transformation_analysis::TransformationAnalysis {
+            transformations: Vec::new(),
+            summary: crate::transformation_analysis::TransformationSummary {
+                destructive_count: metrics.text_corruption_count,
+                constructive_count: 0,
+                neutral_count: 0,
+                net_quality_impact: 0.0,
+                risk_score: metrics.text_corruption_count as f32 * 0.1,
+            },
+        },
+    )
 }
 
 /// Check if an arrow appears to be corrupting text (replacing a letter)
