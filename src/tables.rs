@@ -104,11 +104,25 @@ fn split_table_cells(line: &str) -> Vec<&str> {
 /// ```markdown
 /// | Item | This is a very long description |
 /// ```
+///
+/// Intentional multi-line content with code blocks is preserved:
+/// ```markdown
+/// | Code | Example |
+/// | ```python | of code |
+/// | def hello(): | inside |
+/// | ``` | cell |
+/// ```
+/// remains unchanged (preserved as 4 rows).
 #[must_use]
 #[allow(dead_code)] // Reason: Used in tests, will be used in production soon
 pub fn unwrap_table_rows(rows: &[&str]) -> Vec<String> {
     if rows.is_empty() {
         return Vec::new();
+    }
+
+    // Check if any row contains a code fence - if so, preserve all rows as-is
+    if rows_contain_code_fence(rows) {
+        return rows.iter().map(|&s| s.to_string()).collect();
     }
 
     let mut result: Vec<String> = Vec::new();
@@ -170,6 +184,27 @@ fn format_row(cells: &[String]) -> String {
     result
 }
 
+/// Check if a line contains code fence markers.
+/// Detects both backtick and tilde fences.
+fn contains_code_fence(line: &str) -> bool {
+    let trimmed = line.trim();
+    // Check for backtick fences: ``` or ```python
+    if trimmed.contains("```") {
+        return true;
+    }
+    // Check for tilde fences: ~~~ or ~~~bash
+    if trimmed.contains("~~~") {
+        return true;
+    }
+    false
+}
+
+/// Check if a sequence of rows contains any code fences.
+/// Used to determine if wrapped rows should be preserved as multi-line content.
+fn rows_contain_code_fence(rows: &[&str]) -> bool {
+    rows.iter().any(|row| contains_code_fence(row))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -204,5 +239,38 @@ mod tests {
         let unwrapped = unwrap_table_rows(&rows);
         assert_eq!(unwrapped.len(), 1);
         assert_eq!(unwrapped[0], "| x | very long text | z |");
+    }
+
+    #[test]
+    fn preserve_intentional_multiline_code_block() {
+        // Table cell with code block should NOT be unwrapped
+        let rows = vec![
+            "| Code | Example |",
+            "| ```python | of code |",
+            "| def hello(): | inside |",
+            "| ``` | cell |",
+        ];
+        let unwrapped = unwrap_table_rows(&rows);
+        // Should preserve all 4 rows since there's a code block
+        assert_eq!(unwrapped.len(), 4);
+    }
+
+    #[test]
+    fn unwrap_wrapped_but_not_code() {
+        // Regular wrapped text should be joined, but code blocks preserved
+        let rows = vec!["| A | This is a very |", "|   | long description |"];
+        let unwrapped = unwrap_table_rows(&rows);
+        assert_eq!(unwrapped.len(), 1);
+        assert_eq!(unwrapped[0], "| A | This is a very long description |");
+    }
+
+    #[test]
+    fn detect_code_fence_in_cell() {
+        // Test detection of code fences inside table cells
+        assert!(contains_code_fence("| ```python | code |"));
+        assert!(contains_code_fence("| ``` | end |"));
+        assert!(contains_code_fence("| ~~~bash | script |"));
+        assert!(!contains_code_fence("| normal text | here |"));
+        assert!(!contains_code_fence("| no code | fence |"));
     }
 }
