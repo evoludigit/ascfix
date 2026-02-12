@@ -6,7 +6,7 @@ Testing boxes with rounded-corner style (╭ ─ ╮ ╰ ╯):
 │ Rounded        │
 │ Corner Box     │
 ╰────────────────╯
-        ↓↓
+        ↓
 ╭────────────────╮
 │ Another        │
 │ Rounded Box    │

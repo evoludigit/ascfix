@@ -218,6 +218,8 @@ pub struct HorizontalArrow {
     pub arrow_type: ArrowType,
     /// Direction: true if rightward (→), false if leftward (←)
     pub rightward: bool,
+    /// Original arrow character to preserve (e.g., '→', '←')
+    pub arrow_char: Option<char>,
 }
 
 /// A vertical arrow or connector.
@@ -234,6 +236,8 @@ pub struct VerticalArrow {
     pub arrow_type: ArrowType,
     /// Direction: true if downward (↓), false if upward (↑)
     pub downward: bool,
+    /// Original arrow character to preserve (e.g., '↓', '↑')
+    pub arrow_char: Option<char>,
 }
 
 /// A row of text content.
@@ -492,6 +496,7 @@ mod tests {
             end_col: 8,
             arrow_type: ArrowType::Standard,
             rightward: true,
+            arrow_char: Some('→'),
         };
         assert_eq!(arr.row, 5);
         assert_eq!(arr.start_col, 2);
@@ -505,6 +510,7 @@ mod tests {
             end_row: 6,
             arrow_type: ArrowType::Standard,
             downward: true,
+            arrow_char: None,
         };
         assert_eq!(arr.col, 3);
         assert_eq!(arr.start_row, 1);
@@ -753,6 +759,7 @@ mod tests {
             end_col: 8,
             arrow_type: ArrowType::Standard,
             rightward: true,
+            arrow_char: None,
         };
         assert_eq!(arr.arrow_type, ArrowType::Standard);
         assert!(arr.rightward);
@@ -766,6 +773,7 @@ mod tests {
             end_col: 2,
             arrow_type: ArrowType::Double,
             rightward: false,
+            arrow_char: Some('⇐'),
         };
         assert_eq!(arr.arrow_type, ArrowType::Double);
         assert!(!arr.rightward);
@@ -779,6 +787,7 @@ mod tests {
             end_row: 6,
             arrow_type: ArrowType::Long,
             downward: true,
+            arrow_char: Some('↓'),
         };
         assert_eq!(arr.arrow_type, ArrowType::Long);
         assert!(arr.downward);
@@ -792,6 +801,7 @@ mod tests {
             end_row: 1,
             arrow_type: ArrowType::Dashed,
             downward: false,
+            arrow_char: Some('↑'),
         };
         assert_eq!(arr.arrow_type, ArrowType::Dashed);
         assert!(!arr.downward);

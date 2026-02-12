@@ -646,6 +646,7 @@ mod tests {
             end_col: 5,
             arrow_type: ArrowType::Standard,
             rightward: true,
+            arrow_char: None,
         });
 
         let normalized = align_horizontal_arrows(&inventory);
@@ -663,6 +664,7 @@ mod tests {
             end_col: 15,
             arrow_type: ArrowType::Standard,
             rightward: true,
+            arrow_char: None,
         });
         inventory.horizontal_arrows.push(HorizontalArrow {
             row: 0,
@@ -670,6 +672,7 @@ mod tests {
             end_col: 5,
             arrow_type: ArrowType::Standard,
             rightward: true,
+            arrow_char: None,
         });
 
         let normalized = align_horizontal_arrows(&inventory);
@@ -689,6 +692,7 @@ mod tests {
             end_col: 8,
             arrow_type: ArrowType::Standard,
             rightward: true,
+            arrow_char: None,
         });
         inventory.horizontal_arrows.push(HorizontalArrow {
             row: 5,
@@ -696,6 +700,7 @@ mod tests {
             end_col: 8,
             arrow_type: ArrowType::Standard,
             rightward: true,
+            arrow_char: None,
         });
 
         let normalized = align_horizontal_arrows(&inventory);
@@ -731,7 +736,8 @@ mod tests {
                 end_row: 6,
                 arrow_type: ArrowType::Standard,
                 downward: true,
-            });
+            arrow_char: None,
+        });
 
         let normalized = align_vertical_arrows(&inventory);
         let arrow = &normalized.vertical_arrows[0];
@@ -759,7 +765,8 @@ mod tests {
                 end_row: 6,
                 arrow_type: ArrowType::Standard,
                 downward: true,
-            });
+            arrow_char: None,
+        });
 
         let normalized = align_vertical_arrows(&inventory);
         let arrow = &normalized.vertical_arrows[0];
@@ -794,7 +801,8 @@ mod tests {
                 end_row: 6,
                 arrow_type: ArrowType::Standard,
                 downward: true,
-            });
+            arrow_char: None,
+        });
 
         let normalized = align_vertical_arrows(&inventory);
         let arrow = &normalized.vertical_arrows[0];
@@ -820,7 +828,8 @@ mod tests {
                 end_row: 6,
                 arrow_type: ArrowType::Standard,
                 downward: true,
-            });
+            arrow_char: None,
+        });
 
         let normalized = align_vertical_arrows(&inventory);
         let arrow = &normalized.vertical_arrows[0];
@@ -1006,6 +1015,7 @@ mod tests {
             end_col: 5,
             arrow_type: ArrowType::Standard,
             rightward: true,
+            arrow_char: None,
         });
         inventory.horizontal_arrows.push(HorizontalArrow {
             row: 0,
@@ -1013,6 +1023,7 @@ mod tests {
             end_col: 15,
             arrow_type: ArrowType::Standard,
             rightward: true,
+            arrow_char: None,
         });
 
         let normalized1 = align_horizontal_arrows(&inventory);
@@ -1039,7 +1050,8 @@ mod tests {
                 end_row: 6,
                 arrow_type: ArrowType::Standard,
                 downward: true,
-            });
+            arrow_char: None,
+        });
 
         let normalized1 = align_vertical_arrows(&inventory);
         let normalized2 = align_vertical_arrows(&normalized1);
@@ -1092,6 +1104,7 @@ mod tests {
             end_col: 2,
             arrow_type: ArrowType::Standard,
             rightward: true,
+            arrow_char: None,
         });
 
         // Apply full pipeline twice
@@ -1547,4 +1560,5 @@ mod tests {
         // Both labels should be preserved
         assert_eq!(normalized.labels.len(), 2);
     }
+
 }

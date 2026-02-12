@@ -6,7 +6,7 @@ Testing boxes with double-line style (═ ║ ╔ ╗ ╚ ╝):
 ║ Double-Line    ║
 ║ Box Style      ║
 ╚════════════════╝
-        ↓↓
+        ↓
 ╔════════════════╗
 ║ Another Box    ║
 ║ With Doubles   ║

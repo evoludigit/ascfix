@@ -126,6 +126,10 @@ fn validate_integration_fixtures() {
             "tests/data/integration/dirty/malformed_wrapped_with_code.md",
             "tests/data/integration/clean/malformed_wrapped_with_code.md",
         ),
+        (
+            "tests/data/integration/dirty/readme_arrow_alignment.md",
+            "tests/data/integration/clean/readme_arrow_alignment.md",
+        ),
     ];
 
     let mut failed_fixtures = Vec::new();

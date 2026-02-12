@@ -1,6 +1,6 @@
 [package]
 name = "ascfix"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2021"
 authors = ["evoludigit"]
 description = "Automatic ASCII diagram repair tool for Markdown files"

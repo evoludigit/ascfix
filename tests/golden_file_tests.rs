@@ -195,6 +195,42 @@ fn golden_file_mixed_features() {
 }
 
 #[test]
+fn golden_file_arrow_preservation_vertical() {
+    let input = fs::read_to_string("tests/data/unit/input/arrow_preservation_vertical.txt")
+        .expect("Failed to read input fixture");
+    let expected = fs::read_to_string("tests/data/unit/expected/arrow_preservation_vertical.txt")
+        .expect("Failed to read expected fixture");
+
+    let config = ascfix::config::Config::default();
+    let result =
+        ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false, &config);
+
+    assert_eq!(
+        result.trim(),
+        expected.trim(),
+        "Output does not match expected for arrow_preservation_vertical"
+    );
+}
+
+#[test]
+fn golden_file_arrow_preservation_multi_row() {
+    let input = fs::read_to_string("tests/data/unit/input/arrow_preservation_multi_row.txt")
+        .expect("Failed to read input fixture");
+    let expected = fs::read_to_string("tests/data/unit/expected/arrow_preservation_multi_row.txt")
+        .expect("Failed to read expected fixture");
+
+    let config = ascfix::config::Config::default();
+    let result =
+        ascfix::modes::process_by_mode(&ascfix::cli::Mode::Diagram, &input, false, &config);
+
+    assert_eq!(
+        result.trim(),
+        expected.trim(),
+        "Output does not match expected for arrow_preservation_multi_row"
+    );
+}
+
+#[test]
 fn all_golden_files_have_expected_output() {
     let input_dir = Path::new("tests/data/unit/input");
     let expected_dir = Path::new("tests/data/unit/expected");

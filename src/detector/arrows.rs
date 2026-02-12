@@ -40,12 +40,23 @@ pub fn detect_vertical_arrows(grid: &Grid) -> Vec<crate::primitives::VerticalArr
                             .get(start_row, col)
                             .is_none_or(|start_char| start_char == '↓');
 
+                        // Capture the original arrow character
+                        let arrow_char = grid.get(start_row, col)
+                            .and_then(|c| {
+                                if matches!(c, '↓' | '↑') {
+                                    Some(c)
+                                } else {
+                                    None
+                                }
+                            });
+
                         arrows.push(crate::primitives::VerticalArrow {
                             col,
                             start_row,
                             end_row,
                             arrow_type: ArrowType::Standard,
                             downward: is_downward,
+                            arrow_char,
                         });
                     }
 
@@ -97,12 +108,23 @@ pub fn detect_horizontal_arrows(grid: &Grid) -> Vec<crate::primitives::Horizonta
                         (start_col..=end_col).any(|c| matches!(grid.get(row, c), Some('→' | '←')));
 
                     if has_arrow_tip {
+                        let arrow_char = (start_col..=end_col)
+                            .find_map(|c| {
+                                grid.get(row, c).and_then(|ch| {
+                                    if ArrowType::from_char(ch).is_some() {
+                                        Some(ch)
+                                    } else {
+                                        None
+                                    }
+                                })
+                            });
                         arrows.push(crate::primitives::HorizontalArrow {
                             row,
                             start_col,
                             end_col,
                             arrow_type: ArrowType::Standard,
                             rightward: true,
+                            arrow_char,
                         });
                     }
 

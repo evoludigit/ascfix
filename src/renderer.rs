@@ -97,6 +97,10 @@ fn is_position_inside_any_box(boxes: &[crate::primitives::Box], row: usize, col:
 #[must_use]
 #[allow(dead_code)] // Reason: Used by main processing pipeline
 pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid {
+    // To handle arrow alignment, we need to remove old arrow positions before drawing new ones.
+    // We detect repositioned arrows by checking for arrow characters in the original grid
+    // at positions where we're about to draw arrows from the inventory.
+    // This removes arrows only if they appear to be repositioned.
     // Calculate required dimensions for normalized boxes
     let (max_row, max_col) = calculate_bounds(inventory);
     let original_height = original.height();
@@ -111,14 +115,20 @@ pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid
         // Need to resize - create new grid with original content padded
         let mut new_rows: Vec<Vec<char>> = Vec::with_capacity(required_height);
 
-        // Copy original rows
+        // Copy original rows, skipping arrow characters which will be redrawn
         for row_idx in 0..required_height {
             if row_idx < original_height {
                 let mut row: Vec<char> = Vec::with_capacity(required_width);
-                // Copy original columns
+                // Copy original columns, removing arrows so they can be redrawn at aligned positions
                 for col_idx in 0..required_width {
                     if col_idx < original_width {
-                        row.push(original.get(row_idx, col_idx).unwrap_or(' '));
+                        let ch = original.get(row_idx, col_idx).unwrap_or(' ');
+                        // Remove arrow characters - they'll be redrawn by the inventory at aligned positions
+                        if matches!(ch, '↓' | '↑' | '→' | '←') {
+                            row.push(' ');
+                        } else {
+                            row.push(ch);
+                        }
                     } else {
                         row.push(' ');
                     }
@@ -131,8 +141,24 @@ pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid
         }
         Grid::from_rows(new_rows)
     } else {
-        // No resize needed - just clone
-        original.clone()
+        // No resize needed for overall dimensions, but still need to pad rows
+        // to ensure all rows have consistent width for accessing aligned positions
+        let grid = original.clone();
+        let mut new_rows = Vec::new();
+        for row_idx in 0..grid.height() {
+            let mut row = Vec::new();
+            for col_idx in 0..required_width {
+                let ch = grid.get(row_idx, col_idx).unwrap_or(' ');
+                // Remove arrow characters - they'll be redrawn by the inventory at aligned positions
+                if matches!(ch, '↓' | '↑' | '→' | '←') {
+                    row.push(' ');
+                } else {
+                    row.push(ch);
+                }
+            }
+            new_rows.push(row);
+        }
+        Grid::from_rows(new_rows)
     };
 
     // Draw boxes - borders overwrite original, which is correct
@@ -158,6 +184,8 @@ pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid
     }
 
     // Draw vertical arrows (skip if inside any box interior)
+    // Arrows have already been removed from the grid during initialization,
+    // so we just draw the aligned arrows from the inventory
     for arrow in &inventory.vertical_arrows {
         if !is_position_inside_any_box(&inventory.boxes, arrow.start_row, arrow.col)
             && !is_position_inside_any_box(&inventory.boxes, arrow.end_row, arrow.col)
@@ -290,60 +318,44 @@ fn draw_text_row(grid: &mut Grid, row: &crate::primitives::TextRow) {
 
 /// Draw a horizontal arrow on the grid.
 fn draw_horizontal_arrow(grid: &mut Grid, arrow: &crate::primitives::HorizontalArrow) {
-    let chars = arrow.arrow_type.chars();
+    // Determine the arrow character to use
+    let arrow_char = arrow.arrow_char.unwrap_or_else(|| {
+        let chars = arrow.arrow_type.chars();
+        if arrow.rightward { chars.arrowhead_right } else { chars.arrowhead_left }
+    });
 
-    // Draw arrow line from start_col to end_col
+    // Draw arrow line from start_col to end_col, preserving the arrow character
     for col in arrow.start_col..=arrow.end_col {
         if let Some(cell) = grid.get_mut(arrow.row, col) {
             if *cell == ' ' {
-                *cell = chars.line;
+                *cell = arrow_char;
             }
-        }
-    }
-
-    // Draw arrowhead at end
-    if arrow.end_col > arrow.start_col {
-        if let Some(cell) = grid.get_mut(arrow.row, arrow.end_col) {
-            let arrowhead = if arrow.rightward {
-                chars.arrowhead_right
-            } else {
-                chars.arrowhead_left
-            };
-            *cell = arrowhead;
         }
     }
 }
 
 /// Draw a vertical arrow on the grid.
 fn draw_vertical_arrow(grid: &mut Grid, arrow: &crate::primitives::VerticalArrow) {
+    // Determine the arrow character to use
+    let default_char = if arrow.downward { '↓' } else { '↑' };
+    let arrow_char = arrow.arrow_char.unwrap_or(default_char);
+
     // For single-character arrows, just render the arrow character
     if arrow.start_row == arrow.end_row {
         if let Some(cell) = grid.get_mut(arrow.start_row, arrow.col) {
-            let arrow_char = if arrow.downward { '↓' } else { '↑' };
             *cell = arrow_char;
         }
         return;
     }
 
-    // For multi-character arrows, draw line with arrowhead
-    let line_char = match arrow.arrow_type {
-        ArrowType::Double => '║',
-        _ => '│',
-    };
-
-    // Draw arrow line from start_row to end_row (excluding the end)
-    for row in arrow.start_row..arrow.end_row {
+    // For multi-character arrows, preserve the arrow symbol for all rows
+    // This ensures arrows like ↓ are preserved instead of being converted to │
+    for row in arrow.start_row..=arrow.end_row {
         if let Some(cell) = grid.get_mut(row, arrow.col) {
             if *cell == ' ' {
-                *cell = line_char;
+                *cell = arrow_char;
             }
         }
-    }
-
-    // Draw arrowhead at end
-    if let Some(cell) = grid.get_mut(arrow.end_row, arrow.col) {
-        let arrowhead = if arrow.downward { '↓' } else { '↑' };
-        *cell = arrowhead;
     }
 }
 
