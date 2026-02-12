@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Table Unwrapping (Phase 02)
+
+**Automatic Table Cell Unwrapping**
+- Detect and repair Markdown tables with hard-wrapped cells at 80 columns
+- Join continuation lines back into single cells with proper spacing
+- Support for single and multi-column wrapped content
+- Automatic detection using continuation row patterns (empty leading cells)
+
+**Smart Content Preservation**
+- Code blocks in table cells are preserved (not unwrapped)
+- Supports both backtick (```) and tilde (~~~) code fences
+- Links spanning wrap boundaries are preserved to prevent syntax breakage
+- Intentional multi-line content remains intact
+
+**Safe Mode Integration**
+- Table unwrapping automatically applied in safe mode
+- Unwrapping happens before column alignment normalization
+- Seamless integration with existing table processing pipeline
+
+**Comprehensive Testing**
+- 10 unit tests for table unwrapping logic
+- 3 new integration fixtures for wrapped tables
+- 3 new fixture tests validating end-to-end behavior
+- Tests for code block preservation and link boundary detection
+
+### Technical Details
+
+- New module: `src/tables.rs` with 200+ lines of table unwrapping logic
+- Added `has_wrapped_cells()` - Detect wrapped table cells
+- Added `unwrap_table_rows()` - Join continuation lines intelligently
+- Added `contains_code_fence()` - Detect code blocks in cells
+- Added `has_incomplete_link_across_rows()` - Prevent breaking markdown links
+- Updated `process_safe_mode()` to integrate unwrapping pipeline
+
 ## [0.4.0] - 2026-02-09
 
 ### Added - Directory Support, MDX Files, and Duplicate Fence Repair
