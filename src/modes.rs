@@ -41,6 +41,9 @@ pub fn process_by_mode(
 
 /// Safe mode: Only normalize Markdown tables, leave diagrams untouched.
 fn process_safe_mode(content: &str) -> String {
+    // First normalize lists in the content
+    let content = crate::lists::normalize_lists(content);
+
     let lines: Vec<&str> = content.lines().collect();
     let mut result = Vec::new();
     let mut i = 0;
@@ -556,6 +559,79 @@ mod tests {
         assert!(
             result.contains("def hello():"),
             "Code content should be preserved. Result:\n{result}"
+        );
+    }
+
+    #[test]
+    fn test_safe_mode_normalizes_list_indentation() {
+        // Test that inconsistent list indentation is normalized
+        let content = "- Item 1\n    - Nested with 4 spaces\n- Item 2";
+        let result = process_safe_mode(content);
+        // Nested item should be 2 spaces, not 4
+        assert!(
+            result.contains("  - Nested with 4 spaces"),
+            "List indentation should be normalized to 2 spaces. Result:\n{result}"
+        );
+        assert!(
+            !result.contains("    - Nested"),
+            "4-space indentation should be removed. Result:\n{result}"
+        );
+    }
+
+    #[test]
+    fn test_safe_mode_normalizes_bullet_styles() {
+        // Test that mixed bullet styles are normalized
+        let content = "- Item 1\n* Item 2\n+ Item 3";
+        let result = process_safe_mode(content);
+        // All bullets should be normalized to dash
+        assert!(
+            result.contains("- Item 1"),
+            "Dash bullet should remain. Result:\n{result}"
+        );
+        assert!(
+            result.contains("- Item 2"),
+            "Asterisk should become dash. Result:\n{result}"
+        );
+        assert!(
+            result.contains("- Item 3"),
+            "Plus should become dash. Result:\n{result}"
+        );
+    }
+
+    #[test]
+    fn test_safe_mode_preserves_task_lists() {
+        // Test that task list checkboxes are preserved
+        let content = "- [ ] Todo item\n- [x] Done item\n- [X] Also done";
+        let result = process_safe_mode(content);
+        assert!(
+            result.contains("- [ ] Todo item"),
+            "Unchecked task should be preserved. Result:\n{result}"
+        );
+        assert!(
+            result.contains("- [x] Done item"),
+            "Checked task should be preserved. Result:\n{result}"
+        );
+    }
+
+    #[test]
+    fn test_safe_mode_preserves_lists_in_code_blocks() {
+        // Test that lists inside code blocks are not normalized
+        let content =
+            "```markdown\n- Item in code block\n* Another item\n```\n\n- Real item outside";
+        let result = process_safe_mode(content);
+        // List in code block should preserve mixed bullets
+        assert!(
+            result.contains("- Item in code block"),
+            "List in code block should be preserved. Result:\n{result}"
+        );
+        assert!(
+            result.contains("* Another item"),
+            "Asterisk in code block should be preserved. Result:\n{result}"
+        );
+        // Outside list should be normalized
+        assert!(
+            result.contains("- Real item outside"),
+            "Outside list should be normalized. Result:\n{result}"
         );
     }
 }
