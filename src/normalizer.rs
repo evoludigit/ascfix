@@ -297,7 +297,6 @@ pub fn normalize_box_widths(inventory: &PrimitiveInventory) -> PrimitiveInventor
 #[must_use]
 pub fn normalize_connection_lines(inventory: &PrimitiveInventory) -> PrimitiveInventory {
     // For MVP, return unchanged (conservative approach)
-    // Will implement snapping and straightening in future phase
     inventory.clone()
 }
 
@@ -314,7 +313,6 @@ pub fn normalize_connection_lines(inventory: &PrimitiveInventory) -> PrimitiveIn
 #[must_use]
 pub fn normalize_labels(inventory: &PrimitiveInventory) -> PrimitiveInventory {
     // For MVP, return unchanged (conservative approach)
-    // Will implement offset-based repositioning in future phase
     inventory.clone()
 }
 

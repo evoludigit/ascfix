@@ -690,8 +690,6 @@ mod tests {
         assert_eq!(b.style, BoxStyle::Double);
     }
 
-    // (Note: tests in cycle 3 RED phase above)
-
     #[test]
     fn test_arrow_type_standard_chars() {
         let chars = ArrowType::Standard.chars();

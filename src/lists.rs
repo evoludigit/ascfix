@@ -5,7 +5,7 @@
 
 /// Represents a detected list item.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)]
+#[allow(dead_code)] // Reason: Part of public API for library usage
 pub struct ListItem {
     /// The bullet character (-, *, +) or number for ordered lists
     pub marker: String,
@@ -23,7 +23,7 @@ pub struct ListItem {
 
 /// Represents a complete list.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)]
+#[allow(dead_code)] // Reason: Part of public API for library usage
 pub struct List {
     /// All items in the list
     pub items: Vec<ListItem>,
@@ -51,7 +51,7 @@ pub struct List {
 /// assert_eq!(lists[0].items.len(), 3);
 /// ```
 #[must_use]
-#[allow(dead_code)]
+#[allow(dead_code)] // Reason: Public API for list detection, used in tests
 pub fn detect_lists(content: &str) -> Vec<List> {
     let mut lists = Vec::new();
     let lines: Vec<&str> = content.lines().collect();
@@ -140,7 +140,6 @@ pub fn detect_lists(content: &str) -> Vec<List> {
 }
 
 /// Get code block regions as line number ranges (`start_line`, `end_line`).
-#[allow(dead_code)]
 fn get_code_block_line_ranges(content: &str) -> Vec<(usize, usize)> {
     let mut ranges = Vec::new();
     let lines: Vec<&str> = content.lines().collect();
@@ -173,13 +172,11 @@ fn get_code_block_line_ranges(content: &str) -> Vec<(usize, usize)> {
 }
 
 /// Check if a line is a fence marker (starts with backticks or tildes).
-#[allow(dead_code)]
 fn is_fence_line(line: &str) -> bool {
     line.starts_with("```") || line.starts_with("~~~")
 }
 
 /// Parse a single line to see if it's a list item.
-#[allow(dead_code)]
 fn parse_list_item(line: &str, line_number: usize) -> Option<ListItem> {
     let trimmed = line.trim_start();
 
@@ -236,7 +233,6 @@ fn parse_list_item(line: &str, line_number: usize) -> Option<ListItem> {
 }
 
 /// Check if content is a task list item and parse accordingly.
-#[allow(dead_code)]
 fn parse_task_or_item(marker: &str, content: &str, line_number: usize) -> Option<ListItem> {
     let trimmed = content.trim_start();
 
@@ -284,7 +280,7 @@ fn parse_task_or_item(marker: &str, content: &str, line_number: usize) -> Option
 }
 
 /// Check if a new item belongs to the same list as existing items.
-#[allow(dead_code)]
+#[allow(dead_code)] // Reason: Used by detect_lists
 fn is_same_list(existing_items: &[ListItem], new_item: &ListItem) -> bool {
     if existing_items.is_empty() {
         return true;
@@ -309,7 +305,7 @@ fn is_same_list(existing_items: &[ListItem], new_item: &ListItem) -> bool {
 }
 
 /// Check if a new item is a nested list item.
-#[allow(dead_code)]
+#[allow(dead_code)] // Reason: Used by detect_lists
 fn is_nested_list(existing_items: &[ListItem], new_item: &ListItem) -> bool {
     // A nested item has more indentation
     // For now, just check if it's indented more than the first item
@@ -323,7 +319,7 @@ fn is_nested_list(existing_items: &[ListItem], new_item: &ListItem) -> bool {
 }
 
 /// Check if a line is a continuation of the current list item.
-#[allow(dead_code)]
+#[allow(dead_code)] // Reason: Used by detect_lists
 fn is_continuation_line(line: &str, current_items: &[ListItem]) -> bool {
     if current_items.is_empty() {
         return false;
@@ -341,7 +337,6 @@ fn is_continuation_line(line: &str, current_items: &[ListItem]) -> bool {
 }
 
 /// Check if a line number is inside a code block region.
-#[allow(dead_code)]
 fn is_in_code_region(line_num: usize, regions: &[(usize, usize)]) -> bool {
     for (start, end) in regions {
         if line_num >= *start && line_num <= *end {
@@ -366,7 +361,7 @@ fn is_in_code_region(line_num: usize, regions: &[(usize, usize)]) -> bool {
 /// assert!(normalized.contains("  - Nested item")); // 2 spaces, not 4
 /// ```
 #[must_use]
-#[allow(dead_code)]
+#[allow(dead_code)] // Reason: Public API for list normalization, used in tests
 pub fn normalize_list_indentation(content: &str) -> String {
     let lines: Vec<&str> = content.lines().collect();
     if lines.is_empty() {
@@ -454,7 +449,7 @@ pub fn normalize_list_indentation(content: &str) -> String {
 /// assert!(normalized.contains("- Item 3"));
 /// ```
 #[must_use]
-#[allow(dead_code)]
+#[allow(dead_code)] // Reason: Public API for list normalization, used in tests
 pub fn normalize_bullet_styles(content: &str, target_bullet: char) -> String {
     let lines: Vec<&str> = content.lines().collect();
     if lines.is_empty() {
@@ -532,7 +527,6 @@ pub fn normalize_bullet_styles(content: &str, target_bullet: char) -> String {
 /// assert!(normalized.contains("- Item 2")); // + changed to -
 /// ```
 #[must_use]
-#[allow(dead_code)]
 pub fn normalize_lists(content: &str) -> String {
     let lines: Vec<&str> = content.lines().collect();
     if lines.is_empty() {
@@ -640,7 +634,7 @@ pub fn normalize_lists(content: &str) -> String {
 /// assert!(normalized.contains("# My Title\n\n- Item 1"));
 /// ```
 #[must_use]
-#[allow(dead_code)]
+#[allow(dead_code)] // Reason: Public API for list normalization, used in tests
 pub fn normalize_loose_lists(content: &str) -> String {
     let lines: Vec<&str> = content.lines().collect();
     if lines.is_empty() {
