@@ -836,4 +836,57 @@ mod tests {
         assert!(normalized.contains("- Second list A")); // Normalized to -
         assert!(normalized.contains("- Second list B"));
     }
+
+    #[test]
+    fn preserve_task_list_checkboxes() {
+        // Task list checkboxes should be preserved during normalization
+        // Note: We normalize both [x] and [X] to [x] for consistency
+        let content = "- [ ] Unchecked todo\n- [x] Checked todo\n- [X] Also checked";
+        let normalized = normalize_lists(content);
+        assert!(normalized.contains("- [ ] Unchecked todo"));
+        assert!(normalized.contains("- [x] Checked todo"));
+        assert!(normalized.contains("- [x] Also checked")); // [X] normalized to [x]
+    }
+
+    #[test]
+    fn normalize_mixed_task_and_regular() {
+        // Mix of task and regular list items
+        let content = "- [ ] Todo item\n- Regular item\n- [x] Done item";
+        let normalized = normalize_lists(content);
+        assert!(normalized.contains("- [ ] Todo item"));
+        assert!(normalized.contains("- Regular item"));
+        assert!(normalized.contains("- [x] Done item"));
+    }
+
+    #[test]
+    fn nested_task_lists() {
+        // Task lists can be nested
+        let content =
+            "- [ ] Parent task\n  - [ ] Subtask 1\n  - [x] Subtask 2\n- [ ] Another parent";
+        let normalized = normalize_lists(content);
+        assert!(normalized.contains("- [ ] Parent task"));
+        assert!(normalized.contains("  - [ ] Subtask 1"));
+        assert!(normalized.contains("  - [x] Subtask 2"));
+        assert!(normalized.contains("- [ ] Another parent"));
+    }
+
+    #[test]
+    fn task_list_with_bullet_normalization() {
+        // Task lists should normalize bullet style too
+        let content = "- [ ] Todo 1\n* [ ] Todo 2\n+ [x] Done";
+        let normalized = normalize_lists(content);
+        assert!(normalized.contains("- [ ] Todo 1"));
+        assert!(normalized.contains("- [ ] Todo 2")); // * changed to -
+        assert!(normalized.contains("- [x] Done")); // + changed to -
+    }
+
+    #[test]
+    fn task_lists_in_code_blocks_preserved() {
+        // Task lists in code blocks should not be normalized
+        let content =
+            "```markdown\n- [ ] In code block\n- [x] Also in block\n```\n\n- [ ] Real task outside";
+        let normalized = normalize_lists(content);
+        assert!(normalized.contains("- [ ] In code block")); // Preserved as-is
+        assert!(normalized.contains("- [ ] Real task outside"));
+    }
 }
