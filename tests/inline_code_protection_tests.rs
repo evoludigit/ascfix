@@ -4,8 +4,8 @@
 //! (arrows, box drawing, etc.) are preserved unchanged during diagram processing.
 
 use ascfix::cli::Mode;
-use ascfix::modes::process_by_mode;
 use ascfix::config::Config;
+use ascfix::modes::process_by_mode;
 
 #[test]
 fn test_inline_code_with_arrows_preserved() {
@@ -13,7 +13,10 @@ fn test_inline_code_with_arrows_preserved() {
     let content = "- Double arrows: `⇒ ⇓ ⇑ ⇐`\n- Normal text";
     let result = process_by_mode(&Mode::Diagram, content, false, &config);
     // The inline code arrows should be preserved exactly
-    assert!(result.contains("`⇒ ⇓ ⇑ ⇐`"), "Arrows in inline code should be preserved");
+    assert!(
+        result.contains("`⇒ ⇓ ⇑ ⇐`"),
+        "Arrows in inline code should be preserved"
+    );
 }
 
 #[test]
@@ -21,7 +24,10 @@ fn test_inline_code_with_extended_arrows_preserved() {
     let config = Config::default();
     let content = "Extended arrows: `⟶ ⟹ ⟸` for notation";
     let result = process_by_mode(&Mode::Diagram, content, false, &config);
-    assert!(result.contains("`⟶ ⟹ ⟸`"), "Extended arrows should be preserved");
+    assert!(
+        result.contains("`⟶ ⟹ ⟸`"),
+        "Extended arrows should be preserved"
+    );
 }
 
 #[test]
@@ -29,7 +35,10 @@ fn test_inline_code_with_box_drawing_preserved() {
     let config = Config::default();
     let content = "Box chars: `┌─┐│└┘` for reference";
     let result = process_by_mode(&Mode::Diagram, content, false, &config);
-    assert!(result.contains("`┌─┐│└┘`"), "Box drawing chars should be preserved");
+    assert!(
+        result.contains("`┌─┐│└┘`"),
+        "Box drawing chars should be preserved"
+    );
 }
 
 #[test]
@@ -38,8 +47,14 @@ fn test_multiple_inline_codes_preserved() {
     let content = "`first` and `second` and `⇒ third`";
     let result = process_by_mode(&Mode::Diagram, content, false, &config);
     assert!(result.contains("`first`"), "First code should be preserved");
-    assert!(result.contains("`second`"), "Second code should be preserved");
-    assert!(result.contains("`⇒ third`"), "Third code with arrow should be preserved");
+    assert!(
+        result.contains("`second`"),
+        "Second code should be preserved"
+    );
+    assert!(
+        result.contains("`⇒ third`"),
+        "Third code with arrow should be preserved"
+    );
 }
 
 #[test]
@@ -57,7 +72,10 @@ fn test_inline_code_near_diagram_boundary() {
     let config = Config::default();
     let content = "Code: `⇒` text\n\nDiagram:\n┌──┐\n│xy│\n└──┘";
     let result = process_by_mode(&Mode::Diagram, content, false, &config);
-    assert!(result.contains("`⇒`"), "Inline code at block boundary should be preserved");
+    assert!(
+        result.contains("`⇒`"),
+        "Inline code at block boundary should be preserved"
+    );
 }
 
 #[test]
@@ -83,13 +101,25 @@ ascfix recognizes various diagram types:
     let result = process_by_mode(&Mode::Diagram, content, false, &config);
 
     // Verify all inline code is preserved
-    assert!(result.contains("`⇒ ⇓ ⇑ ⇐`"), "Double arrows should be preserved");
-    assert!(result.contains("`⟶ ⟹`"), "Extended arrows should be preserved");
+    assert!(
+        result.contains("`⇒ ⇓ ⇑ ⇐`"),
+        "Double arrows should be preserved"
+    );
+    assert!(
+        result.contains("`⟶ ⟹`"),
+        "Extended arrows should be preserved"
+    );
     assert!(result.contains("`┌─┐`"), "Box drawing should be preserved");
 
     // Verify structure is intact
-    assert!(result.contains("## Diagram Types"), "Headers should be preserved");
-    assert!(result.contains("ascfix recognizes"), "Text should be preserved");
+    assert!(
+        result.contains("## Diagram Types"),
+        "Headers should be preserved"
+    );
+    assert!(
+        result.contains("ascfix recognizes"),
+        "Text should be preserved"
+    );
 }
 
 #[test]
@@ -109,7 +139,10 @@ fn test_safe_mode_preserves_inline_code() {
     let config = Config::default();
     let content = "Safe mode test: `⇒ ⇓`";
     let result = process_by_mode(&Mode::Safe, content, false, &config);
-    assert!(result.contains("`⇒ ⇓`"), "Safe mode should preserve inline code");
+    assert!(
+        result.contains("`⇒ ⇓`"),
+        "Safe mode should preserve inline code"
+    );
 }
 
 #[test]
@@ -117,7 +150,10 @@ fn test_check_mode_preserves_inline_code() {
     let config = Config::default();
     let content = "Check mode test: `⇒ ⇓`";
     let result = process_by_mode(&Mode::Check, content, false, &config);
-    assert!(result.contains("`⇒ ⇓`"), "Check mode should preserve inline code");
+    assert!(
+        result.contains("`⇒ ⇓`"),
+        "Check mode should preserve inline code"
+    );
 }
 
 #[test]
@@ -142,7 +178,10 @@ fn test_inline_code_idempotency() {
     let after_second = process_by_mode(&Mode::Diagram, &after_first, false, &config);
 
     assert_eq!(after_first, after_second, "Processing should be idempotent");
-    assert!(after_second.contains("`⇒ ⇓`"), "Content should still be preserved");
+    assert!(
+        after_second.contains("`⇒ ⇓`"),
+        "Content should still be preserved"
+    );
 }
 
 #[test]
@@ -163,5 +202,9 @@ fn test_inline_code_with_newlines_outside_code() {
     let config = Config::default();
     let content = "`code` on line 1\n\n┌─┐\n│ │\n└─┘\n\n`code` on line after";
     let result = process_by_mode(&Mode::Diagram, content, false, &config);
-    assert_eq!(result.matches("`code`").count(), 2, "Both inline codes should be preserved");
+    assert_eq!(
+        result.matches("`code`").count(),
+        2,
+        "Both inline codes should be preserved"
+    );
 }
