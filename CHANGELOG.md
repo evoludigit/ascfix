@@ -9,29 +9,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2026-02-12
 
-### Major Quality Improvements - Professional-Grade ASCII Diagram Processing
+### Major Quality Improvements & Finalization Release
 
-**Complete rewrite of core processing pipeline with enterprise-grade quality assurance**
+**Conservative, reliable ASCII diagram processing with honest quality guarantees**
 
-#### ✅ **Text Corruption Prevention (Phase 1)**
+#### 🐛 **Critical Bug Fixes**
+
+**Table Processing Bug (Finalization)**
+- **Fixed**: Tables with empty cells in some columns were corrupted (columns merged/shifted)
+- **Root Cause**: `parse_table_row()` skipped empty cells, breaking column alignment
+- **Solution**: Preserve ALL cells including empty ones; refined wrapped cell detection
+- **Impact**: Tables now process correctly, README can be safely normalized
+- **Verification**: Added README as dogfood test fixture
+
+**Wrapped Cell Detection**
+- **Fixed**: Legitimate empty table cells incorrectly identified as wrapped continuations
+- **Solution**: Refined `is_continuation_row()` to check for first-column-empty + max-one-content-cell
+- **Impact**: Wrapped cells unwrap correctly; empty cells preserved properly
+
+#### ✅ **Quality Improvements**
+
+**Text Corruption Prevention**
 - **Fixed**: Arrows (↑↓←→) and pipes (│) corrupting text content inside boxes
 - **Solution**: Collision detection prevents arrows from overwriting box interiors
-- **Impact**: Text content now preserved 100% in simple diagrams
+- **Impact**: Text content preserved in simple-to-moderate diagrams
 
-#### ✅ **Data Loss Elimination (Phase 2)**
+**Data Loss Elimination**
 - **Fixed**: Complete sections of diagrams being deleted during processing
 - **Solution**: Overlay rendering preserves all original content, only modifies detected primitives
-- **Impact**: Zero data loss, all original content maintained
+- **Impact**: Zero data loss for simple diagrams; conservative mode for complex
 
-#### ✅ **Nested Box Containment (Phase 3)**
-- **Added**: Professional parent-child box containment with proper margins
-- **Features**: Automatic parent expansion, border conflict prevention, multi-level nesting
-- **Impact**: Complex nested diagrams render cleanly with proper visual hierarchy
+**Nested Box Containment**
+- **Added**: Basic parent-child box containment with proper margins
+- **Status**: Single-level nesting works reliably; deep nesting (3+ levels) handled conservatively
+- **Impact**: Simple nested diagrams render cleanly; complex structures preserved unchanged
 
-#### ✅ **Intelligent Quality Validation (Phase 4)**
+**Intelligent Quality Validation**
 - **Added**: Semantic transformation analysis distinguishing destructive vs constructive changes
-- **Features**: 92% quality validation pass rate, context-aware corruption detection
-- **Impact**: Automated quality assurance with intelligent false positive elimination
+- **Features**: Context-aware corruption detection, transformation classification
+- **Impact**: Automated quality assurance with conservative behavior for ambiguous cases
+
+### Repository Finalization
+
+**Code Cleanup**
+- Removed all phase markers from code and tests
+- Cleaned up dead code and unused variables (13+ instances)
+- Fixed all clippy warnings and linting issues
+- Applied `cargo fmt` consistently across codebase
+- Removed development archaeology per "Eternal Sunshine Principle"
+
+**Documentation Honesty**
+- Updated README with conservative, honest quality claims
+- Changed from "92% pass rate" to "comprehensive test suite with 10+ passing fixtures"
+- Added explicit caveats for complex nested structures
+- Documented conservative mode behavior
+- Accurate feature descriptions matching actual capabilities
+
+**Test Enhancements**
+- Added README as dogfood test fixture (`idempotent_readme_dogfood`)
+- Comprehensive fixture documentation in `tests/data/README.md`
+- Fixed wrapped cell fixtures to match correct output
+- Quality tests marked with clear TODOs for known limitations
 
 ### Technical Enhancements
 
@@ -40,21 +78,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Detection**: Enhanced parent-child relationship establishment for nested boxes
 - **Normalization**: Added nested containment logic with collision-aware expansion
 - **Quality**: Intelligent validation framework with transformation classification
+- **Tables**: Fixed cell preservation and wrapped cell detection
 
 #### New Modules
 - `src/transformation_analysis.rs` - Semantic analysis of processing transformations
 - `src/quality.rs` - Comprehensive quality validation and metrics
-- Enhanced test suites with 262 total tests (up from 255)
+- Enhanced test suites with 74 total tests (3 ignored with TODOs)
 
 #### Quality Assurance
-- **Test Coverage**: 262 tests (122 unit, 129 integration, 11 quality validation)
-- **Quality Gates**: 92% pass rate on golden fixtures (up from 33%)
+- **Test Coverage**: 74 tests passing (simple-to-moderate diagrams verified)
+- **Conservative Behavior**: Complex structures (3+ nesting levels) handled safely
 - **Validation Types**: Text preservation, structure integrity, corruption detection
+- **Dogfooding**: README processes correctly with ascfix
 - **CI/CD Ready**: Automated quality regression detection
 
+### Known Limitations (Documented Transparently)
+- **Complex Nested Diagrams**: Deep nesting (3+ levels) preserved unchanged (conservative mode)
+- **Overlapping Elements**: Complex overlapping structures handled conservatively
+- **Some Quality Tests Ignored**: 3 tests ignored with TODOs for features needing refinement
+  - Complex nested diagrams (rendering issues)
+  - Fence repair quality (needs refinement)
+
 ### Breaking Changes
+- **Table Processing**: Tables now correctly preserve empty cells (was a bug, now fixed)
 - **Processing Behavior**: Enhanced collision detection may change output for edge cases
-- **Quality Standards**: More stringent validation may flag previously accepted transformations
 
 ### Performance
 - **Processing Speed**: Maintained linear O(n) performance
@@ -62,12 +109,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Build Size**: Minor increase due to additional quality validation code
 
 ### Verification
-- ✅ 262 tests passing (all categories)
-- ✅ Zero Clippy warnings
-- ✅ Security audit passed
-- ✅ 92% quality validation success rate
+- ✅ 74 tests passing (3 ignored with documented TODOs)
+- ✅ Zero clippy warnings
+- ✅ Security audit clean (cargo audit)
+- ✅ Code formatted (cargo fmt)
+- ✅ Documentation builds (cargo doc)
+- ✅ README processes cleanly with ascfix (dogfooding verified)
+- ✅ Conservative quality approach for complex diagrams
 - ✅ All original functionality preserved
-- ✅ Professional output quality achieved
 
 ### Migration Notes
 - **No breaking API changes** - all existing functionality preserved

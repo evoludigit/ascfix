@@ -361,10 +361,7 @@ fn is_arrow_duplication(
     // Look for pattern where spaces become arrows for alignment
     // Check if this is part of a larger arrow alignment pattern
     if input_chars.get(input_pos) == Some(&' ')
-        && matches!(
-            output_chars.get(output_pos),
-            Some('↓') | Some('↑') | Some('←') | Some('→')
-        )
+        && matches!(output_chars.get(output_pos), Some('↓' | '↑' | '←' | '→'))
     {
         // Check surrounding context for arrow alignment patterns
         let start = output_pos.saturating_sub(5);
@@ -422,20 +419,6 @@ fn is_in_text_content(chars: &[char], pos: usize) -> bool {
 
     // Look for text patterns (letters, spaces, punctuation)
     context.chars().any(|c| c.is_alphabetic()) && !context.contains("┌┐└┘│─") // Not in box borders
-}
-
-/// Check if character is a box drawing character
-fn is_box_character(c: char) -> bool {
-    matches!(
-        c,
-        '┌' | '┐' | '└' | '┘' | '│' | '─' | '┼' | '├' | '┤' | '┬' | '┴'
-    )
-}
-
-/// Check if this is a border correction
-fn is_border_correction(from: char, to: char) -> bool {
-    // Simplified check - in practice, we'd validate border connectivity
-    is_box_character(from) && is_box_character(to)
 }
 
 /// Calculate transformation summary

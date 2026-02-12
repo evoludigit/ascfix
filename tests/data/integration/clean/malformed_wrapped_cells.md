@@ -13,10 +13,11 @@
 | Bob   | Product Manager driving roadmap and coordinating cross-functional teams               | Product     |
 
 ## Wrapped header row
-| Feature        | Description                                                                 | Priority | Status      |
-|----------------|-----------------------------------------------------------------------------|----------|-------------|
-| Authentication | OAuth2 and SSO integration with role-based access control and audit logging | High     | In Progress |
-| Analytics      | Real-time data processing with custom dashboards and automated reporting    | Medium   | Planned     |
+| Feature        | Description                                                              | Priority | Status   |
+|----------------|--------------------------------------------------------------------------|----------|----------|
+| Authentication | OAuth2 and SSO integration with role-based access                        | High     | In       |
+|                | control and audit logging                                                |          | Progress |
+| Analytics      | Real-time data processing with custom dashboards and automated reporting | Medium   | Planned  |
 
 ## Long wrapped descriptions
 | API Endpoint  | Description                                                                                          | Method |

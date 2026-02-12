@@ -146,24 +146,24 @@ ascfix docs/ -c
 
 ### Modes
 
-| Mode      | Description              | Use Case                        |
-|-----------|--------------------------|---------------------------------|
-| `safe`    | Fix only Markdown tables | Conservative, safe for any file |
-| `diagram` | Fix boxes and arrows     | For files with ASCII diagrams   |
-| `check`   | Validate without writing | CI/CD validation                |
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `safe` | Fix only Markdown tables | Conservative, safe for any file |
+| `diagram` | Fix boxes and arrows | For files with ASCII diagrams |
+| `check` | Validate without writing | CI/CD validation |
 
 ### Flags
 
-| Flag             | Short | Description                                                              | Default                   |
-|------------------|-------|--------------------------------------------------------------------------|---------------------------|
-| `--in-place`     | `-i`  | Modify files instead of printing to stdout                               | Off                       |
-| `--check`        | `-c`  | Validate files without modifying (returns exit code 1 if changes needed) | Off                       |
-| `--fences`       |       | Repair code fence boundaries                                             | Off                       |
-| `--all`          |       | Shorthand for `--fences --mode=diagram`                                  | Off                       |
-| `--mode`         |       | Processing mode (safe, diagram, check)                                   | safe                      |
-| `--ext`          | `-e`  | File extensions to process (comma-separated, e.g., `.md,.mdx`)           | `.md,.mdx`                |
-| `--no-gitignore` |       | Do not respect .gitignore files                                          | Off (respects .gitignore) |
-| `--max-size`     |       | Maximum file size to process (e.g., "100MB", "1GB")                      | Unlimited                 |
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--in-place` | `-i` | Modify files instead of printing to stdout | Off |
+| `--check` | `-c` | Validate files without modifying (returns exit code 1 if changes needed) | Off |
+| `--fences` | | Repair code fence boundaries | Off |
+| `--all` | | Shorthand for `--fences --mode=diagram` | Off |
+| `--mode` | | Processing mode (safe, diagram, check) | safe |
+| `--ext` | `-e` | File extensions to process (comma-separated, e.g., `.md,.mdx`) | `.md,.mdx` |
+| `--no-gitignore` | | Do not respect .gitignore files | Off (respects .gitignore) |
+| `--max-size` | | Maximum file size to process (e.g., "100MB", "1GB") | Unlimited |
 
 ## Examples
 
@@ -171,20 +171,20 @@ ascfix docs/ -c
 
 **Before** (inconsistent column widths):
 ```markdown
-| Name    | Age | City     |
-|---------|-----|----------|
-| Alice   | 30  | New York |
-| Bob     | 25  | Boston   |
-| Charlie | 35  | Chicago  |
+| Name | Age | City |
+|------|-----|----------|
+| Alice | 30 | New York |
+| Bob | 25 | Boston |
+| Charlie | 35 | Chicago |
 ```
 
 **After** (normalized columns):
 ```markdown
-| Name    | Age | City     |
-|---------|-----|----------|
-| Alice   | 30  | New York |
-| Bob     | 25  | Boston   |
-| Charlie | 35  | Chicago  |
+| Name    | Age | City      |
+|---------|-----|-----------|
+| Alice   | 30  | New York  |
+| Bob     | 25  | Boston    |
+| Charlie | 35  | Chicago   |
 ```
 
 **Command:**

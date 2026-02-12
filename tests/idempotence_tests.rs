@@ -76,6 +76,45 @@ fn idempotent_box_with_arrow() {
 // - idempotent_triple_pass
 
 #[test]
+fn idempotent_readme_dogfood() {
+    // The README itself is an excellent real-world test fixture
+    // It contains tables, lists, code blocks, and various Markdown features
+    // This test verifies that table normalization is idempotent
+    let readme = fs::read_to_string("tests/data/integration/readme_dogfood.md")
+        .expect("Failed to read README fixture");
+
+    let result1 = ascfix::modes::process_by_mode(
+        &ascfix::cli::Mode::Safe, // Safe mode for tables/lists only
+        &readme,
+        false,
+        &ascfix::config::Config::default(),
+    );
+    let result2 = ascfix::modes::process_by_mode(
+        &ascfix::cli::Mode::Safe,
+        &result1,
+        false,
+        &ascfix::config::Config::default(),
+    );
+
+    // README should be idempotent - well-formatted content stays unchanged
+    assert_eq!(
+        result1.trim(),
+        result2.trim(),
+        "README idempotence failed: tool modified already well-formatted content"
+    );
+
+    // Tables may be normalized (column widths adjusted), but line count should remain stable
+    let original_lines = readme.lines().count();
+    let result_lines = result1.lines().count();
+
+    assert_eq!(
+        original_lines, result_lines,
+        "README processing changed line count: {} -> {}",
+        original_lines, result_lines
+    );
+}
+
+#[test]
 fn idempotent_baseline_tests_verify_conservative_behavior() {
     // This test documents that idempotence verification exists for simple diagrams
     // Complex features (nesting, connection lines, mixed styles) require architectural

@@ -57,18 +57,41 @@ fn is_table_row(line: &str) -> bool {
 
 /// Check if a row is a continuation of the previous row.
 ///
-/// A continuation row has some cells that are empty (only whitespace)
-/// and at least one cell with content.
+/// A continuation row typically has:
+/// 1. ALL leading cells empty (only whitespace), OR
+/// 2. Exactly one non-empty cell (indicating that column is being continued)
+///
+/// This distinguishes wrapped cells from tables with legitimately empty columns.
+///
+/// Example of continuation rows:
+/// ```markdown
+/// | Name | Description with |
+/// |      |  wrapped text    |  <- Leading cell empty
+/// | API  | [Link](http://   |
+/// |      | example.com)     |  <- Continuing URL column
+/// ```
+///
+/// NOT a continuation (legitimate empty cells):
+/// ```markdown
+/// | Flag | | Description |  <- Multiple columns have content
+/// ```
 fn is_continuation_row(line: &str) -> bool {
     let cells = split_table_cells(line);
 
-    // A continuation row should have:
-    // - At least one empty cell (only whitespace)
-    // - At least one non-empty cell
-    let has_empty = cells.iter().any(|cell| cell.trim().is_empty());
-    let has_content = cells.iter().any(|cell| !cell.trim().is_empty());
+    if cells.is_empty() {
+        return false;
+    }
 
-    has_empty && has_content
+    // Count non-empty cells
+    let non_empty_count = cells.iter().filter(|cell| !cell.trim().is_empty()).count();
+
+    // A continuation row should have:
+    // - At most one non-empty cell (the cell being continued)
+    // - At least one empty cell
+    // - First cell empty (continuation starts after the first column)
+    non_empty_count <= 1
+        && non_empty_count < cells.len()
+        && cells.first().map_or(false, |c| c.trim().is_empty())
 }
 
 /// Split a table row into cells, handling the | delimiters.

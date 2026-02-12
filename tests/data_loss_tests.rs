@@ -1,4 +1,4 @@
-//! Regression tests for data loss issues (Phase 2)
+//! Regression tests for data loss issues
 
 /// Test that no lines are lost during processing
 #[test]

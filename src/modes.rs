@@ -289,11 +289,8 @@ fn parse_table_row(row: &str) -> Option<Vec<String>> {
             } else {
                 // This | is a cell delimiter
                 if in_cell {
-                    // End of current cell
-                    let trimmed_cell = current_cell.trim().to_string();
-                    if !trimmed_cell.is_empty() {
-                        cells.push(trimmed_cell);
-                    }
+                    // End of current cell - preserve empty cells to maintain column structure
+                    cells.push(current_cell.trim().to_string());
                     current_cell = String::new();
                 }
                 in_cell = true;
@@ -303,12 +300,9 @@ fn parse_table_row(row: &str) -> Option<Vec<String>> {
         }
     }
 
-    // Don't forget the last cell if there is one
-    if in_cell && !current_cell.trim().is_empty() {
-        cells.push(current_cell.trim().to_string());
-    }
+    // The final | creates a trailing empty element that we should skip
+    // (but keep intentional empty cells in the middle of the row)
 
-    // Remove the trailing empty cell from the final |
     if cells.is_empty() {
         None
     } else {

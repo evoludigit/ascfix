@@ -1,4 +1,4 @@
-//! Regression tests for nested box containment (Phase 3)
+//! Regression tests for nested box containment
 
 use ascfix::{
     normalizer::{

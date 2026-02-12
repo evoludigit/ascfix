@@ -357,23 +357,6 @@ fn calculate_enhanced_overall_score(
     score.max(0.0).min(1.0)
 }
 
-/// Calculate overall quality score (legacy function)
-fn calculate_overall_score(metrics: &QualityMetrics) -> f32 {
-    calculate_enhanced_overall_score(
-        metrics,
-        &crate::transformation_analysis::TransformationAnalysis {
-            transformations: Vec::new(),
-            summary: crate::transformation_analysis::TransformationSummary {
-                destructive_count: metrics.text_corruption_count,
-                constructive_count: 0,
-                neutral_count: 0,
-                net_quality_impact: 0.0,
-                risk_score: metrics.text_corruption_count as f32 * 0.1,
-            },
-        },
-    )
-}
-
 /// Check if an arrow appears to be corrupting text (replacing a letter)
 fn is_arrow_corrupting_text(line_chars: &[char], col: usize) -> bool {
     if col == 0 || col >= line_chars.len() - 1 {
@@ -403,20 +386,6 @@ fn is_pipe_in_text_content(line_chars: &[char], col: usize) -> bool {
         || (prev == ' ' && next.is_alphabetic())
 }
 
-/// Check if a pipe is corrupting text content
-fn is_pipe_in_text(line_chars: &[char], col: usize) -> bool {
-    // Check if pipe is surrounded by text characters
-    if col == 0 || col >= line_chars.len() - 1 {
-        return false;
-    }
-
-    let prev = line_chars[col - 1];
-    let next = line_chars[col + 1];
-
-    // If surrounded by letters/spaces, likely text corruption
-    (prev.is_alphabetic() || prev == ' ') && (next.is_alphabetic() || next == ' ')
-}
-
 /// Count text characters (letters, numbers, punctuation)
 fn count_text_chars(lines: &[&str]) -> usize {
     lines
@@ -437,6 +406,25 @@ pub fn validate_fixture(
     expected_path: &str,
     config: &QualityConfig,
 ) -> Result<(), String> {
+    validate_fixture_with_options(input_path, expected_path, config, false)
+}
+
+/// Validate a fixture against quality standards with fence repair option
+pub fn validate_fixture_with_fences(
+    input_path: &str,
+    expected_path: &str,
+    config: &QualityConfig,
+) -> Result<(), String> {
+    validate_fixture_with_options(input_path, expected_path, config, true)
+}
+
+/// Internal function to validate a fixture with configurable fence repair
+fn validate_fixture_with_options(
+    input_path: &str,
+    expected_path: &str,
+    config: &QualityConfig,
+    repair_fences: bool,
+) -> Result<(), String> {
     let input = std::fs::read_to_string(input_path)
         .map_err(|e| format!("Failed to read input {}: {}", input_path, e))?;
 
@@ -444,7 +432,8 @@ pub fn validate_fixture(
         .map_err(|e| format!("Failed to read expected {}: {}", expected_path, e))?;
 
     // Process the input
-    let processed = modes::process_by_mode(&Mode::Diagram, &input, false, &Config::default());
+    let processed =
+        modes::process_by_mode(&Mode::Diagram, &input, repair_fences, &Config::default());
 
     // Validate quality
     let report = validate_quality(&input, &processed);
@@ -510,12 +499,12 @@ mod tests {
 
     #[test]
     fn test_quality_validation_clean_input() {
-        let input = r#"
+        let input = r"
 ┌──────────┐
 │ Clean    │
 │ Text     │
 └──────────┘
-"#;
+";
 
         let output = input; // Perfect preservation
         let report = validate_quality(input, output);
@@ -528,19 +517,19 @@ mod tests {
 
     #[test]
     fn test_quality_validation_text_corruption() {
-        let input = r#"
+        let input = r"
 ┌──────────┐
 │ Clean    │
 │ Text     │
 └──────────┘
-"#;
+";
 
-        let output = r#"
+        let output = r"
 ┌──────────┐
 │ Clean↑   │
 │ Text     │
 └──────────┘
-"#;
+";
 
         let report = validate_quality(input, output);
 
@@ -557,18 +546,18 @@ mod tests {
 
     #[test]
     fn test_quality_validation_data_loss() {
-        let input = r#"
+        let input = r"
 ┌──────────┐
 │ Original │
 │ Content  │
 └──────────┘
-"#;
+";
 
-        let output = r#"
+        let output = r"
 ┌──────────┐
 │ Original │
 └──────────┘
-"#;
+";
 
         let report = validate_quality(input, output);
 

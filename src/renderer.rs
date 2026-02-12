@@ -26,7 +26,7 @@ pub fn render_diagram(inventory: &PrimitiveInventory) -> Grid {
 
     // Draw boxes
     for b in &inventory.boxes {
-        draw_box(&mut grid, b, inventory);
+        draw_box(&mut grid, b);
     }
 
     // Draw text rows
@@ -137,7 +137,7 @@ pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid
 
     // Draw boxes - borders overwrite original, which is correct
     for b in &inventory.boxes {
-        draw_box(&mut grid, b, inventory);
+        draw_box(&mut grid, b);
     }
 
     // Draw text rows extracted from boxes - these replace original content
@@ -238,7 +238,7 @@ fn calculate_bounds(inventory: &PrimitiveInventory) -> (usize, usize) {
 }
 
 /// Draw a box on the grid.
-fn draw_box(grid: &mut Grid, b: &crate::primitives::Box, inventory: &PrimitiveInventory) {
+fn draw_box(grid: &mut Grid, b: &crate::primitives::Box) {
     let chars = b.style.chars();
 
     // Top and bottom borders
@@ -274,34 +274,6 @@ fn draw_box(grid: &mut Grid, b: &crate::primitives::Box, inventory: &PrimitiveIn
     if let Some(cell) = grid.get_mut(b.bottom_right.0, b.bottom_right.1) {
         *cell = chars.bottom_right;
     }
-}
-
-/// Check if a position would be occupied by a child box's border
-/// This checks coordinates rather than rendered content to avoid order dependencies
-fn is_child_border_at(
-    inventory: &PrimitiveInventory,
-    parent: &crate::primitives::Box,
-    row: usize,
-    col: usize,
-) -> bool {
-    for &child_idx in &parent.child_indices {
-        let child = &inventory.boxes[child_idx];
-
-        // Check if position is on child's border coordinates
-        let on_top_border =
-            row == child.top_left.0 && col >= child.top_left.1 && col <= child.bottom_right.1;
-        let on_bottom_border =
-            row == child.bottom_right.0 && col >= child.top_left.1 && col <= child.bottom_right.1;
-        let on_left_border =
-            col == child.top_left.1 && row >= child.top_left.0 && row <= child.bottom_right.0;
-        let on_right_border =
-            col == child.bottom_right.1 && row >= child.top_left.0 && row <= child.bottom_right.0;
-
-        if on_top_border || on_bottom_border || on_left_border || on_right_border {
-            return true;
-        }
-    }
-    false
 }
 
 /// Draw a text row on the grid.

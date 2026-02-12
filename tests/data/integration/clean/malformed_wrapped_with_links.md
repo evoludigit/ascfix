@@ -2,17 +2,17 @@
 # Tests that links spanning wrap boundaries are preserved
 
 ## Link spanning two rows
-| Resource          | URL                                                      | Description            |
-|-------------------|----------------------------------------------------------|------------------------|
-| API Docs          | [Documentation](https://api.example.com/v2/documentation | Official API reference |
-| /endpoints/users) | and guides                                               |
+| Resource | URL                                                      | Description            |
+|----------|----------------------------------------------------------|------------------------|
+| API Docs | [Documentation](https://api.example.com/v2/documentation | Official API reference |
+|          | /endpoints/users)                                        | and guides             |
 
 ## Multiple links, one incomplete
-| Library                      | Source                                      | License |
-|------------------------------|---------------------------------------------|---------|
-| React                        | [GitHub](https://github.com/facebook/react) | MIT     |
-| Vue                          | [Repository](https://github.com/vuejs/      | MIT     |
-| core/tree/main/packages/vue) |
+| Library | Source                                      | License |
+|---------|---------------------------------------------|---------|
+| React   | [GitHub](https://github.com/facebook/react) | MIT     |
+| Vue     | [Repository](https://github.com/vuejs/      | MIT     |
+|         | core/tree/main/packages/vue)                |         |
 
 ## Wrapped with complete link
 | Tool     | Link                                  | Notes                                                |
@@ -25,4 +25,4 @@
 |---------|---------------------------------------------|---------|
 | lodash  | [npm](https://www.npmjs.com/package/lodash) | 4.17.21 |
 | axios   | [Package](https://www.npmjs.com/package/    | 1.6.0   |
-| axios)  |
+|         | axios)                                      |         |

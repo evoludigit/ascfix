@@ -1,4 +1,4 @@
-//! Regression tests for text corruption issues (Phase 1)
+//! Regression tests for text corruption issues
 
 use ascfix::{
     grid::Grid,
