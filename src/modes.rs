@@ -2,6 +2,7 @@
 
 use crate::cli::Mode;
 use crate::links::{detect_links, is_inside_link_url};
+use crate::tables::{has_wrapped_cells, unwrap_table_rows};
 use std::fmt::Write;
 
 /// Process content according to the specified mode.
@@ -58,18 +59,44 @@ fn process_safe_mode(content: &str) -> String {
                 i += 1;
             }
 
-            // Parse and normalize the table
-            if let Some(normalized) = normalize_table(header, separator, &table_rows) {
-                result.push(normalized);
-            } else {
-                // If parsing fails, keep original lines
-                result.push(header.to_string());
-                result.push(separator.to_string());
-                for row in &table_rows {
-                    result.push(row.to_string());
+            // Check if table has wrapped cells and unwrap if needed
+            let all_table_lines: Vec<&str> = std::iter::once(header)
+                .chain(std::iter::once(separator))
+                .chain(table_rows.iter().copied())
+                .collect();
+
+            let table_content = all_table_lines.join("\n");
+
+            if has_wrapped_cells(&table_content) {
+                // Unwrap the table rows
+                let unwrapped_rows = unwrap_table_rows(&table_rows);
+                // Convert unwrapped rows back to &str for normalize_table
+                let unwrapped_refs: Vec<&str> = unwrapped_rows.iter().map(String::as_str).collect();
+
+                if let Some(normalized) = normalize_table(header, separator, &unwrapped_refs) {
+                    result.push(normalized);
+                } else {
+                    // If parsing fails, use unwrapped rows
+                    result.push(header.to_string());
+                    result.push(separator.to_string());
+                    for row in unwrapped_rows {
+                        result.push(row);
+                    }
                 }
-                i -= table_rows.len();
-                i += 2;
+            } else {
+                // No wrapping - normalize normally
+                if let Some(normalized) = normalize_table(header, separator, &table_rows) {
+                    result.push(normalized);
+                } else {
+                    // If parsing fails, keep original lines
+                    result.push(header.to_string());
+                    result.push(separator.to_string());
+                    for row in &table_rows {
+                        result.push(row.to_string());
+                    }
+                    i -= table_rows.len();
+                    i += 2;
+                }
             }
         } else {
             result.push(lines[i].to_string());
@@ -496,6 +523,39 @@ mod tests {
         assert!(
             result.contains("https://example.com/doc|section"),
             "Link URL with pipe should be preserved. Result:\n{result}"
+        );
+    }
+
+    #[test]
+    fn test_safe_mode_unwraps_wrapped_table_cells() {
+        // Test that wrapped table cells are unwrapped in safe mode
+        let content = "| Name | Description |\n|------|-------------|\n| Item | This is a very |\n|      | long description |";
+        let result = process_safe_mode(content);
+        // The wrapped cell should be joined into one row
+        assert!(
+            result.contains("This is a very long description"),
+            "Wrapped cell should be unwrapped. Result:\n{result}"
+        );
+        // Should not have the continuation row pattern
+        assert!(
+            !result.contains("|      | long description |"),
+            "Continuation row should be removed. Result:\n{result}"
+        );
+    }
+
+    #[test]
+    fn test_safe_mode_preserves_multiline_code_in_tables() {
+        // Test that intentional multi-line content (code blocks) is preserved
+        let content = "| Code | Example |\n|------|---------|\n| ```python | of code |\n| def hello(): | inside |\n| ``` | cell |";
+        let result = process_safe_mode(content);
+        // Code blocks should be preserved (not unwrapped)
+        assert!(
+            result.contains("```python"),
+            "Code fence should be preserved. Result:\n{result}"
+        );
+        assert!(
+            result.contains("def hello():"),
+            "Code content should be preserved. Result:\n{result}"
         );
     }
 }

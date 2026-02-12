@@ -20,6 +20,7 @@ mod primitives;
 mod processor;
 mod renderer;
 mod scanner;
+mod tables;
 
 use anyhow::Result;
 use clap::Parser;
