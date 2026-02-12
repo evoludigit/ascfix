@@ -621,6 +621,71 @@ pub fn normalize_lists(content: &str) -> String {
     result.join("\n")
 }
 
+/// Normalize spacing between headers/paragraphs and lists.
+///
+/// Adds blank lines between:
+/// - Headers (# ## ### etc.) and lists
+/// - Paragraphs and lists
+///
+/// This fixes the common issue where Markdown parsers require blank lines
+/// between block-level elements.
+///
+/// # Examples
+///
+/// ```
+/// use ascfix::lists::normalize_loose_lists;
+///
+/// let content = "# My Title\n- Item 1\n- Item 2";
+/// let normalized = normalize_loose_lists(content);
+/// assert!(normalized.contains("# My Title\n\n- Item 1"));
+/// ```
+#[must_use]
+#[allow(dead_code)]
+pub fn normalize_loose_lists(content: &str) -> String {
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.is_empty() {
+        return String::new();
+    }
+
+    let mut result = Vec::new();
+
+    for (i, line) in lines.iter().enumerate() {
+        // Check if current line is a list item
+        let is_list_item = parse_list_item(line, i).is_some();
+
+        // Check if previous line was a header
+        let prev_line = if i > 0 { lines.get(i - 1) } else { None };
+        let prev_trimmed = prev_line.map_or("", |l| l.trim());
+
+        // Determine if we need to insert a blank line
+        let needs_blank_line = if is_list_item {
+            // Check if previous line was a header (starts with #)
+            let prev_was_header = prev_trimmed.starts_with('#');
+            // Check if previous line was a paragraph (non-empty, not a list, not a header)
+            let prev_was_paragraph = !prev_trimmed.is_empty()
+                && !prev_trimmed.starts_with('#')
+                && !prev_trimmed.starts_with('-')
+                && !prev_trimmed.starts_with('*')
+                && !prev_trimmed.starts_with('+')
+                && prev_line.is_none_or(|l| parse_list_item(l, i - 1).is_none());
+
+            (prev_was_header || prev_was_paragraph)
+                && !result.is_empty()
+                && result.last().is_none_or(|s: &String| !s.trim().is_empty())
+        } else {
+            false
+        };
+
+        if needs_blank_line {
+            result.push(String::new());
+        }
+
+        result.push(line.to_string());
+    }
+
+    result.join("\n")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -888,5 +953,46 @@ mod tests {
         let normalized = normalize_lists(content);
         assert!(normalized.contains("- [ ] In code block")); // Preserved as-is
         assert!(normalized.contains("- [ ] Real task outside"));
+    }
+
+    #[test]
+    fn add_blank_line_between_header_and_list() {
+        // Headers immediately followed by lists should have blank line added
+        let content = "# My Title\n- Item 1\n- Item 2";
+        let normalized = normalize_loose_lists(content);
+        assert!(normalized.contains("# My Title\n\n- Item 1"));
+    }
+
+    #[test]
+    fn add_blank_line_between_paragraph_and_list() {
+        // Paragraphs immediately followed by lists should have blank line added
+        let content = "Some paragraph text\n- Item 1\n- Item 2";
+        let normalized = normalize_loose_lists(content);
+        assert!(normalized.contains("Some paragraph text\n\n- Item 1"));
+    }
+
+    #[test]
+    fn preserve_existing_blank_lines() {
+        // Content that already has proper spacing should not change
+        let content = "# Title\n\n- Item 1\n\nSome text\n\n- Item 2";
+        let normalized = normalize_loose_lists(content);
+        assert_eq!(normalized, content);
+    }
+
+    #[test]
+    fn handle_loose_lists_with_paragraphs() {
+        // Lists with blank lines between items (loose lists) should be preserved
+        let content = "- Item 1\n\n  Paragraph text\n\n- Item 2";
+        let normalized = normalize_loose_lists(content);
+        assert!(normalized.contains("- Item 1\n\n  Paragraph text\n\n- Item 2"));
+    }
+
+    #[test]
+    fn multiple_headers_need_spacing() {
+        // Multiple headers followed by lists
+        let content = "# Header 1\n- Item A\n# Header 2\n- Item B";
+        let normalized = normalize_loose_lists(content);
+        assert!(normalized.contains("# Header 1\n\n- Item A"));
+        assert!(normalized.contains("# Header 2\n\n- Item B"));
     }
 }
