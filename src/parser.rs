@@ -181,7 +181,8 @@ mod tests {
 
     #[test]
     fn test_ignore_block_basic() {
-        let markdown = "Before\n<!-- ascfix:ignore -->\nIgnored content\n<!-- /ascfix:ignore -->\nAfter";
+        let markdown =
+            "Before\n<!-- ascfix:ignore -->\nIgnored content\n<!-- /ascfix:ignore -->\nAfter";
         let normal_lines = extract_normal_lines(markdown);
 
         let line_texts: Vec<&str> = normal_lines.iter().map(|(_, l)| l.as_str()).collect();
@@ -217,7 +218,8 @@ mod tests {
 
     #[test]
     fn test_ignore_block_multiline() {
-        let markdown = "Before\n<!-- ascfix:ignore -->\nLine1\nLine2\nLine3\n<!-- /ascfix:ignore -->\nAfter";
+        let markdown =
+            "Before\n<!-- ascfix:ignore -->\nLine1\nLine2\nLine3\n<!-- /ascfix:ignore -->\nAfter";
         let normal_lines = extract_normal_lines(markdown);
 
         let line_texts: Vec<&str> = normal_lines.iter().map(|(_, l)| l.as_str()).collect();
@@ -228,7 +230,8 @@ mod tests {
 
     #[test]
     fn test_ignore_block_with_code_fence() {
-        let markdown = "Text\n<!-- ascfix:ignore -->\n```\ncode\n```\n<!-- /ascfix:ignore -->\nAfter";
+        let markdown =
+            "Text\n<!-- ascfix:ignore -->\n```\ncode\n```\n<!-- /ascfix:ignore -->\nAfter";
         let normal_lines = extract_normal_lines(markdown);
 
         let line_texts: Vec<&str> = normal_lines.iter().map(|(_, l)| l.as_str()).collect();
@@ -276,7 +279,8 @@ mod tests {
 
     #[test]
     fn test_ignore_block_preserves_line_numbers() {
-        let markdown = "Line0\n<!-- ascfix:ignore -->\nLine2\nLine3\n<!-- /ascfix:ignore -->\nLine5";
+        let markdown =
+            "Line0\n<!-- ascfix:ignore -->\nLine2\nLine3\n<!-- /ascfix:ignore -->\nLine5";
         let normal_lines = extract_normal_lines(markdown);
 
         let line_nums: Vec<usize> = normal_lines.iter().map(|(num, _)| *num).collect();

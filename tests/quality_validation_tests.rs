@@ -182,8 +182,9 @@ fn validate_fence_repair_quality() {
 
     for (input_path, expected_path) in fixtures {
         if Path::new(input_path).exists() && Path::new(expected_path).exists() {
-            validate_fixture_with_fences(input_path, expected_path, &config)
-                .unwrap_or_else(|e| panic!("Fence repair quality validation failed for {input_path}: {e}"));
+            validate_fixture_with_fences(input_path, expected_path, &config).unwrap_or_else(|e| {
+                panic!("Fence repair quality validation failed for {input_path}: {e}")
+            });
         }
     }
 }

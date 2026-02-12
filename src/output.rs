@@ -82,19 +82,11 @@ pub enum FileResult {
         transformations: Option<Vec<String>>,
     },
     #[serde(rename = "unchanged")]
-    Unchanged {
-        file: String,
-    },
+    Unchanged { file: String },
     #[serde(rename = "error")]
-    Error {
-        file: String,
-        error: String,
-    },
+    Error { file: String, error: String },
     #[serde(rename = "skipped")]
-    Skipped {
-        file: String,
-        reason: String,
-    },
+    Skipped { file: String, reason: String },
 }
 
 impl FileResult {

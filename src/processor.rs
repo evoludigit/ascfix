@@ -88,7 +88,8 @@ impl Processor {
         let mut any_needs_fixing = false;
 
         for file_path in file_paths {
-            let result = self.process_single_file_enhanced(&file_path, &mut any_needs_fixing, &mut stats);
+            let result =
+                self.process_single_file_enhanced(&file_path, &mut any_needs_fixing, &mut stats);
             file_results.push(result);
         }
 
@@ -149,7 +150,9 @@ impl Processor {
                     stats.record_skipped();
                     return FileResult::Skipped {
                         file: file_str,
-                        reason: format!("File size ({file_size} bytes) exceeds maximum ({max_size} bytes)"),
+                        reason: format!(
+                            "File size ({file_size} bytes) exceeds maximum ({max_size} bytes)"
+                        ),
                     };
                 }
             }
@@ -160,7 +163,11 @@ impl Processor {
             Ok(c) => c,
             Err(e) => {
                 if self.args.verbose {
-                    crate::output::log_error(&format!("Failed to read {}: {}", file_path.display(), e));
+                    crate::output::log_error(&format!(
+                        "Failed to read {}: {}",
+                        file_path.display(),
+                        e
+                    ));
                 }
                 stats.record_error();
                 return FileResult::Error {
@@ -226,9 +233,7 @@ impl Processor {
                 println!("{processed}");
             }
 
-            FileResult::Unchanged {
-                file: file_str,
-            }
+            FileResult::Unchanged { file: file_str }
         }
     }
 
