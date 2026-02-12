@@ -2,7 +2,7 @@
 
 /// Box drawing style for different box types.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram rendering
 pub enum BoxStyle {
     /// Single-line boxes: ─ │ ┌ ┐ └ ┘
     Single,
@@ -14,7 +14,7 @@ pub enum BoxStyle {
 
 /// Box drawing characters for a specific style.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram rendering
 pub struct BoxChars {
     /// Horizontal line character
     pub horizontal: char,
@@ -33,7 +33,7 @@ pub struct BoxChars {
 impl BoxStyle {
     /// Get the characters used for this box style.
     #[must_use]
-    #[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+    #[allow(dead_code)] // Reason: Part of public API for diagram rendering
     pub const fn chars(self) -> BoxChars {
         match self {
             Self::Single => BoxChars {
@@ -68,7 +68,7 @@ impl BoxStyle {
     /// Returns the style if the character is a corner of a box,
     /// or None if the character is not a corner.
     #[must_use]
-    #[allow(dead_code)] // Reason: Used by detector in upcoming phases
+    #[allow(dead_code)] // Reason: Part of public API for diagram detection
     pub const fn from_corner(ch: char) -> Option<Self> {
         match ch {
             '┌' | '┐' | '└' | '┘' => Some(Self::Single),
@@ -134,7 +134,7 @@ impl Box {
 
 /// Arrow type for different arrow styles.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram rendering
 pub enum ArrowType {
     /// Standard arrow: → ←
     Standard,
@@ -148,7 +148,7 @@ pub enum ArrowType {
 
 /// Arrow drawing characters for a specific style.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram rendering
 pub struct ArrowChars {
     /// Line character
     pub line: char,
@@ -161,7 +161,7 @@ pub struct ArrowChars {
 impl ArrowType {
     /// Get the characters used for this arrow type.
     #[must_use]
-    #[allow(dead_code)] // Reason: Used by detector and renderer in upcoming phases
+    #[allow(dead_code)] // Reason: Part of public API for diagram rendering
     pub const fn chars(self) -> ArrowChars {
         match self {
             Self::Standard => ArrowChars {
@@ -192,7 +192,7 @@ impl ArrowType {
     /// Returns the type if the character is an arrowhead,
     /// or None if the character is not an arrowhead.
     #[must_use]
-    #[allow(dead_code)] // Reason: Used by detector in upcoming phases
+    #[allow(dead_code)] // Reason: Part of public API for diagram detection
     pub const fn from_char(ch: char) -> Option<Self> {
         match ch {
             '→' | '←' => Some(Self::Standard),
@@ -303,37 +303,37 @@ pub struct ConnectionLine {
 }
 
 /// Single-line box characters for character set constant.
-#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const SINGLE_LINE_HORIZ: char = '─';
 /// Single-line box characters for character set constant.
-#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const SINGLE_LINE_VERT: char = '│';
 /// Single-line box characters for character set constant.
-#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const SINGLE_LINE_CORNERS: &[char] = &['┌', '┐', '└', '┘'];
 
 /// Double-line box characters for character set constant.
-#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const DOUBLE_LINE_HORIZ: char = '═';
 /// Double-line box characters for character set constant.
-#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const DOUBLE_LINE_VERT: char = '║';
 /// Double-line box characters for character set constant.
-#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const DOUBLE_LINE_CORNERS: &[char] = &['╔', '╗', '╚', '╝'];
 
 /// Rounded box characters for character set constant.
-#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const ROUNDED_HORIZ: char = '─';
 /// Rounded box characters for character set constant.
-#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const ROUNDED_VERT: char = '│';
 /// Rounded box characters for character set constant.
-#[allow(dead_code)] // Reason: Will be used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const ROUNDED_CORNERS: &[char] = &['╭', '╮', '╰', '╯'];
 
 /// Check if a character is a box character.
-#[allow(dead_code)] // Reason: Used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const fn is_box_char(ch: char) -> bool {
     matches!(
         ch,
@@ -362,7 +362,7 @@ const fn is_box_char(ch: char) -> bool {
 }
 
 /// Check if a character is a box corner (any style).
-#[allow(dead_code)] // Reason: Used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const fn is_box_corner(ch: char) -> bool {
     matches!(
         ch,
@@ -371,19 +371,19 @@ const fn is_box_corner(ch: char) -> bool {
 }
 
 /// Check if a character is a double-line box corner.
-#[allow(dead_code)] // Reason: Used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const fn is_double_line_corner(ch: char) -> bool {
     matches!(ch, '╔' | '╗' | '╚' | '╝')
 }
 
 /// Check if a character is a rounded box corner.
-#[allow(dead_code)] // Reason: Used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const fn is_rounded_corner(ch: char) -> bool {
     matches!(ch, '╭' | '╮' | '╰' | '╯')
 }
 
 /// Check if a character is a vertical arrow character (any style or direction).
-#[allow(dead_code)] // Reason: Used by detector in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for diagram detection
 const fn is_vertical_arrow_char(ch: char) -> bool {
     matches!(ch, '↓' | '↑' | '⇓' | '⇑' | '⟱' | '⟰')
 }

@@ -45,7 +45,7 @@ pub fn balance_horizontal_boxes(inventory: &PrimitiveInventory) -> PrimitiveInve
 /// 1. For each pair of boxes, check if they have vertical overlap
 /// 2. Check if they are horizontally adjacent (no gap or minimal gap)
 /// 3. Group adjacent boxes together
-#[allow(dead_code)] // Reason: Used by balancing normalization in upcoming phases
+#[allow(dead_code)] // Reason: Part of public API for box normalization
 #[must_use]
 fn find_vertical_overlap_groups(inventory: &PrimitiveInventory) -> Vec<Vec<usize>> {
     if inventory.boxes.is_empty() {

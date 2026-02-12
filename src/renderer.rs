@@ -230,7 +230,7 @@ fn draw_vertical_arrow(grid: &mut Grid, arrow: &crate::primitives::VerticalArrow
 /// 3. Skip if segments collide with boxes
 ///
 /// Conservative: Does not render to avoid unintended overwrites.
-#[allow(dead_code)] // Reason: Used by rendering pipeline in upcoming phase
+#[allow(dead_code)] // Reason: Part of public API for diagram rendering
 #[allow(clippy::missing_const_for_fn)] // Future implementation will need mutable grid
 fn draw_connection_line(grid: &mut Grid, conn: &crate::primitives::ConnectionLine) {
     // First, identify all junction points where elbows should be drawn
@@ -402,7 +402,7 @@ fn draw_elbows_at_points(
 /// 4. Labels rendered last (lowest priority)
 ///
 /// Conservative: Does not render to avoid text collision.
-#[allow(dead_code)] // Reason: Used by rendering pipeline in upcoming phase
+#[allow(dead_code)] // Reason: Part of public API for diagram rendering
 #[allow(clippy::missing_const_for_fn)] // Future implementation will need mutable grid
 fn draw_label(grid: &mut Grid, label: &crate::primitives::Label) {
     // For labels attached to vertical arrows, position them under the arrows
