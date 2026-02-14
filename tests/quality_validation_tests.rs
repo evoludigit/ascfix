@@ -130,9 +130,14 @@ fn validate_integration_fixtures() {
             "tests/data/integration/dirty/malformed_box_alignment.md",
             "tests/data/integration/clean/malformed_box_alignment.md",
         ),
+        // Arrow alignment fixtures (common LLM issue)
         (
             "tests/data/integration/dirty/readme_arrow_alignment.md",
             "tests/data/integration/clean/readme_arrow_alignment.md",
+        ),
+        (
+            "tests/data/integration/dirty/llm_arrow_inconsistency.md",
+            "tests/data/integration/clean/llm_arrow_inconsistency.md",
         ),
     ];
 

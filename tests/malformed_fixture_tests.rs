@@ -334,6 +334,16 @@ mod malformed_fixture_tests {
     }
 
     #[test]
+    fn test_llm_arrow_inconsistency() {
+        // Test LLM-generated content with arrows at inconsistent positions
+        let dirty_content = include_str!("data/integration/dirty/llm_arrow_inconsistency.md");
+        let expected_clean = include_str!("data/integration/clean/llm_arrow_inconsistency.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Diagram, false);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
     fn test_malformed_wrapped_cells() {
         // Test that wrapped table cells are unwrapped in safe mode
         let dirty_content = include_str!("data/integration/dirty/malformed_wrapped_cells.md");
