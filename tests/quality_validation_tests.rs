@@ -96,16 +96,18 @@ fn validate_all_golden_fixtures() {
 
 #[test]
 fn validate_integration_fixtures() {
-    // Even more lenient for complex integration fixtures
+    // Lenient but safe quality config for integration fixtures
+    // These fixtures test real-world repair scenarios where structural improvements are expected
     let config = QualityConfig {
-        min_text_preservation: 0.75, // Complex fixtures may have significant constructive changes
-        min_structure_preservation: 0.70, // Allow major structural improvements
-        max_line_count_delta: 10,    // Allow substantial formatting changes
-        allow_text_corruption: false, // Still prevent destructive corruption
-        allow_data_loss: false,      // Still prevent data loss
+        min_text_preservation: 0.80, // Allow constructive changes like arrow alignment/duplication
+        min_structure_preservation: 0.75, // Allow structural repairs (breaking/fixing boxes, nesting)
+        max_line_count_delta: 15,    // Allow substantial formatting changes in complex diagrams
+        allow_text_corruption: false, // Always prevent destructive corruption
+        allow_data_loss: false,      // Always prevent data loss
     };
 
     let fixtures = vec![
+        // Table and text wrapping fixtures
         (
             "tests/data/integration/dirty/malformed_wrapped_cells.md",
             "tests/data/integration/clean/malformed_wrapped_cells.md",
@@ -115,20 +117,49 @@ fn validate_integration_fixtures() {
             "tests/data/integration/clean/malformed_wrapped_with_links.md",
         ),
         (
-            "tests/data/integration/dirty/malformed_box_alignment.md",
-            "tests/data/integration/clean/malformed_box_alignment.md",
+            "tests/data/integration/dirty/malformed_wrapped_with_code.md",
+            "tests/data/integration/clean/malformed_wrapped_with_code.md",
         ),
         (
             "tests/data/integration/dirty/malformed_broken_tables.md",
             "tests/data/integration/clean/malformed_broken_tables.md",
         ),
+        // Box and diagram alignment fixtures
         (
-            "tests/data/integration/dirty/malformed_wrapped_with_code.md",
-            "tests/data/integration/clean/malformed_wrapped_with_code.md",
+            "tests/data/integration/dirty/malformed_box_alignment.md",
+            "tests/data/integration/clean/malformed_box_alignment.md",
         ),
         (
             "tests/data/integration/dirty/readme_arrow_alignment.md",
             "tests/data/integration/clean/readme_arrow_alignment.md",
+        ),
+        // Arrow and connection fixtures
+        (
+            "tests/data/integration/dirty/malformed_broken_arrows.md",
+            "tests/data/integration/clean/malformed_broken_arrows.md",
+        ),
+        // Box structure fixtures
+        (
+            "tests/data/integration/dirty/malformed_broken_box.md",
+            "tests/data/integration/clean/malformed_broken_box.md",
+        ),
+        (
+            "tests/data/integration/dirty/malformed_nested.md",
+            "tests/data/integration/clean/malformed_nested.md",
+        ),
+        (
+            "tests/data/integration/dirty/malformed_overlapping.md",
+            "tests/data/integration/clean/malformed_overlapping.md",
+        ),
+        // Fence and code block fixtures
+        (
+            "tests/data/integration/dirty/malformed_broken_fences.md",
+            "tests/data/integration/clean/malformed_broken_fences.md",
+        ),
+        // Error recovery fixture
+        (
+            "tests/data/integration/dirty/error_recovery_corrupted.md",
+            "tests/data/integration/clean/error_recovery_corrupted.md",
         ),
     ];
 

@@ -232,7 +232,7 @@ Or alternatively:
 
 **Example:**
 
-```markdown
+````markdown
 <!-- ascfix:ignore -->
 ```
  .----------------.  .----------------.
@@ -247,7 +247,7 @@ This box will be processed:
 ┌──────┐
 │ Test │
 └──────┘
-```
+````
 
 Content inside ignore markers is completely skipped by ascfix, regardless of mode. Ignore markers work with:
 - Code fences (content inside fences within ignore blocks is preserved)

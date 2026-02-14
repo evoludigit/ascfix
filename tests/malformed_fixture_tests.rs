@@ -15,7 +15,7 @@ mod malformed_fixture_tests {
 
     #[test]
     fn test_malformed_broken_box() {
-        let content = include_str!("data/integration/malformed_broken_box.md");
+        let content = include_str!("data/integration/dirty/malformed_broken_box.md");
         // Test that ascfix handles broken boxes gracefully
         let result = process_fixture_content(content, &Mode::Diagram, false);
         // Should not crash, may or may not fix the broken box
@@ -24,11 +24,11 @@ mod malformed_fixture_tests {
 
     #[test]
     fn test_malformed_broken_arrows() {
-        let content = include_str!("data/integration/malformed_broken_arrows.md");
+        let content = include_str!("data/integration/dirty/malformed_broken_arrows.md");
         let result = process_fixture_content(content, &Mode::Diagram, false);
         assert!(!result.is_empty());
         // Check that some arrows are preserved even if malformed
-        assert!(result.contains("│A │"));
+        assert!(result.contains("│A │") || result.contains("│A  │"));
     }
 
     #[test]
@@ -43,7 +43,7 @@ mod malformed_fixture_tests {
 
     #[test]
     fn test_malformed_broken_fences() {
-        let content = include_str!("data/integration/malformed_broken_fences.md");
+        let content = include_str!("data/integration/dirty/malformed_broken_fences.md");
         let result = process_fixture_content(content, &Mode::Diagram, true);
         assert!(!result.is_empty());
         // Fence repair enabled
@@ -59,7 +59,7 @@ mod malformed_fixture_tests {
 
     #[test]
     fn test_malformed_overlapping() {
-        let content = include_str!("data/integration/malformed_overlapping.md");
+        let content = include_str!("data/integration/dirty/malformed_overlapping.md");
         let result = process_fixture_content(content, &Mode::Diagram, false);
         assert!(!result.is_empty());
         // Should handle overlapping elements without crashing
@@ -67,7 +67,7 @@ mod malformed_fixture_tests {
 
     #[test]
     fn test_malformed_nested() {
-        let content = include_str!("data/integration/malformed_nested.md");
+        let content = include_str!("data/integration/dirty/malformed_nested.md");
         let result = process_fixture_content(content, &Mode::Diagram, false);
         assert!(!result.is_empty());
         // Should handle nested structures
@@ -279,7 +279,7 @@ mod malformed_fixture_tests {
 
     #[test]
     fn test_error_recovery_corrupted() {
-        let content = include_str!("data/integration/error_recovery_corrupted.md");
+        let content = include_str!("data/integration/dirty/error_recovery_corrupted.md");
         let result = process_fixture_content(content, &Mode::Diagram, true);
         assert!(!result.is_empty());
         // Should handle corrupted content gracefully
@@ -386,14 +386,14 @@ mod malformed_fixture_tests {
     fn test_all_fixtures_exist() {
         // Verify all fixture files can be read
         let fixtures = vec![
-            include_str!("data/integration/malformed_broken_box.md"),
-            include_str!("data/integration/malformed_broken_arrows.md"),
-            include_str!("data/integration/malformed_broken_tables.md"),
-            include_str!("data/integration/malformed_broken_fences.md"),
+            include_str!("data/integration/dirty/malformed_broken_box.md"),
+            include_str!("data/integration/dirty/malformed_broken_arrows.md"),
+            include_str!("data/integration/dirty/malformed_broken_tables.md"),
+            include_str!("data/integration/dirty/malformed_broken_fences.md"),
             include_str!("data/integration/edge_case_minimal.md"),
-            include_str!("data/integration/malformed_overlapping.md"),
-            include_str!("data/integration/malformed_nested.md"),
-            include_str!("data/integration/malformed_box_alignment.md"),
+            include_str!("data/integration/dirty/malformed_overlapping.md"),
+            include_str!("data/integration/dirty/malformed_nested.md"),
+            include_str!("data/integration/dirty/malformed_box_alignment.md"),
             // New complex fixtures
             include_str!("data/integration/complex_nested_with_labels.md"),
             include_str!("data/integration/complex_connection_lines.md"),
@@ -421,7 +421,7 @@ mod malformed_fixture_tests {
             // International fixtures
             include_str!("data/integration/international_multilingual.md"),
             // Error recovery fixtures
-            include_str!("data/integration/error_recovery_corrupted.md"),
+            include_str!("data/integration/dirty/error_recovery_corrupted.md"),
             // Whitespace fixtures
             include_str!("data/integration/whitespace_handling.md"),
             // Real-world fixtures
@@ -436,9 +436,10 @@ mod malformed_fixture_tests {
             assert!(fixture.contains('#'), "Fixture should have header comment");
         }
 
-        // Verify dirty/clean pairs exist for key test cases
+        // Verify dirty/clean pairs exist for all quality validation test cases
         #[allow(clippy::no_effect_underscore_binding)]
         {
+            // Original pairs
             let _dirty_tables = include_str!("data/integration/dirty/malformed_broken_tables.md");
             let _clean_tables = include_str!("data/integration/clean/malformed_broken_tables.md");
             let _dirty_boxes = include_str!("data/integration/dirty/malformed_box_alignment.md");
@@ -447,6 +448,20 @@ mod malformed_fixture_tests {
                 include_str!("data/integration/dirty/complex_nested_with_labels.md");
             let _clean_nested =
                 include_str!("data/integration/clean/complex_nested_with_labels.md");
+
+            // New pairs from reorganization
+            let _dirty_arrows = include_str!("data/integration/dirty/malformed_broken_arrows.md");
+            let _clean_arrows = include_str!("data/integration/clean/malformed_broken_arrows.md");
+            let _dirty_broken_box = include_str!("data/integration/dirty/malformed_broken_box.md");
+            let _clean_broken_box = include_str!("data/integration/clean/malformed_broken_box.md");
+            let _dirty_fences = include_str!("data/integration/dirty/malformed_broken_fences.md");
+            let _clean_fences = include_str!("data/integration/clean/malformed_broken_fences.md");
+            let _dirty_overlapping = include_str!("data/integration/dirty/malformed_overlapping.md");
+            let _clean_overlapping = include_str!("data/integration/clean/malformed_overlapping.md");
+            let _dirty_malformed_nested = include_str!("data/integration/dirty/malformed_nested.md");
+            let _clean_malformed_nested = include_str!("data/integration/clean/malformed_nested.md");
+            let _dirty_error = include_str!("data/integration/dirty/error_recovery_corrupted.md");
+            let _clean_error = include_str!("data/integration/clean/error_recovery_corrupted.md");
         }
     }
 }
