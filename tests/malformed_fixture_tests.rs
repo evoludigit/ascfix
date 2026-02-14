@@ -384,6 +384,66 @@ mod malformed_fixture_tests {
     }
 
     #[test]
+    fn test_llm_list_normalization() {
+        // Test LLM-generated lists with mixed bullet styles
+        let dirty_content = include_str!("data/integration/dirty/llm_list_normalization.md");
+        let expected_clean = include_str!("data/integration/clean/llm_list_normalization.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Safe, false);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
+    fn test_llm_connection_paths() {
+        // Test LLM-generated L-shaped connection paths
+        let dirty_content = include_str!("data/integration/dirty/llm_connection_paths.md");
+        let expected_clean = include_str!("data/integration/clean/llm_connection_paths.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Diagram, false);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
+    fn test_llm_mixed_tables_diagrams() {
+        // Test mixed tables and diagrams together
+        let dirty_content = include_str!("data/integration/dirty/llm_mixed_tables_diagrams.md");
+        let expected_clean = include_str!("data/integration/clean/llm_mixed_tables_diagrams.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Diagram, false);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
+    fn test_llm_unicode_tables_mixed() {
+        // Test Unicode and table structures mixed
+        let dirty_content = include_str!("data/integration/dirty/llm_unicode_tables_mixed.md");
+        let expected_clean = include_str!("data/integration/clean/llm_unicode_tables_mixed.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Diagram, false);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
+    fn test_llm_diagrams_with_code() {
+        // Test diagrams mixed with code blocks
+        let dirty_content = include_str!("data/integration/dirty/llm_diagrams_with_code.md");
+        let expected_clean = include_str!("data/integration/clean/llm_diagrams_with_code.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Diagram, true);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
+    fn test_llm_everything_mixed() {
+        // Test everything together: lists, tables, diagrams, code, mixed styles
+        let dirty_content = include_str!("data/integration/dirty/llm_everything_mixed.md");
+        let expected_clean = include_str!("data/integration/clean/llm_everything_mixed.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Diagram, true);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
     fn test_malformed_wrapped_cells() {
         // Test that wrapped table cells are unwrapped in safe mode
         let dirty_content = include_str!("data/integration/dirty/malformed_wrapped_cells.md");

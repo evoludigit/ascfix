@@ -159,6 +159,36 @@ fn validate_integration_fixtures() {
             "tests/data/integration/dirty/llm_unicode_mixed.md",
             "tests/data/integration/clean/llm_unicode_mixed.md",
         ),
+        // List normalization (common LLM issue)
+        (
+            "tests/data/integration/dirty/llm_list_normalization.md",
+            "tests/data/integration/clean/llm_list_normalization.md",
+        ),
+        // Connection paths/L-shaped connectors
+        (
+            "tests/data/integration/dirty/llm_connection_paths.md",
+            "tests/data/integration/clean/llm_connection_paths.md",
+        ),
+        // Mixed patterns: Tables + Diagrams
+        (
+            "tests/data/integration/dirty/llm_mixed_tables_diagrams.md",
+            "tests/data/integration/clean/llm_mixed_tables_diagrams.md",
+        ),
+        // Mixed patterns: Unicode + Tables
+        (
+            "tests/data/integration/dirty/llm_unicode_tables_mixed.md",
+            "tests/data/integration/clean/llm_unicode_tables_mixed.md",
+        ),
+        // Mixed patterns: Diagrams + Code blocks
+        (
+            "tests/data/integration/dirty/llm_diagrams_with_code.md",
+            "tests/data/integration/clean/llm_diagrams_with_code.md",
+        ),
+        // Mixed patterns: Everything together
+        (
+            "tests/data/integration/dirty/llm_everything_mixed.md",
+            "tests/data/integration/clean/llm_everything_mixed.md",
+        ),
     ];
 
     let mut failed_fixtures = Vec::new();
