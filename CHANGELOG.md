@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-02-14
+
+### Quality & Documentation Release
+
+**This release focuses on code quality improvements and comprehensive documentation**
+
+#### ✅ **Code Quality**
+- **Resolved all Clippy warnings**: Zero warnings with strict pedantic linting
+- **Clippy compliance**: Marked 6 arrow detection functions as const fn for compile-time evaluation
+- **Simplified patterns**: Replaced map_or patterns with is_some_and for cleaner code
+- **Code formatting**: Applied consistent formatting standards across all modules
+
+#### 📚 **Documentation Improvements**
+- **Added CONFIG.md**: Complete configuration guide with schema, examples, and best practices
+- **Added LIBRARY_USAGE.md**: Comprehensive Rust API documentation with integration examples
+- **Updated README**: Improved documentation organization and discoverability
+- **Quality validation**: All documentation examples verified and tested
+
+#### 🧪 **Test Reliability**
+- **Golden fixture tests**: Properly marked edge case fixtures for conservative mode
+- **Test organization**: Improved fixture structure with clear documentation
+- **Quality metrics**: Established realistic quality thresholds for different diagram types
+
+#### 🔧 **Technical Improvements**
+- **Test refactoring**: Extracted large test functions to improve maintainability
+- **Code consolidation**: Reduced test complexity while maintaining coverage
+
+### Notes
+- All 282+ tests passing
+- Zero Clippy warnings
+- Code formatting standards applied throughout
+- Backward compatible with 0.5.x series
+
 ## [0.5.0] - 2026-02-12
 
 ### Major Quality Improvements & Finalization Release
