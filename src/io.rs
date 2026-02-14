@@ -9,7 +9,7 @@ use std::path::Path;
 /// # Errors
 ///
 /// Returns an error if the file cannot be read.
-#[allow(dead_code)] // Reason: Used by main processing pipeline (Cycle 3)
+#[allow(dead_code)] // Reason: Used by main processing pipeline
 pub fn read_markdown(path: &Path) -> Result<String> {
     fs::read_to_string(path).context(format!("Failed to read {}", path.display()))
 }
@@ -19,7 +19,7 @@ pub fn read_markdown(path: &Path) -> Result<String> {
 /// # Errors
 ///
 /// Returns an error if the file cannot be written.
-#[allow(dead_code)] // Reason: Used by main processing pipeline (Cycle 3)
+#[allow(dead_code)] // Reason: Used by main processing pipeline
 pub fn write_markdown(path: &Path, content: &str) -> Result<()> {
     fs::write(path, content).context(format!("Failed to write {}", path.display()))
 }
