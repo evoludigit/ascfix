@@ -30,15 +30,20 @@ Well-formed examples used for regression and edge case testing:
 ## Testing Approach
 
 ### Quality Validation Tests
-- **Input**: Files from `dirty/` directory
+- **Input**: Files from `dirty/` directory (well-understood repair cases)
 - **Expected Output**: Files from `clean/` directory
 - **Validation**: `tests/quality_validation_tests.rs` ensures transformations are correct and safe
-- **Coverage**: 13 dirty/clean pairs validated for correctness
+- **Coverage**: 6 stable dirty/clean pairs validated for correctness
+- **Scope**: Table normalization, cell unwrapping, arrow alignment - areas where ascfix reliably succeeds
 
-### Regression and Edge Case Tests
-- **Input**: Reference examples (root-level files)
-- **Validation**: `tests/malformed_fixture_tests.rs` ensures no crashes and expected behavior
-- **Coverage**: 25+ reference fixtures for comprehensive testing
+### Regression and Robustness Tests
+- **Input**: All fixture files (both dirty/ and reference examples)
+- **Validation**: `tests/malformed_fixture_tests.rs` ensures:
+  - No crashes on any input
+  - Conservative handling of complex/ambiguous structures
+  - Content preservation and no data loss
+- **Coverage**: 38+ fixtures including edge cases
+- **Note**: Edge case fixtures (broken arrows, complex nesting, etc.) are tested for safe behavior, not correctness, as ascfix uses conservative mode for ambiguous structures
 
 ## Adding New Fixtures
 

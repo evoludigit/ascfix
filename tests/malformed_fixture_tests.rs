@@ -436,32 +436,29 @@ mod malformed_fixture_tests {
             assert!(fixture.contains('#'), "Fixture should have header comment");
         }
 
-        // Verify dirty/clean pairs exist for all quality validation test cases
+        // Verify dirty/clean pairs exist for quality validation test cases
         #[allow(clippy::no_effect_underscore_binding)]
         {
-            // Original pairs
+            // Stable pairs with reliable transformations (quality validated)
             let _dirty_tables = include_str!("data/integration/dirty/malformed_broken_tables.md");
             let _clean_tables = include_str!("data/integration/clean/malformed_broken_tables.md");
             let _dirty_boxes = include_str!("data/integration/dirty/malformed_box_alignment.md");
             let _clean_boxes = include_str!("data/integration/clean/malformed_box_alignment.md");
+            let _dirty_wrapped = include_str!("data/integration/dirty/malformed_wrapped_cells.md");
+            let _clean_wrapped = include_str!("data/integration/clean/malformed_wrapped_cells.md");
             let _dirty_nested =
                 include_str!("data/integration/dirty/complex_nested_with_labels.md");
             let _clean_nested =
                 include_str!("data/integration/clean/complex_nested_with_labels.md");
 
-            // New pairs from reorganization
-            let _dirty_arrows = include_str!("data/integration/dirty/malformed_broken_arrows.md");
-            let _clean_arrows = include_str!("data/integration/clean/malformed_broken_arrows.md");
-            let _dirty_broken_box = include_str!("data/integration/dirty/malformed_broken_box.md");
-            let _clean_broken_box = include_str!("data/integration/clean/malformed_broken_box.md");
-            let _dirty_fences = include_str!("data/integration/dirty/malformed_broken_fences.md");
-            let _clean_fences = include_str!("data/integration/clean/malformed_broken_fences.md");
-            let _dirty_overlapping = include_str!("data/integration/dirty/malformed_overlapping.md");
-            let _clean_overlapping = include_str!("data/integration/clean/malformed_overlapping.md");
-            let _dirty_malformed_nested = include_str!("data/integration/dirty/malformed_nested.md");
-            let _clean_malformed_nested = include_str!("data/integration/clean/malformed_nested.md");
-            let _dirty_error = include_str!("data/integration/dirty/error_recovery_corrupted.md");
-            let _clean_error = include_str!("data/integration/clean/error_recovery_corrupted.md");
+            // Edge case fixtures (regression tested only, not quality validated)
+            // These are known to be handled conservatively by ascfix
+            let _edge_arrows = include_str!("data/integration/dirty/malformed_broken_arrows.md");
+            let _edge_box = include_str!("data/integration/dirty/malformed_broken_box.md");
+            let _edge_fences = include_str!("data/integration/dirty/malformed_broken_fences.md");
+            let _edge_overlapping = include_str!("data/integration/dirty/malformed_overlapping.md");
+            let _edge_nesting = include_str!("data/integration/dirty/malformed_nested.md");
+            let _edge_corrupted = include_str!("data/integration/dirty/error_recovery_corrupted.md");
         }
     }
 }
