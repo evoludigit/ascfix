@@ -58,6 +58,20 @@ For regression/edge cases (tests robustness):
 
 ## Statistics
 
-- **Dirty/Clean Pairs**: 13 fixtures with quality validation
-- **Reference Examples**: 25+ well-formed examples for regression testing
-- **Total Integration Fixtures**: 38+ test cases
+- **Dirty/Clean Pairs (Quality Validated)**: 8 fixtures
+  - 4 table wrapping & structure issues
+  - 2 arrow alignment issues
+  - 1 box alignment issue
+  - 1 nested box issue
+- **Reference Examples (Regression Only)**: 31+ test cases
+- **Total Integration Tests**: 39 cases all passing
+
+## Design Philosophy
+
+**Focus on realistic LLM problems**: All quality-validated fixtures represent problems that LLMs commonly generate:
+- Cells wrapping at column boundaries (very common)
+- Boxes too narrow for content (very common)
+- Arrows at inconsistent positions (common)
+- Mixed Unicode/ASCII styles (somewhat common)
+
+**Conservative with edge cases**: Complex structures that ascfix handles conservatively (ambiguous nesting, overlapping elements) are tested for safety (no crash, no data loss) but NOT validated for specific correctness, as ascfix intentionally preserves these unchanged to prioritize safety over aggressive transformation.
