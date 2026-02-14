@@ -6,7 +6,7 @@ use crate::primitives::ArrowType;
 /// Check if a character is a vertical arrow (Unicode or box-drawing)
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
-fn is_vertical_arrow(ch: char) -> bool {
+const fn is_vertical_arrow(ch: char) -> bool {
     matches!(ch,
         // Standard arrows
         '↓' | '↑' |
@@ -20,7 +20,7 @@ fn is_vertical_arrow(ch: char) -> bool {
 /// Check if a character is a horizontal arrow (Unicode or box-drawing)
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
-fn is_horizontal_arrow(ch: char) -> bool {
+const fn is_horizontal_arrow(ch: char) -> bool {
     matches!(ch,
         // Standard arrows
         '→' | '←' |
@@ -36,28 +36,28 @@ fn is_horizontal_arrow(ch: char) -> bool {
 /// Check if a character is a downward arrow
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
-fn is_downward_arrow(ch: char) -> bool {
+const fn is_downward_arrow(ch: char) -> bool {
     matches!(ch, '↓' | '⇓')
 }
 
 /// Check if a character is an upward arrow
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
-fn is_upward_arrow(ch: char) -> bool {
+const fn is_upward_arrow(ch: char) -> bool {
     matches!(ch, '↑' | '⇑')
 }
 
 /// Check if a character is a rightward arrow
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
-fn is_rightward_arrow(ch: char) -> bool {
+const fn is_rightward_arrow(ch: char) -> bool {
     matches!(ch, '→' | '⇒' | '⟶')
 }
 
 /// Check if a character is a leftward arrow
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
-fn is_leftward_arrow(ch: char) -> bool {
+const fn is_leftward_arrow(ch: char) -> bool {
     matches!(ch, '←' | '⇐' | '⟹')
 }
 
@@ -163,7 +163,7 @@ pub fn detect_horizontal_arrows(grid: &Grid) -> Vec<crate::primitives::Horizonta
 
                     // Only add if it contains an arrow tip somewhere in the sequence
                     let has_arrow_tip = (start_col..=end_col)
-                        .any(|c| grid.get(row, c).map_or(false, |ch| is_rightward_arrow(ch) || is_leftward_arrow(ch)));
+                        .any(|c| grid.get(row, c).is_some_and(|ch| is_rightward_arrow(ch) || is_leftward_arrow(ch)));
 
                     if has_arrow_tip {
                         let arrow_char = (start_col..=end_col)

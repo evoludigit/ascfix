@@ -94,20 +94,8 @@ fn validate_all_golden_fixtures() {
     );
 }
 
-#[test]
-fn validate_integration_fixtures() {
-    // Strict but reasonable quality config for well-handled fixtures
-    // These are fixtures where ascfix reliably produces correct output
-    // Edge cases (complex nesting, broken arrows, etc.) are tested for non-crash behavior only
-    let config = QualityConfig {
-        min_text_preservation: 0.75, // Table/alignment repairs allow constructive changes
-        min_structure_preservation: 0.70, // Allow structural improvements like cell unwrapping
-        max_line_count_delta: 10,    // Allow formatting changes
-        allow_text_corruption: false, // Always prevent destructive corruption
-        allow_data_loss: false,      // Always prevent data loss
-    };
-
-    let fixtures = vec![
+fn get_integration_fixtures() -> Vec<(&'static str, &'static str)> {
+    vec![
         // Table and text wrapping fixtures (stable, well-handled by ascfix)
         (
             "tests/data/integration/dirty/malformed_wrapped_cells.md",
@@ -194,11 +182,22 @@ fn validate_integration_fixtures() {
             "tests/data/integration/dirty/llm_everything_mixed.md",
             "tests/data/integration/clean/llm_everything_mixed.md",
         ),
-    ];
+    ]
+}
+
+#[test]
+fn validate_integration_fixtures() {
+    let config = QualityConfig {
+        min_text_preservation: 0.75,
+        min_structure_preservation: 0.70,
+        max_line_count_delta: 10,
+        allow_text_corruption: false,
+        allow_data_loss: false,
+    };
 
     let mut failed_fixtures = Vec::new();
 
-    for (input_path, expected_path) in fixtures {
+    for (input_path, expected_path) in get_integration_fixtures() {
         if !Path::new(input_path).exists() || !Path::new(expected_path).exists() {
             println!("Skipping {input_path} (files not found)");
             continue;
@@ -215,9 +214,6 @@ fn validate_integration_fixtures() {
         }
     }
 
-    // For now, allow some integration fixtures to fail while we establish quality baselines
-    // Note: Some integration fixtures may require more lenient quality thresholds
-    // due to complex transformations that are still beneficial overall
     if !failed_fixtures.is_empty() {
         println!(
             "Note: {} integration fixtures need quality improvements",
