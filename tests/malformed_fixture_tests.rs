@@ -344,6 +344,46 @@ mod malformed_fixture_tests {
     }
 
     #[test]
+    fn test_llm_mixed_box_styles() {
+        // Test LLM-generated content mixing box styles (┌ vs ╔ vs ╭)
+        let dirty_content = include_str!("data/integration/dirty/llm_mixed_box_styles.md");
+        let expected_clean = include_str!("data/integration/clean/llm_mixed_box_styles.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Diagram, false);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
+    fn test_llm_side_by_side() {
+        // Test LLM-generated side-by-side boxes with uneven widths
+        let dirty_content = include_str!("data/integration/dirty/llm_side_by_side.md");
+        let expected_clean = include_str!("data/integration/clean/llm_side_by_side.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Diagram, false);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
+    fn test_llm_fence_repair() {
+        // Test LLM-generated code fences with mismatches
+        let dirty_content = include_str!("data/integration/dirty/llm_fence_repair.md");
+        let expected_clean = include_str!("data/integration/clean/llm_fence_repair.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Diagram, true);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
+    fn test_llm_unicode_mixed() {
+        // Test LLM-generated content mixing Unicode arrows and box styles
+        let dirty_content = include_str!("data/integration/dirty/llm_unicode_mixed.md");
+        let expected_clean = include_str!("data/integration/clean/llm_unicode_mixed.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Diagram, false);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
     fn test_malformed_wrapped_cells() {
         // Test that wrapped table cells are unwrapped in safe mode
         let dirty_content = include_str!("data/integration/dirty/malformed_wrapped_cells.md");

@@ -139,6 +139,26 @@ fn validate_integration_fixtures() {
             "tests/data/integration/dirty/llm_arrow_inconsistency.md",
             "tests/data/integration/clean/llm_arrow_inconsistency.md",
         ),
+        // Box styling fixtures (common LLM issue - mixed ┌/╔/╭)
+        (
+            "tests/data/integration/dirty/llm_mixed_box_styles.md",
+            "tests/data/integration/clean/llm_mixed_box_styles.md",
+        ),
+        // Side-by-side box balancing (common LLM issue)
+        (
+            "tests/data/integration/dirty/llm_side_by_side.md",
+            "tests/data/integration/clean/llm_side_by_side.md",
+        ),
+        // Code fence repair (common LLM issue)
+        (
+            "tests/data/integration/dirty/llm_fence_repair.md",
+            "tests/data/integration/clean/llm_fence_repair.md",
+        ),
+        // Unicode and mixed characters (less common but important)
+        (
+            "tests/data/integration/dirty/llm_unicode_mixed.md",
+            "tests/data/integration/clean/llm_unicode_mixed.md",
+        ),
     ];
 
     let mut failed_fixtures = Vec::new();
