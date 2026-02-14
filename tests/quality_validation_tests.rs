@@ -159,10 +159,15 @@ fn validate_integration_fixtures() {
             "tests/data/integration/dirty/llm_unicode_mixed.md",
             "tests/data/integration/clean/llm_unicode_mixed.md",
         ),
-        // List normalization (common LLM issue)
+        // List normalization - mixed bullet styles (common LLM issue)
         (
             "tests/data/integration/dirty/llm_list_normalization.md",
             "tests/data/integration/clean/llm_list_normalization.md",
+        ),
+        // List normalization - missing blank lines before lists (very common LLM issue)
+        (
+            "tests/data/integration/dirty/llm_lists_no_blank_lines.md",
+            "tests/data/integration/clean/llm_lists_no_blank_lines.md",
         ),
         // Connection paths/L-shaped connectors
         (

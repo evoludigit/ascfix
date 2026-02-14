@@ -394,6 +394,16 @@ mod malformed_fixture_tests {
     }
 
     #[test]
+    fn test_llm_lists_no_blank_lines() {
+        // Test LLM-generated lists missing blank lines before them
+        let dirty_content = include_str!("data/integration/dirty/llm_lists_no_blank_lines.md");
+        let expected_clean = include_str!("data/integration/clean/llm_lists_no_blank_lines.md");
+
+        let result = process_fixture_content(dirty_content, &Mode::Safe, false);
+        assert_eq!(result.trim(), expected_clean.trim());
+    }
+
+    #[test]
     fn test_llm_connection_paths() {
         // Test LLM-generated L-shaped connection paths
         let dirty_content = include_str!("data/integration/dirty/llm_connection_paths.md");
