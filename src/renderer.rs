@@ -125,7 +125,10 @@ pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid
                         let ch = original.get(row_idx, col_idx).unwrap_or(' ');
                         // Remove arrow characters - they'll be redrawn by the inventory at aligned positions
                         // Support standard (↓ ↑ → ←), double (⇓ ⇑ ⇒ ⇐), and extended (⟶ ⟹) arrows
-                        if matches!(ch, '↓' | '↑' | '→' | '←' | '⇓' | '⇑' | '⇒' | '⇐' | '⟶' | '⟹') {
+                        if matches!(
+                            ch,
+                            '↓' | '↑' | '→' | '←' | '⇓' | '⇑' | '⇒' | '⇐' | '⟶' | '⟹'
+                        ) {
                             row.push(' ');
                         } else {
                             row.push(ch);
@@ -152,7 +155,10 @@ pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid
                 let ch = grid.get(row_idx, col_idx).unwrap_or(' ');
                 // Remove arrow characters - they'll be redrawn by the inventory at aligned positions
                 // Support standard (↓ ↑ → ←), double (⇓ ⇑ ⇒ ⇐), and extended (⟶ ⟹) arrows
-                if matches!(ch, '↓' | '↑' | '→' | '←' | '⇓' | '⇑' | '⇒' | '⇐' | '⟶' | '⟹') {
+                if matches!(
+                    ch,
+                    '↓' | '↑' | '→' | '←' | '⇓' | '⇑' | '⇒' | '⇐' | '⟶' | '⟹'
+                ) {
                     row.push(' ');
                 } else {
                     row.push(ch);
@@ -323,7 +329,11 @@ fn draw_horizontal_arrow(grid: &mut Grid, arrow: &crate::primitives::HorizontalA
     // Determine the arrow character to use
     let arrow_char = arrow.arrow_char.unwrap_or_else(|| {
         let chars = arrow.arrow_type.chars();
-        if arrow.rightward { chars.arrowhead_right } else { chars.arrowhead_left }
+        if arrow.rightward {
+            chars.arrowhead_right
+        } else {
+            chars.arrowhead_left
+        }
     });
 
     // Draw arrow line from start_col to end_col, preserving the arrow character

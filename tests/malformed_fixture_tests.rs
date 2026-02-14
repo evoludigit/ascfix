@@ -578,7 +578,8 @@ mod malformed_fixture_tests {
             let _edge_fences = include_str!("data/integration/dirty/malformed_broken_fences.md");
             let _edge_overlapping = include_str!("data/integration/dirty/malformed_overlapping.md");
             let _edge_nesting = include_str!("data/integration/dirty/malformed_nested.md");
-            let _edge_corrupted = include_str!("data/integration/dirty/error_recovery_corrupted.md");
+            let _edge_corrupted =
+                include_str!("data/integration/dirty/error_recovery_corrupted.md");
         }
     }
 }

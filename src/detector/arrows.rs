@@ -7,7 +7,8 @@ use crate::primitives::ArrowType;
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
 const fn is_vertical_arrow(ch: char) -> bool {
-    matches!(ch,
+    matches!(
+        ch,
         // Standard arrows
         '↓' | '↑' |
         // Double arrows
@@ -21,7 +22,8 @@ const fn is_vertical_arrow(ch: char) -> bool {
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
 const fn is_horizontal_arrow(ch: char) -> bool {
-    matches!(ch,
+    matches!(
+        ch,
         // Standard arrows
         '→' | '←' |
         // Double arrows
@@ -99,14 +101,13 @@ pub fn detect_vertical_arrows(grid: &Grid) -> Vec<crate::primitives::VerticalArr
                             .is_none_or(|start_char| !is_upward_arrow(start_char));
 
                         // Capture the original arrow character
-                        let arrow_char = grid.get(start_row, col)
-                            .and_then(|c| {
-                                if is_downward_arrow(c) || is_upward_arrow(c) {
-                                    Some(c)
-                                } else {
-                                    None
-                                }
-                            });
+                        let arrow_char = grid.get(start_row, col).and_then(|c| {
+                            if is_downward_arrow(c) || is_upward_arrow(c) {
+                                Some(c)
+                            } else {
+                                None
+                            }
+                        });
 
                         arrows.push(crate::primitives::VerticalArrow {
                             col,
@@ -162,20 +163,21 @@ pub fn detect_horizontal_arrows(grid: &Grid) -> Vec<crate::primitives::Horizonta
                     end_col -= 1;
 
                     // Only add if it contains an arrow tip somewhere in the sequence
-                    let has_arrow_tip = (start_col..=end_col)
-                        .any(|c| grid.get(row, c).is_some_and(|ch| is_rightward_arrow(ch) || is_leftward_arrow(ch)));
+                    let has_arrow_tip = (start_col..=end_col).any(|c| {
+                        grid.get(row, c)
+                            .is_some_and(|ch| is_rightward_arrow(ch) || is_leftward_arrow(ch))
+                    });
 
                     if has_arrow_tip {
-                        let arrow_char = (start_col..=end_col)
-                            .find_map(|c| {
-                                grid.get(row, c).and_then(|ch| {
-                                    if ArrowType::from_char(ch).is_some() {
-                                        Some(ch)
-                                    } else {
-                                        None
-                                    }
-                                })
-                            });
+                        let arrow_char = (start_col..=end_col).find_map(|c| {
+                            grid.get(row, c).and_then(|ch| {
+                                if ArrowType::from_char(ch).is_some() {
+                                    Some(ch)
+                                } else {
+                                    None
+                                }
+                            })
+                        });
                         arrows.push(crate::primitives::HorizontalArrow {
                             row,
                             start_col,
