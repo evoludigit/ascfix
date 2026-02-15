@@ -62,6 +62,8 @@ pub fn process_by_mode(
 fn process_safe_mode(content: &str) -> String {
     // First normalize lists in the content
     let content = crate::lists::normalize_lists(content);
+    // Then add blank lines before lists for Pandoc compatibility
+    let content = crate::lists::normalize_loose_lists(&content);
 
     let lines: Vec<&str> = content.lines().collect();
     let mut result = Vec::new();

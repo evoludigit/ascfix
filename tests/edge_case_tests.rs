@@ -329,3 +329,20 @@ fn edge_case_list_in_code_block_preserved() {
         "Should not add blank line inside code block. Got:\n{result}"
     );
 }
+
+#[test]
+fn edge_case_normalize_loose_lists_called_in_safe_mode() {
+    // Issue #9: normalize_loose_lists should be called in safe mode
+    let input = "# Test\n\n**Requirements:**\n- Item 1\n- Item 2";
+    let result = ascfix::modes::process_by_mode(
+        &ascfix::cli::Mode::Safe,
+        input,
+        false,
+        &ascfix::config::Config::default(),
+    );
+    // Should add blank line in safe mode (not just in normalize_loose_lists directly)
+    assert!(
+        result.contains("**Requirements:**\n\n- Item 1"),
+        "Safe mode should add blank lines before lists. Got:\n{result}"
+    );
+}

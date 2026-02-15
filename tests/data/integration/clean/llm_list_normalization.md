@@ -2,6 +2,7 @@
 # LLMs mix list styles and inconsistent indentation
 
 Project structure:
+
 - Frontend code
   - React components
     - Hooks and utilities
@@ -9,12 +10,14 @@ Project structure:
     - styled-components
 
 Features:
+
 - Authentication
   - OAuth support
   - SSO integration
     - Multiple providers
 
 Configuration:
+
 - Database setup
 - Redis cache
 - Message queue
