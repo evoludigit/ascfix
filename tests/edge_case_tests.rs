@@ -213,3 +213,41 @@ fn edge_case_text_rows_preservation() {
     // Should preserve surrounding text
     assert!(result.contains("Workflow") || result.contains("Start"));
 }
+
+#[test]
+fn edge_case_table_with_extra_columns_should_not_panic() {
+    // Issue #7: Table with more cells than headers should not panic
+    let input = "# Test Table\n\n| Col1 | Col2 | Col3 | Col4 |\n|------|------|------|------|\n| A | B | C | D |\n| E | F | G | H | I |\n";
+    let result = std::panic::catch_unwind(|| {
+        ascfix::modes::process_by_mode(
+            &ascfix::cli::Mode::Safe,
+            input,
+            false,
+            &ascfix::config::Config::default(),
+        )
+    });
+    assert!(
+        result.is_ok(),
+        "Should not panic on table with extra columns"
+    );
+    let output = result.unwrap();
+    assert!(!output.is_empty());
+    // The row with extra column should be handled gracefully (truncated)
+    // Note: cells are padded to column width during normalization
+    assert!(output.contains("| E    | F    | G    | H    |"));
+}
+
+#[test]
+fn edge_case_table_with_fewer_columns_should_work() {
+    // Issue #7: Table with fewer cells than headers should work
+    let input = "| Col1 | Col2 | Col3 | Col4 |\n|------|------|------|------|\n| A | B | C |\n";
+    let result = ascfix::modes::process_by_mode(
+        &ascfix::cli::Mode::Safe,
+        input,
+        false,
+        &ascfix::config::Config::default(),
+    );
+    assert!(!result.is_empty());
+    // Row with fewer columns should still render (missing cells are empty)
+    assert!(result.contains("| A    | B    | C    |"));
+}

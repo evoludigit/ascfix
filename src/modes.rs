@@ -287,7 +287,10 @@ fn normalize_table(header: &str, _separator: &str, rows: &[&str]) -> Option<Stri
         let _ = writeln!(result);
         let _ = write!(result, "|");
         for (i, cell) in row.iter().enumerate() {
-            let _ = write!(result, " {:<width$} |", cell, width = col_widths[i]);
+            if i < col_widths.len() {
+                let _ = write!(result, " {:<width$} |", cell, width = col_widths[i]);
+            }
+            // Extra cells beyond header count are silently truncated
         }
     }
 
