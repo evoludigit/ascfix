@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.6] - 2026-02-15
+
+### Feature Release
+
+**Auto-fix list formatting for Pandoc/CommonMark compatibility**
+
+#### ✨ **New Features**
+- **Fixed issue #8**: Automatically add blank lines before lists for proper rendering
+  - Lists following text ending with `:` now get blank line inserted
+  - Lists following bold text with colons (e.g., `**Requirements:**`) now work correctly
+  - Lists in code blocks are preserved unchanged
+  - Nested lists maintain proper structure (no blank lines added between parent/child)
+  - Prevents duplicate blank lines when one already exists
+
+#### 🐛 **Bug Fixes**
+- Fixed false positive detection: bold text like `**Requirements:**` was incorrectly treated as list items
+- Fixed code block handling: lists inside code fences are no longer modified
+
+#### 🧪 **Tests**
+- Added 6 comprehensive edge case tests for blank line insertion
+- Tests cover colon endings, bold text, nested lists, and code block preservation
+
+### Verification
+- ✅ All 288+ tests passing (6 new tests added)
+- ✅ Zero Clippy warnings
+- ✅ No breaking changes
+
 ## [0.5.5] - 2026-02-15
 
 ### Bug Fix Release
