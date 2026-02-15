@@ -641,9 +641,18 @@ pub fn normalize_loose_lists(content: &str) -> String {
         return String::new();
     }
 
+    // Get code block line ranges to skip
+    let code_line_ranges = get_code_block_line_ranges(content);
+
     let mut result = Vec::new();
 
     for (i, line) in lines.iter().enumerate() {
+        // Skip lines inside code blocks
+        if is_in_code_region(i, &code_line_ranges) {
+            result.push(line.to_string());
+            continue;
+        }
+
         // Check if current line is a list item
         let is_list_item = parse_list_item(line, i).is_some();
 
@@ -656,12 +665,12 @@ pub fn normalize_loose_lists(content: &str) -> String {
             // Check if previous line was a header (starts with #)
             let prev_was_header = prev_trimmed.starts_with('#');
             // Check if previous line was a paragraph (non-empty, not a list, not a header)
-            let prev_was_paragraph = !prev_trimmed.is_empty()
-                && !prev_trimmed.starts_with('#')
-                && !prev_trimmed.starts_with('-')
-                && !prev_trimmed.starts_with('*')
-                && !prev_trimmed.starts_with('+')
-                && prev_line.is_none_or(|l| parse_list_item(l, i - 1).is_none());
+            // A line is a paragraph if it's not empty, not a header, and not a list item
+            // We check for list items by using parse_list_item, which properly distinguishes
+            // between actual list items and lines that just happen to start with special chars
+            let prev_was_list_item = prev_line.is_some_and(|l| parse_list_item(l, i - 1).is_some());
+            let prev_was_paragraph =
+                !prev_trimmed.is_empty() && !prev_was_header && !prev_was_list_item;
 
             (prev_was_header || prev_was_paragraph)
                 && !result.is_empty()

@@ -251,3 +251,81 @@ fn edge_case_table_with_fewer_columns_should_work() {
     // Row with fewer columns should still render (missing cells are empty)
     assert!(result.contains("| A    | B    | C    |"));
 }
+
+#[test]
+fn edge_case_list_blank_line_after_colon() {
+    // Issue #8: Lists should have blank line before them for Pandoc compatibility
+    let input = "Requirements:\n- Item 1\n- Item 2";
+    let result = ascfix::lists::normalize_loose_lists(input);
+    // Should insert blank line after "Requirements:"
+    assert!(
+        result.contains("Requirements:\n\n- Item 1"),
+        "Should add blank line before list after colon. Got:\n{result}"
+    );
+}
+
+#[test]
+fn edge_case_list_blank_line_after_bold_colon() {
+    // Issue #8: Bold text with colon should have blank line before list
+    let input = "**Requirements:**\n- Item 1\n- Item 2";
+    let result = ascfix::lists::normalize_loose_lists(input);
+    assert!(
+        result.contains("**Requirements:**\n\n- Item 1"),
+        "Should add blank line after bold text with colon. Got:\n{result}"
+    );
+}
+
+#[test]
+fn edge_case_list_blank_line_after_word_bold_colon() {
+    // Issue #8: Bold word followed by colon should have blank line before list
+    let input = "Tools like **npm**:\n- Fast\n- Reliable";
+    let result = ascfix::lists::normalize_loose_lists(input);
+    assert!(
+        result.contains("**npm**:\n\n- Fast"),
+        "Should add blank line after bold word with colon. Got:\n{result}"
+    );
+}
+
+#[test]
+fn edge_case_list_no_duplicate_blank_line() {
+    // Issue #8: Should not add blank line if one already exists
+    let input = "Requirements:\n\n- Item 1\n- Item 2";
+    let result = ascfix::lists::normalize_loose_lists(input);
+    // Should not add extra blank line
+    assert!(
+        !result.contains("\n\n\n"),
+        "Should not add duplicate blank line. Got:\n{result}"
+    );
+    assert!(
+        result.contains("Requirements:\n\n- Item 1"),
+        "Should preserve existing blank line. Got:\n{result}"
+    );
+}
+
+#[test]
+fn edge_case_list_nested_list_no_blank_line() {
+    // Issue #8: Nested lists should not get blank line (previous line is list item)
+    let input = "- Item 1\n  - Nested item";
+    let result = ascfix::lists::normalize_loose_lists(input);
+    // Should not add blank line between parent and nested list
+    assert!(
+        !result.contains("- Item 1\n\n  -"),
+        "Should not add blank line in nested list. Got:\n{result}"
+    );
+}
+
+#[test]
+fn edge_case_list_in_code_block_preserved() {
+    // Issue #8: Lists in code blocks should not be modified
+    let input = "```markdown\nRequirements:\n- Item 1\n```";
+    let result = ascfix::lists::normalize_loose_lists(input);
+    // Should not modify content inside code block
+    assert!(
+        result.contains("Requirements:\n- Item 1"),
+        "Should preserve list in code block. Got:\n{result}"
+    );
+    assert!(
+        !result.contains("Requirements:\n\n- Item 1"),
+        "Should not add blank line inside code block. Got:\n{result}"
+    );
+}
