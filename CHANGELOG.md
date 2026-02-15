@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7] - 2026-02-15
+
+### Bug Fix Release
+
+**Critical fix: normalize_loose_lists now called in safe mode**
+
+#### 🐛 **Bug Fixes**
+- **Fixed issue #9**: `normalize_loose_lists()` was not being called in safe mode
+  - Lists were rendering inline in Pandoc/LaTeX PDFs despite v0.5.6 claims
+  - Root cause: function existed but was never invoked in `process_safe_mode()`
+  - Fix: Added missing call to `normalize_loose_lists(&content)` in safe mode processing
+
+#### 🔧 **Technical Changes**
+- Fixed idempotence test to verify idempotence rather than exact line count equality
+- Updated fixture files to reflect correct Pandoc-compatible list formatting
+- Updated README.md with proper list formatting
+
+### Verification
+- ✅ All 288+ tests passing
+- ✅ Zero Clippy warnings
+- ✅ Lists now properly get blank lines in safe mode
+
 ## [0.5.6] - 2026-02-15
 
 ### Feature Release
