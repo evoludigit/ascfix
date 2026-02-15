@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-02-15
+
+### Bug Fix Release
+
+**Fixed critical panic on tables with mismatched column counts**
+
+#### 🐛 **Bug Fixes**
+- **Fixed issue #7**: Prevent "index out of bounds" panic when data rows have more cells than header rows
+  - Added bounds check in `normalize_table()` when formatting data rows
+  - Extra cells beyond header count are now silently truncated (consistent with width calculation)
+  - Tables with fewer cells than headers continue to work correctly
+
+#### 🧪 **Tests**
+- Added edge case test for tables with extra columns
+- Added edge case test for tables with fewer columns
+
+### Verification
+- ✅ All 282+ tests passing
+- ✅ Zero Clippy warnings
+- ✅ No breaking changes
+
 ## [0.5.4] - 2026-02-14
 
 ### Quality & Documentation Release
