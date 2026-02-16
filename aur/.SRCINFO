@@ -7,6 +7,6 @@ pkgbase = ascfix
 	license = MIT
 	makedepends = cargo
 	source = ascfix-0.6.0.tar.gz::https://crates.io/api/v1/crates/ascfix/0.6.0/download
-	sha256sums = SKIP
+	sha256sums = 949fa350816926c7d1badd2f144e0dfb8ac26aec0c3f0c4b0dc459cca53ba893
 
 pkgname = ascfix

@@ -9,7 +9,7 @@ license=('MIT')
 depends=()
 makedepends=('cargo')
 source=("$pkgname-$pkgver.tar.gz::https://crates.io/api/v1/crates/$pkgname/$pkgver/download")
-sha256sums=('SKIP')  # Will be updated after first download
+sha256sums=('949fa350816926c7d1badd2f144e0dfb8ac26aec0c3f0c4b0dc459cca53ba893')  # Will be updated after first download
 
 prepare() {
     cd "$pkgname-$pkgver"
