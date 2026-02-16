@@ -46,17 +46,16 @@ pub fn parse_extensions(s: &str) -> Result<Vec<String>> {
 /// File discovery configuration and operations.
 pub struct FileDiscovery {
     extensions: Vec<String>,
-    respect_gitignore: bool,
 }
 
 impl FileDiscovery {
-    /// Create a new file discovery with given extensions and gitignore setting.
+    /// Create a new file discovery with given extensions.
+    ///
+    /// Note: Simple directory filtering is used (skips hidden dirs, `node_modules`, `target`, etc.)
+    /// For complex filtering needs, use external tools like `find` or `fd`.
     #[must_use]
-    pub const fn new(extensions: Vec<String>, respect_gitignore: bool) -> Self {
-        Self {
-            extensions,
-            respect_gitignore,
-        }
+    pub const fn new(extensions: Vec<String>) -> Self {
+        Self { extensions }
     }
 
     /// Discover files matching the configured criteria.
@@ -107,15 +106,56 @@ impl FileDiscovery {
 
     /// Recursively walk a directory and collect matching files.
     fn walk_directory(&self, dir: &Path, results: &mut Vec<PathBuf>) -> Result<()> {
-        let mut builder = ignore::WalkBuilder::new(dir);
-        // standard_filters enables: hidden file filtering, .gitignore parsing, etc.
-        builder.standard_filters(self.respect_gitignore);
-        let walker = builder.build();
+        self.walk_directory_recursive(dir, results)
+    }
 
-        for entry in walker.flatten() {
+    /// Internal recursive directory walker using `std::fs`.
+    fn walk_directory_recursive(&self, dir: &Path, results: &mut Vec<PathBuf>) -> Result<()> {
+        // Directories to skip (common build/cache directories)
+        const SKIP_DIRS: &[&str] = &[
+            "target",        // Rust build
+            "node_modules",  // JavaScript
+            "vendor",        // Go, PHP
+            "dist",          // Build output
+            "build",         // Build output
+            ".git",          // Version control
+            ".svn",          // Version control
+            ".hg",           // Version control
+        ];
+
+        if !dir.is_dir() {
+            return Ok(());
+        }
+
+        for entry in std::fs::read_dir(dir)? {
+            let entry = entry?;
             let path = entry.path();
-            if path.is_file() && self.matches_extension(path) {
-                results.push(path.to_path_buf());
+
+            // Skip if it's a symlink (prevent loops)
+            if entry.file_type()?.is_symlink() {
+                continue;
+            }
+
+            // Get directory/file name
+            let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+                continue;
+            };
+
+            // Skip hidden files/directories (starting with .)
+            if name.starts_with('.') {
+                continue;
+            }
+
+            // Skip common build directories
+            if SKIP_DIRS.contains(&name) {
+                continue;
+            }
+
+            if path.is_dir() {
+                // Recurse into subdirectories
+                self.walk_directory_recursive(&path, results)?;
+            } else if path.is_file() && self.matches_extension(&path) {
+                results.push(path);
             }
         }
 
@@ -126,6 +166,8 @@ impl FileDiscovery {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use tempfile::TempDir;
 
     #[test]
     fn test_parse_extensions_single() {
@@ -137,5 +179,117 @@ mod tests {
     fn test_parse_extensions_normalizes_without_dot() {
         let result = parse_extensions("md").expect("Failed to parse");
         assert_eq!(result, vec![".md"]);
+    }
+
+    #[test]
+    fn test_empty_directory() {
+        let temp_dir = TempDir::new().unwrap();
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
+        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn test_single_markdown_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("test.md");
+        fs::write(&file_path, "# Test").unwrap();
+
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
+        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0], file_path);
+    }
+
+    #[test]
+    fn test_skips_hidden_directories() {
+        let temp_dir = TempDir::new().unwrap();
+
+        // Create hidden directory with .md file
+        let hidden_dir = temp_dir.path().join(".git");
+        fs::create_dir(&hidden_dir).unwrap();
+        fs::write(hidden_dir.join("file.md"), "content").unwrap();
+
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
+        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+
+        assert_eq!(results.len(), 0, "Should skip hidden directories");
+    }
+
+    #[test]
+    fn test_skips_target_directory() {
+        let temp_dir = TempDir::new().unwrap();
+
+        // Create target directory with .md file
+        let target_dir = temp_dir.path().join("target");
+        fs::create_dir(&target_dir).unwrap();
+        fs::write(target_dir.join("file.md"), "content").unwrap();
+
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
+        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+
+        assert_eq!(results.len(), 0, "Should skip target directory");
+    }
+
+    #[test]
+    fn test_skips_node_modules() {
+        let temp_dir = TempDir::new().unwrap();
+
+        // Create node_modules directory with .md file
+        let nm_dir = temp_dir.path().join("node_modules");
+        fs::create_dir(&nm_dir).unwrap();
+        fs::write(nm_dir.join("readme.md"), "content").unwrap();
+
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
+        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+
+        assert_eq!(results.len(), 0, "Should skip node_modules");
+    }
+
+    #[test]
+    fn test_recursive_search() {
+        let temp_dir = TempDir::new().unwrap();
+
+        // Create nested structure
+        let subdir = temp_dir.path().join("docs");
+        fs::create_dir(&subdir).unwrap();
+        let file_path = subdir.join("readme.md");
+        fs::write(&file_path, "# README").unwrap();
+
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
+        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0], file_path);
+    }
+
+    #[test]
+    fn test_filters_non_markdown() {
+        let temp_dir = TempDir::new().unwrap();
+
+        // Create mix of file types
+        fs::write(temp_dir.path().join("test.md"), "markdown").unwrap();
+        fs::write(temp_dir.path().join("test.txt"), "text").unwrap();
+        fs::write(temp_dir.path().join("test.rs"), "rust").unwrap();
+
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
+        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+
+        assert_eq!(results.len(), 1, "Should only find .md files");
+    }
+
+    #[test]
+    fn test_multiple_extensions() {
+        let temp_dir = TempDir::new().unwrap();
+
+        fs::write(temp_dir.path().join("test.md"), "markdown").unwrap();
+        fs::write(temp_dir.path().join("test.txt"), "text").unwrap();
+        fs::write(temp_dir.path().join("test.rs"), "rust").unwrap();
+
+        let discovery = FileDiscovery::new(vec![".md".to_string(), ".txt".to_string()]);
+        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+
+        assert_eq!(results.len(), 2, "Should find .md and .txt files");
     }
 }

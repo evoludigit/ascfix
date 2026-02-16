@@ -78,7 +78,6 @@ pub struct Args {
     pub fences: bool,
     pub all: bool,
     pub ext: Vec<String>,
-    pub no_gitignore: bool,
     pub summary: bool,
     pub list_files: bool,
     pub verbose: bool,
@@ -97,7 +96,6 @@ impl Default for Args {
             fences: false,
             all: false,
             ext: vec![String::from(".md"), String::from(".mdx"), String::from(".txt")],
-            no_gitignore: false,
             summary: false,
             list_files: false,
             verbose: false,
@@ -124,7 +122,6 @@ fn print_help() {
     println!("        --fences               Process code fences");
     println!("        --all                  Enable all processing (equivalent to --mode diagram --fences)");
     println!("    -e, --ext <EXT>            File extensions to process (comma-separated) [default: .md,.mdx,.txt]");
-    println!("        --no-gitignore         Don't respect .gitignore files");
     println!("        --summary              Show summary of changes");
     println!("        --list-files           List files that would be processed");
     println!("    -v, --verbose              Verbose output");
@@ -200,9 +197,6 @@ impl Args {
                         result.ext.push(ext.trim().to_string());
                     }
                 }
-                lexopt::Arg::Long("no-gitignore") => {
-                    result.no_gitignore = true;
-                }
                 lexopt::Arg::Long("summary") => {
                     result.summary = true;
                 }
@@ -257,7 +251,6 @@ pub struct Config {
     pub max_size: Option<u64>,
     pub fences: bool,
     pub extensions: Vec<String>,
-    pub no_gitignore: bool,
 }
 
 /// Normalize extension list: deduplicate, trim, lowercase, ensure leading dot.
@@ -301,7 +294,6 @@ impl From<Args> for Config {
             max_size: args.max_size,
             fences,
             extensions: normalize_exts(&args.ext),
-            no_gitignore: args.no_gitignore,
         }
     }
 }
@@ -471,7 +463,6 @@ mod tests {
             "10MB",
             "--ext",
             "md,txt",
-            "--no-gitignore",
             "docs/",
         ])
         .unwrap();
@@ -484,7 +475,6 @@ mod tests {
             config.extensions,
             vec![".md".to_string(), ".txt".to_string()]
         );
-        assert!(config.no_gitignore);
         assert_eq!(config.paths, vec![PathBuf::from("docs/")]);
     }
 }

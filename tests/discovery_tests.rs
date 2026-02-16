@@ -58,7 +58,7 @@ mod single_file_discovery {
         let file_path = temp_dir.path().join("test.md");
         std::fs::write(&file_path, "# Test").expect("Failed to write file");
 
-        let discovery = FileDiscovery::new(vec![".md".to_string()], true);
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
         let results = discovery
             .discover(std::slice::from_ref(&file_path))
             .expect("Failed to discover");
@@ -73,7 +73,7 @@ mod single_file_discovery {
         let file_path = temp_dir.path().join("test.txt");
         std::fs::write(&file_path, "# Test").expect("Failed to write file");
 
-        let discovery = FileDiscovery::new(vec![".md".to_string()], true);
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
         let results = discovery
             .discover(&[file_path])
             .expect("Failed to discover");
@@ -87,7 +87,7 @@ mod single_file_discovery {
         let file_path = temp_dir.path().join("test.mdx");
         std::fs::write(&file_path, "# Test").expect("Failed to write file");
 
-        let discovery = FileDiscovery::new(vec![".mdx".to_string()], true);
+        let discovery = FileDiscovery::new(vec![".mdx".to_string()]);
         let results = discovery
             .discover(std::slice::from_ref(&file_path))
             .expect("Failed to discover");
@@ -104,7 +104,7 @@ mod single_file_discovery {
         std::fs::write(&md_path, "# MD").expect("Failed to write file");
         std::fs::write(&mdx_path, "# MDX").expect("Failed to write file");
 
-        let discovery = FileDiscovery::new(vec![".md".to_string(), ".mdx".to_string()], true);
+        let discovery = FileDiscovery::new(vec![".md".to_string(), ".mdx".to_string()]);
         let results = discovery
             .discover(std::slice::from_ref(&md_path))
             .expect("Failed to discover");
@@ -127,7 +127,7 @@ mod directory_discovery {
         fs::write(temp_dir.path().join("test2.md"), "# Test 2").expect("Failed to write");
         fs::write(temp_dir.path().join("other.txt"), "# Other").expect("Failed to write");
 
-        let discovery = FileDiscovery::new(vec![".md".to_string()], true);
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
         let results = discovery
             .discover(&[temp_dir.path().to_path_buf()])
             .expect("Failed to discover");
@@ -142,7 +142,7 @@ mod directory_discovery {
         fs::write(temp_dir.path().join("test1.md"), "# Test 1").expect("Failed to write");
         fs::write(temp_dir.path().join("nested/test2.md"), "# Test 2").expect("Failed to write");
 
-        let discovery = FileDiscovery::new(vec![".md".to_string()], true);
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
         let results = discovery
             .discover(&[temp_dir.path().to_path_buf()])
             .expect("Failed to discover");
@@ -154,7 +154,7 @@ mod directory_discovery {
     fn test_discover_empty_directory() {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
 
-        let discovery = FileDiscovery::new(vec![".md".to_string()], true);
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
         let results = discovery
             .discover(&[temp_dir.path().to_path_buf()])
             .expect("Failed to discover");
@@ -168,7 +168,7 @@ mod directory_discovery {
         fs::write(temp_dir.path().join("test.txt"), "# Test").expect("Failed to write");
         fs::write(temp_dir.path().join("test.doc"), "# Test").expect("Failed to write");
 
-        let discovery = FileDiscovery::new(vec![".md".to_string()], true);
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
         let results = discovery
             .discover(&[temp_dir.path().to_path_buf()])
             .expect("Failed to discover");
@@ -186,7 +186,7 @@ mod directory_discovery {
         fs::create_dir(&subdir).expect("Failed to create dir");
         fs::write(subdir.join("nested.md"), "# Nested").expect("Failed to write");
 
-        let discovery = FileDiscovery::new(vec![".md".to_string()], true);
+        let discovery = FileDiscovery::new(vec![".md".to_string()]);
         let results = discovery
             .discover(&[file_path, subdir])
             .expect("Failed to discover");
