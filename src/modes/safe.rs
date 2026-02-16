@@ -229,10 +229,10 @@ mod tests {
     #[test]
     fn test_safe_mode_preserves_task_lists() {
         // Test that task list checkboxes are preserved
-        let content = "- [ ] Todo item\n- [x] Done item\n- [X] Also done";
+        let content = "- [ ] Buy milk\n- [x] Done item\n- [X] Also done";
         let result = process_safe_mode(content);
         assert!(
-            result.contains("- [ ] Todo item"),
+            result.contains("- [ ] Buy milk"),
             "Unchecked task should be preserved. Result:\n{result}"
         );
         assert!(

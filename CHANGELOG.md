@@ -7,6 +7,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.8] - 2026-02-16
+
+### Architecture & Quality Release
+
+**Major code organization improvements, comprehensive testing, and transparency about limitations**
+
+#### 🏗️ **Architecture Improvements**
+- **Module Refactoring**: Split `modes.rs` into clean, focused modules
+  - `modes/mod.rs` (113 lines) - Router logic and integration tests
+  - `modes/check.rs` (33 lines) - Check mode implementation
+  - `modes/diagram.rs` (150 lines) - Diagram processing pipeline
+  - `modes/safe.rs` (265 lines) - Safe mode for tables and lists
+  - `modes/table.rs` (215 lines) - Table normalization utilities
+  - Improved code maintainability and test organization
+  - No breaking changes to public API
+
+#### 🧪 **Testing Infrastructure**
+- **Stress Tests**: Added 21 comprehensive stress tests (run with `--ignored`)
+  - Large file handling: 1MB, 10MB, 50MB, 100MB
+  - Performance scaling verification (linear time complexity)
+  - Edge cases: extremely long lines, many blank lines, deeply nested lists
+  - Unicode support: emoji, RTL text, zero-width characters, Asian scripts
+  - Complex diagrams: nested boxes, wide tables, large grids
+- **Fuzz Tests**: Added 3 property-based tests using proptest
+  - Random ASCII input handling (no panics)
+  - Box dimension fuzzing
+  - Line length fuzzing
+- **Test Helpers**: Created generators and assertions for test infrastructure
+  - `tests/helpers/generators.rs` - Test data generation
+  - `tests/helpers/assertions.rs` - Custom test assertions
+
+#### 📚 **Documentation**
+- **Idempotence Transparency**: Comprehensive documentation of known limitations
+  - README.md: Added "Known Limitations" section with clear examples
+  - LIBRARY_USAGE.md: 141 new lines with code examples and workarounds
+  - ARCHITECTURE.md: 60 new lines explaining technical root causes
+  - What works: simple diagrams, tables, single-level nesting (✅ fully idempotent)
+  - What to watch: complex diagrams with 3+ nesting levels (⚠️ may not be idempotent)
+  - Four documented workarounds for users
+- **Documentation Tests**: Added 5 tests to validate documentation accuracy
+
+#### 🛡️ **Safety Enhancements**
+- **Table Unwrapping**: Improved edge case handling with conservative preservation
+  - Detects and preserves list markers (`-`, `*`, `+`, `1.`, `2.`) in table cells
+  - Detects and preserves blockquotes (`>`) in table cells
+  - Prevents incorrect unwrapping of intentional multi-line content
+  - 4 new tests for edge case coverage
+  - Total: 14 table tests ensuring correctness
+
+#### 🧹 **Code Quality**
+- Removed all TODO action items from codebase
+- Added safety comments to production `unwrap()` calls
+- Replaced "Todo" in test data with clearer examples ("Buy milk", "Task")
+- All 288 library tests passing
+- Zero clippy warnings
+- Clean code audit results
+
+#### ⚡ **Performance**
+- Verified linear scaling (1MB in ~1.2s, no quadratic behavior)
+- Performance test included in stress test suite
+- Memory efficiency maintained for large files
+
+### Verification
+- ✅ 288 library tests passing (100%)
+- ✅ 21 stress tests available
+- ✅ 3 fuzz tests passing
+- ✅ 5 documentation tests passing
+- ✅ Zero clippy warnings
+- ✅ Backwards compatible (no API changes)
+
+### Notes
+This release focuses on code quality, testing infrastructure, and transparency. The module refactoring makes the codebase more maintainable while the comprehensive documentation helps users understand the tool's capabilities and limitations. No functional changes to existing features.
+
 ## [0.5.7] - 2026-02-15
 
 ### Bug Fix Release

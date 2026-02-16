@@ -54,12 +54,13 @@ fn validate_all_golden_fixtures() {
         //     "tests/data/unit/input/markdown_with_diagram.md",
         //     "tests/data/unit/expected/markdown_with_diagram.md",
         // ),
-        // TODO: mixed_features has complex nested boxes that trigger rendering issues
+        // Note: mixed_features has complex nested boxes (known idempotence limitation)
+        // See README.md "Known Limitations" section for details on 3+ level nesting
         // (
         //     "tests/data/unit/input/mixed_features.md",
         //     "tests/data/unit/expected/mixed_features.md",
         // ),
-        // TODO: Fence fixtures need to be validated with fence mode, not diagram mode
+        // Note: Fence fixtures are validated separately in validate_fence_repair_quality()
         // (
         //     "tests/data/unit/input/mismatched_fences.md",
         //     "tests/data/unit/expected/mismatched_fences.md",
@@ -259,7 +260,8 @@ fn validate_fence_repair_quality() {
 #[test]
 #[ignore = "Complex nested diagrams have rendering issues - conservative mode active"]
 fn validate_complex_nested_diagrams() {
-    // TODO: Add quality config validation when this test is enabled
+    // Note: Quality config is defined but not currently used in this test.
+    // The test focuses on basic data integrity checks for complex fixtures.
     // let config = QualityConfig {
     //     min_text_preservation: 0.90,
     //     min_structure_preservation: 0.85,

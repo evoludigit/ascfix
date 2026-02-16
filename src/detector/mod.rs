@@ -313,6 +313,7 @@ fn find_nearest_primitive(
             },
         ];
 
+        // Safe: distances array has 4 elements, min() on non-empty slice never returns None
         let min_distance = distances.iter().min().unwrap();
         if *min_distance <= 2 {
             if let Some((_, current_min)) = nearest {

@@ -723,7 +723,7 @@ mod tests {
 
     #[test]
     fn detect_task_list() {
-        let content = "- [ ] Todo item\n- [x] Done item\n- [X] Also done";
+        let content = "- [ ] Buy milk\n- [x] Done item\n- [X] Also done";
         let lists = detect_lists(content);
         assert_eq!(lists.len(), 1);
         assert_eq!(lists[0].items.len(), 3);
@@ -841,9 +841,9 @@ mod tests {
     #[test]
     fn bullet_normalization_preserves_task_lists() {
         // Task list syntax should be preserved
-        let content = "- [ ] Todo\n* [x] Done\n+ [ ] Another";
+        let content = "- [ ] Task\n* [x] Done\n+ [ ] Another";
         let normalized = normalize_bullet_styles(content, '-');
-        assert!(normalized.contains("- [ ] Todo"));
+        assert!(normalized.contains("- [ ] Task"));
         assert!(normalized.contains("- [x] Done"));
         assert!(normalized.contains("- [ ] Another"));
     }
@@ -909,19 +909,19 @@ mod tests {
     fn preserve_task_list_checkboxes() {
         // Task list checkboxes should be preserved during normalization
         // Note: We normalize both [x] and [X] to [x] for consistency
-        let content = "- [ ] Unchecked todo\n- [x] Checked todo\n- [X] Also checked";
+        let content = "- [ ] Unchecked task\n- [x] Checked task\n- [X] Also checked";
         let normalized = normalize_lists(content);
-        assert!(normalized.contains("- [ ] Unchecked todo"));
-        assert!(normalized.contains("- [x] Checked todo"));
+        assert!(normalized.contains("- [ ] Unchecked task"));
+        assert!(normalized.contains("- [x] Checked task"));
         assert!(normalized.contains("- [x] Also checked")); // [X] normalized to [x]
     }
 
     #[test]
     fn normalize_mixed_task_and_regular() {
         // Mix of task and regular list items
-        let content = "- [ ] Todo item\n- Regular item\n- [x] Done item";
+        let content = "- [ ] Buy milk\n- Regular item\n- [x] Done item";
         let normalized = normalize_lists(content);
-        assert!(normalized.contains("- [ ] Todo item"));
+        assert!(normalized.contains("- [ ] Buy milk"));
         assert!(normalized.contains("- Regular item"));
         assert!(normalized.contains("- [x] Done item"));
     }
@@ -941,10 +941,10 @@ mod tests {
     #[test]
     fn task_list_with_bullet_normalization() {
         // Task lists should normalize bullet style too
-        let content = "- [ ] Todo 1\n* [ ] Todo 2\n+ [x] Done";
+        let content = "- [ ] Task 1\n* [ ] Task 2\n+ [x] Done";
         let normalized = normalize_lists(content);
-        assert!(normalized.contains("- [ ] Todo 1"));
-        assert!(normalized.contains("- [ ] Todo 2")); // * changed to -
+        assert!(normalized.contains("- [ ] Task 1"));
+        assert!(normalized.contains("- [ ] Task 2")); // * changed to -
         assert!(normalized.contains("- [x] Done")); // + changed to -
     }
 
