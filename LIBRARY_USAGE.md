@@ -391,6 +391,141 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+## Known Limitations
+
+### Idempotence Constraints
+
+**ascfix** aims to be idempotent (processing the same input multiple times produces identical output), but there are known edge cases where this doesn't hold for complex diagrams.
+
+#### What Works (Fully Idempotent)
+
+These cases are guaranteed to be idempotent:
+
+```rust
+use ascfix::modes::process_by_mode;
+use ascfix::cli::Mode;
+use ascfix::config::Config;
+
+// ✅ Simple boxes
+let simple = "┌───┐\n│ A │\n└───┘";
+let pass1 = process_by_mode(&Mode::Diagram, simple, false, &Config::default());
+let pass2 = process_by_mode(&Mode::Diagram, &pass1, false, &Config::default());
+assert_eq!(pass1, pass2); // Always passes
+
+// ✅ Tables in Safe mode
+let table = "| A | B |\n|---|---|\n| 1 | 2 |";
+let pass1 = process_by_mode(&Mode::Safe, table, false, &Config::default());
+let pass2 = process_by_mode(&Mode::Safe, &pass1, false, &Config::default());
+assert_eq!(pass1, pass2); // Always passes
+
+// ✅ Single-level nested boxes
+let nested_simple = "┌────────┐\n│ Parent │\n│ ┌────┐ │\n│ │ Ch │ │\n│ └────┘ │\n└────────┘";
+let pass1 = process_by_mode(&Mode::Diagram, nested_simple, false, &Config::default());
+let pass2 = process_by_mode(&Mode::Diagram, &pass1, false, &Config::default());
+assert_eq!(pass1, pass2); // Usually passes
+```
+
+#### Known Issues
+
+**Deeply Nested Hierarchies (3+ levels):**
+
+For diagrams with 3 or more levels of nesting, idempotence may not hold:
+
+```rust
+// ⚠️ May not be idempotent
+let complex = "┌──────────────┐\n│ Grandparent  │\n│ ┌──────────┐ │\n│ │ Parent   │ │\n│ │ ┌──────┐ │ │\n│ │ │Child │ │ │\n│ │ └──────┘ │ │\n│ └──────────┘ │\n└──────────────┘";
+
+let pass1 = process_by_mode(&Mode::Diagram, complex, false, &Config::default());
+let pass2 = process_by_mode(&Mode::Diagram, &pass1, false, &Config::default());
+// pass1 != pass2 in some cases
+```
+
+**Why:** After the first pass expands the parent box to fit children, the detection phase on the second pass sees different spatial relationships and may recalculate box boundaries.
+
+#### Technical Details
+
+The root cause is in the detection phase:
+
+1. **First Pass:**
+   - Detector finds boxes at original positions
+   - Normalizer expands parent to fit child
+   - Renderer outputs expanded diagram
+
+2. **Second Pass:**
+   - Detector sees expanded parent box
+   - Calculates new parent-child relationships
+   - May identify different nesting levels
+   - Can trigger different normalization
+
+For complex diagrams with overlapping elements or tight spacing, this detection difference can cascade through nested levels.
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for details on the detection algorithm and spatial relationship calculations.
+
+#### Workarounds
+
+**1. Use Safe Mode for Tables:**
+```rust
+// Always idempotent
+let fixed = process_by_mode(&Mode::Safe, content, false, &Config::default());
+```
+
+**2. Process Once and Commit:**
+```rust
+// Run once, review output, commit
+let fixed = process_by_mode(&Mode::Diagram, content, false, &Config::default());
+std::fs::write("output.md", fixed)?;
+// Don't run again on the output
+```
+
+**3. Test Idempotence Before Production:**
+```rust
+fn verify_idempotence(content: &str) -> bool {
+    let pass1 = process_by_mode(&Mode::Diagram, content, false, &Config::default());
+    let pass2 = process_by_mode(&Mode::Diagram, &pass1, false, &Config::default());
+    pass1 == pass2
+}
+
+if !verify_idempotence(&my_diagram) {
+    eprintln!("Warning: This diagram may not be fully idempotent");
+    // Decide whether to proceed
+}
+```
+
+**4. Use Ignore Markers:**
+```markdown
+<!-- ascfix:ignore -->
+Complex nested diagram here
+<!-- /ascfix:ignore -->
+```
+
+#### Testing Strategy
+
+If you're processing diagrams programmatically, consider:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_my_diagram_is_idempotent() {
+        let diagram = include_str!("../fixtures/my_diagram.md");
+
+        let pass1 = process_by_mode(&Mode::Diagram, diagram, false, &Config::default());
+        let pass2 = process_by_mode(&Mode::Diagram, &pass1, false, &Config::default());
+
+        assert_eq!(
+            pass1, pass2,
+            "Diagram should be idempotent after first normalization"
+        );
+    }
+}
+```
+
+This allows you to verify idempotence for your specific diagrams and catch regressions.
+
+---
+
 ## Support
 
 For issues or questions about using ascfix as a library, please refer to:

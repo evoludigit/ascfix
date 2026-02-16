@@ -48,7 +48,7 @@ Ideal for:
 
 - **Content preservation** - designed to never delete or modify unintended text
 - **Non-destructive processing** - safe to run on Markdown files
-- **Idempotent operations** - running multiple times produces consistent results
+- **Idempotent operations** - running multiple times produces consistent results for simple diagrams (see [Known Limitations](#known-limitations))
 - **Conservative default** - when uncertain, preserves original formatting
 
 ### Intelligent Quality Assurance
@@ -920,6 +920,36 @@ ascfix includes framework support for preserving text labels attached to primiti
 - Labels attached to arrows are preserved
 - Relative offsets are maintained during normalization
 - Collision detection prevents label-diagram overlap
+
+---
+
+## Known Limitations
+
+### Idempotence for Complex Diagrams
+
+**ascfix** is designed to be idempotent (running multiple times produces the same result), and this works reliably for most use cases:
+
+**✅ Fully Idempotent:**
+- Simple ASCII boxes and arrows
+- Markdown tables in Safe mode
+- Single-level nested boxes
+- Standard list formatting
+
+**⚠️ Known Limitations:**
+Complex diagrams with **deeply nested boxes (3+ levels)** or **overlapping elements** may not be fully idempotent. After the first normalization pass, the expanded parent boxes create new spatial relationships that can trigger different detection on subsequent runs.
+
+**Why This Happens:**
+1. First pass: Parent box expands to fit children
+2. Second pass: Detection sees new box dimensions and may recalculate relationships
+3. For deeply nested hierarchies (3+ levels), this can cascade
+
+**Recommended Approach:**
+- Run ascfix once on complex diagrams
+- Review the output
+- Commit the normalized version
+- For table-only processing, use `--mode=safe` which is always idempotent
+
+For technical details about the detection phase and spatial relationship algorithms, see [ARCHITECTURE.md](ARCHITECTURE.md). For workarounds and testing strategies, see [LIBRARY_USAGE.md](LIBRARY_USAGE.md#known-limitations).
 
 ---
 

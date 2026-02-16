@@ -392,6 +392,84 @@ pub struct PrimitiveInventory {
 - Complex diagrams with hierarchies may not be idempotent due to re-detection of hierarchies on second pass
 - Verified by tests: `test_normalization_idempotent_*` and `idempotence_tests.rs`
 
+**Idempotence Deep Dive:**
+
+The system aims for idempotence but has known limitations with deeply nested structures (3+ levels). This section explains why.
+
+*Root Cause:* The detection-normalization-rendering pipeline creates a feedback loop:
+
+1. **First Pass - Detection:**
+   - `detect_boxes()` finds boxes at original positions
+   - `calculate_parent_child_relationships()` determines nesting based on spatial containment
+   - Parent at (row=1, col=1, width=12, height=6)
+   - Child at (row=3, col=3, width=8, height=2)
+
+2. **First Pass - Normalization:**
+   - `normalize_nested_boxes()` expands parent to fit child + margins
+   - Parent becomes (row=1, col=1, width=16, height=8)
+   - Child stays at (row=3, col=3, width=8, height=2)
+
+3. **Second Pass - Detection:**
+   - Detector sees expanded parent dimensions
+   - Recalculates parent-child relationships with new boundaries
+   - For complex hierarchies (3+ levels), may identify different nesting structure
+   - Different nesting → different normalization → different output
+
+*Why Simple Diagrams Work:*
+- Single box: No relationships to recalculate
+- Side-by-side boxes: Width balancing is stable
+- Single-level nesting: Parent expansion is stable after first pass
+
+*Why Complex Diagrams Fail:*
+- 3+ levels: Each level's expansion affects parent's expansion
+- Cascading changes propagate up hierarchy
+- Tight spacing or overlapping elements create ambiguous containment
+- Detection phase may see new overlap patterns on second pass
+
+*Example of Non-Idempotent Case:*
+
+```
+Input (3 levels):
+┌────────────┐
+│ GP         │
+│ ┌────────┐ │
+│ │ Parent │ │
+│ │ ┌────┐ │ │
+│ │ │Kid │ │ │
+│ │ └────┘ │ │
+│ └────────┘ │
+└────────────┘
+
+Pass 1 Output (Parent expanded):
+┌──────────────────┐
+│ GP               │
+│  ┌────────────┐  │
+│  │ Parent     │  │
+│  │  ┌──────┐  │  │
+│  │  │ Kid  │  │  │
+│  │  └──────┘  │  │
+│  └────────────┘  │
+└──────────────────┘
+
+Pass 2 Detection:
+- GP box boundaries changed
+- Parent boundaries changed relative to GP
+- Detection may see different containment relationships
+- Could trigger different normalization
+```
+
+*Mitigation Strategies:*
+
+Current approach uses conservative detection:
+- Quality validation catches most issues
+- Data loss detection prevents corruption
+- Conservative mode for ambiguous cases
+
+Future improvements being considered:
+- Stable detection algorithm (use normalized geometry as canonical)
+- Convergence detection (run until output stabilizes)
+- Explicit 3+ level detection and preservation
+
 **Data Flow:**
 ```
 PrimitiveInventory
