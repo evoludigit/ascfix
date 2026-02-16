@@ -113,14 +113,14 @@ impl FileDiscovery {
     fn walk_directory_recursive(&self, dir: &Path, results: &mut Vec<PathBuf>) -> Result<()> {
         // Directories to skip (common build/cache directories)
         const SKIP_DIRS: &[&str] = &[
-            "target",        // Rust build
-            "node_modules",  // JavaScript
-            "vendor",        // Go, PHP
-            "dist",          // Build output
-            "build",         // Build output
-            ".git",          // Version control
-            ".svn",          // Version control
-            ".hg",           // Version control
+            "target",       // Rust build
+            "node_modules", // JavaScript
+            "vendor",       // Go, PHP
+            "dist",         // Build output
+            "build",        // Build output
+            ".git",         // Version control
+            ".svn",         // Version control
+            ".hg",          // Version control
         ];
 
         if !dir.is_dir() {
@@ -185,7 +185,9 @@ mod tests {
     fn test_empty_directory() {
         let temp_dir = TempDir::new().unwrap();
         let discovery = FileDiscovery::new(vec![".md".to_string()]);
-        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+        let results = discovery
+            .discover(&[temp_dir.path().to_path_buf()])
+            .unwrap();
         assert_eq!(results.len(), 0);
     }
 
@@ -196,7 +198,9 @@ mod tests {
         fs::write(&file_path, "# Test").unwrap();
 
         let discovery = FileDiscovery::new(vec![".md".to_string()]);
-        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+        let results = discovery
+            .discover(&[temp_dir.path().to_path_buf()])
+            .unwrap();
 
         assert_eq!(results.len(), 1);
         assert_eq!(results[0], file_path);
@@ -212,7 +216,9 @@ mod tests {
         fs::write(hidden_dir.join("file.md"), "content").unwrap();
 
         let discovery = FileDiscovery::new(vec![".md".to_string()]);
-        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+        let results = discovery
+            .discover(&[temp_dir.path().to_path_buf()])
+            .unwrap();
 
         assert_eq!(results.len(), 0, "Should skip hidden directories");
     }
@@ -227,7 +233,9 @@ mod tests {
         fs::write(target_dir.join("file.md"), "content").unwrap();
 
         let discovery = FileDiscovery::new(vec![".md".to_string()]);
-        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+        let results = discovery
+            .discover(&[temp_dir.path().to_path_buf()])
+            .unwrap();
 
         assert_eq!(results.len(), 0, "Should skip target directory");
     }
@@ -242,7 +250,9 @@ mod tests {
         fs::write(nm_dir.join("readme.md"), "content").unwrap();
 
         let discovery = FileDiscovery::new(vec![".md".to_string()]);
-        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+        let results = discovery
+            .discover(&[temp_dir.path().to_path_buf()])
+            .unwrap();
 
         assert_eq!(results.len(), 0, "Should skip node_modules");
     }
@@ -258,7 +268,9 @@ mod tests {
         fs::write(&file_path, "# README").unwrap();
 
         let discovery = FileDiscovery::new(vec![".md".to_string()]);
-        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+        let results = discovery
+            .discover(&[temp_dir.path().to_path_buf()])
+            .unwrap();
 
         assert_eq!(results.len(), 1);
         assert_eq!(results[0], file_path);
@@ -274,7 +286,9 @@ mod tests {
         fs::write(temp_dir.path().join("test.rs"), "rust").unwrap();
 
         let discovery = FileDiscovery::new(vec![".md".to_string()]);
-        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+        let results = discovery
+            .discover(&[temp_dir.path().to_path_buf()])
+            .unwrap();
 
         assert_eq!(results.len(), 1, "Should only find .md files");
     }
@@ -288,7 +302,9 @@ mod tests {
         fs::write(temp_dir.path().join("test.rs"), "rust").unwrap();
 
         let discovery = FileDiscovery::new(vec![".md".to_string(), ".txt".to_string()]);
-        let results = discovery.discover(&[temp_dir.path().to_path_buf()]).unwrap();
+        let results = discovery
+            .discover(&[temp_dir.path().to_path_buf()])
+            .unwrap();
 
         assert_eq!(results.len(), 2, "Should find .md and .txt files");
     }

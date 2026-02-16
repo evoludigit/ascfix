@@ -95,7 +95,11 @@ impl Default for Args {
             max_size: None,
             fences: false,
             all: false,
-            ext: vec![String::from(".md"), String::from(".mdx"), String::from(".txt")],
+            ext: vec![
+                String::from(".md"),
+                String::from(".mdx"),
+                String::from(".txt"),
+            ],
             summary: false,
             list_files: false,
             verbose: false,
