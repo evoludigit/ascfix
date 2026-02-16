@@ -4,6 +4,7 @@
 //! ASCII diagrams in Markdown content.
 
 pub mod cli;
+pub mod cli_lexopt;
 pub mod config;
 pub mod discovery;
 pub mod fences;
