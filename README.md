@@ -95,7 +95,7 @@ Ideal for:
 
 - **Directory processing**: Recursively process directories with automatic file discovery
 - **Multiple extensions**: Process `.md`, `.mdx`, `.txt` files (customizable with `--ext`)
-- **Gitignore respect**: Automatically respects `.gitignore` (can be disabled with `--no-gitignore`)
+- **Smart filtering**: Automatically skips hidden directories, `node_modules`, `target`, build output
 - **Size limits**: Configurable max file size (`--max-size 5MB`)
 - **In-place editing**: Modify files directly with `--in-place` (default: stdout output)
 - **Error resilience**: Continue processing remaining files on individual errors
@@ -158,23 +158,26 @@ ascfix README.md -c --mode=diagram
 ### Directories
 
 ```bash
-# Process all .md and .mdx files in a directory (respects .gitignore)
+# Process all .md and .mdx files in a directory
 ascfix docs/ --in-place --mode=diagram
 
-# Process a directory recursively
+# Process a directory recursively (skips hidden dirs, node_modules, target, etc.)
 ascfix . --in-place --all
 
-# Process only .md files (default includes both .md and .mdx)
+# Process only .md files (default includes .md, .mdx, .txt)
 ascfix docs/ -e .md --in-place
 
 # Process .mdx files only
 ascfix docs/ -e .mdx --in-place
 
-# Process directories ignoring .gitignore
-ascfix docs/ --no-gitignore --in-place --all
+# Complex filtering with find (exclude specific paths)
+ascfix $(find . -name "*.md" -not -path "*/node_modules/*" -not -path "*/.git/*") --in-place
+
+# Or use fd (faster)
+ascfix $(fd -e md) --in-place
 
 # Check multiple files without modifying
-ascfix docs/ -c
+ascfix docs/ --check
 ```
 
 ### Modes
@@ -195,7 +198,6 @@ ascfix docs/ -c
 | `--all`          |       | Shorthand for `--fences --mode=diagram`                                  | Off                       |
 | `--mode`         |       | Processing mode (safe, diagram, check)                                   | safe                      |
 | `--ext`          | `-e`  | File extensions to process (comma-separated, e.g., `.md,.mdx`)           | `.md,.mdx`                |
-| `--no-gitignore` |       | Do not respect .gitignore files                                          | Off (respects .gitignore) |
 | `--max-size`     |       | Maximum file size to process (e.g., "100MB", "1GB")                      | Unlimited                 |
 
 ### Output & Formatting Flags
