@@ -320,22 +320,20 @@ mod tests {
 
     #[test]
     fn test_processor_creates_instance() {
-        use clap::Parser;
-        let args = Args::try_parse_from(["ascfix", "test.md"]).expect("Failed to parse args");
+        let args = Args::parse_from(["ascfix", "test.md"]).expect("Failed to parse args");
         let processor = Processor::new(args).unwrap();
         assert_eq!(processor.args.paths.len(), 1);
     }
 
     #[test]
     fn test_max_size_enforcement() -> Result<()> {
-        use clap::Parser;
         let temp_dir = TempDir::new()?;
         let file_path = temp_dir.path().join("test.md");
         let content = "# Test\n\nSmall file";
         fs::write(&file_path, content)?;
 
         // Create processor with max_size: 5 bytes (smaller than file)
-        let args = Args::try_parse_from(vec![
+        let args = Args::parse_from(vec![
             "ascfix",
             file_path.to_str().unwrap(),
             "--max-size",
@@ -352,14 +350,13 @@ mod tests {
 
     #[test]
     fn test_max_size_allows_valid_file() -> Result<()> {
-        use clap::Parser;
         let temp_dir = TempDir::new()?;
         let file_path = temp_dir.path().join("test.md");
         let content = "# Test";
         fs::write(&file_path, content)?;
 
         // Create processor with max_size: 1000 bytes (larger than file)
-        let args = Args::try_parse_from(vec![
+        let args = Args::parse_from(vec![
             "ascfix",
             file_path.to_str().unwrap(),
             "--max-size",

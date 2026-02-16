@@ -27,12 +27,11 @@ mod tables;
 mod transformation_analysis;
 
 use anyhow::Result;
-use clap::Parser;
 use cli::Args;
 use processor::Processor;
 
 fn main() -> Result<()> {
-    let args = Args::parse();
+    let args = Args::parse()?;
     let processor = Processor::new(args)?;
     let exit_code = processor.process_all()?;
 
