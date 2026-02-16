@@ -25,10 +25,23 @@ similar = "2.4"
 [dev-dependencies]
 tempfile = "3.8"
 insta = "1.36"
+proptest = "1.5"
+
+[features]
+stress = []                 # Enable stress tests
+fuzz = []                   # Enable fuzz tests
 
 [[bin]]
 name = "ascfix"
 path = "src/main.rs"
+
+[[test]]
+name = "stress_tests"
+path = "tests/stress_tests.rs"
+
+[[test]]
+name = "fuzz_tests"
+path = "tests/fuzz_tests.rs"
 
 [lints.rust]
 unsafe_code = "forbid"
