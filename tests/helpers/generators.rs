@@ -96,3 +96,38 @@ pub fn generate_box_grid(rows: usize, cols: usize) -> String {
 
     result
 }
+
+/// Generate markdown with extremely long lines
+#[allow(dead_code)]
+pub fn generate_long_lines(line_length: usize, num_lines: usize) -> String {
+    let line = "a".repeat(line_length);
+    let mut result = String::new();
+    for _ in 0..num_lines {
+        result.push_str(&line);
+        result.push('\n');
+    }
+    result
+}
+
+/// Generate a file with many consecutive blank lines
+#[allow(dead_code)]
+pub fn generate_many_blank_lines(num_blanks: usize) -> String {
+    let mut result = String::from("# Header\n\n");
+    for _ in 0..num_blanks {
+        result.push('\n');
+    }
+    result.push_str("Content\n");
+    result
+}
+
+/// Generate markdown with deeply nested lists
+#[allow(dead_code)]
+#[allow(clippy::format_push_string)]
+pub fn generate_nested_lists(depth: usize) -> String {
+    let mut result = String::new();
+    for level in 0..depth {
+        result.push_str(&"  ".repeat(level));
+        result.push_str(&format!("- Item at level {level}\n"));
+    }
+    result
+}

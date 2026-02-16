@@ -10,9 +10,9 @@
 
 #![cfg(feature = "fuzz")]
 
-use ascfix::modes::process_by_mode;
 use ascfix::cli::Mode;
 use ascfix::config::Config;
+use ascfix::modes::process_by_mode;
 use proptest::prelude::*;
 
 mod helpers;
