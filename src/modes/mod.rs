@@ -1,5 +1,6 @@
 //! Mode-specific processing implementations.
 
+mod check;
 mod table;
 
 use crate::cli::Mode;
@@ -55,7 +56,7 @@ pub fn process_by_mode(
     match mode {
         Mode::Safe => process_safe_mode(&content),
         Mode::Diagram => process_diagram_mode(&content, effective_config),
-        Mode::Check => process_check_mode(&content),
+        Mode::Check => check::process_check_mode(&content),
     }
 }
 
@@ -206,14 +207,6 @@ fn process_diagram_mode(content: &str, _config: &crate::config::Config) -> Strin
     lines.join("\n")
 }
 
-/// Check mode: Validate without modifying (used with --check flag).
-fn process_check_mode(content: &str) -> String {
-    // Check mode uses the same processing as diagram mode but doesn't write
-    // The caller will compare input vs output
-    let default_config = crate::config::Config::default();
-    process_diagram_mode(content, &default_config)
-}
-
 /// Compare original and processed content to determine if fixes are needed.
 ///
 /// Returns true if the content has been modified, false if identical.
@@ -244,14 +237,6 @@ mod tests {
         let content = "# Test\n\nSome content";
         let result = process_by_mode(&Mode::Diagram, content, false, &default_config());
         // Diagram mode should preserve content when no diagrams exist
-        assert_eq!(result, content);
-    }
-
-    #[test]
-    fn test_check_mode_preserves_content() {
-        let content = "# Test\n\nSome content";
-        let result = process_by_mode(&Mode::Check, content, false, &default_config());
-        // Check mode should use same processing as diagram
         assert_eq!(result, content);
     }
 
@@ -305,7 +290,6 @@ mod tests {
         assert!(result.contains("| C"));
     }
 
-
     #[test]
     fn test_diagram_mode_processes_boxes() {
         let content = "┌─┐\n│ │\n└─┘";
@@ -323,14 +307,6 @@ mod tests {
         // Non-diagram content should be preserved
         assert!(result.contains("# Title"));
         assert!(result.contains("Some text"));
-    }
-
-    #[test]
-    fn test_check_mode_returns_unchanged_content() {
-        let content = "# Test\n\nNo diagrams here";
-        let result = process_by_mode(&Mode::Check, content, false, &default_config());
-        // Check mode processes same as diagram mode but returns content
-        assert_eq!(result, content);
     }
 
     #[test]
