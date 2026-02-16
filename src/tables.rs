@@ -2,6 +2,21 @@
 //!
 //! This module detects and repairs tables where cells have been hard-wrapped
 //! at 80 columns, joining continuation lines back into single cells.
+//!
+//! ## Heuristics
+//!
+//! The unwrapping logic uses several heuristics to preserve intentional multi-line content:
+//!
+//! 1. **Continuation detection**: Empty leading cell + single non-empty cell indicates wrapping
+//! 2. **Code fence preservation**: Lines with backticks or tildes are kept as-is
+//! 3. **Link preservation**: Incomplete markdown links (unclosed parentheses) are preserved
+//! 4. **List markers**: Lines with `- * +` or numbered lists (`1. 2.`) are preserved
+//! 5. **Blockquotes**: Lines starting with `>` are preserved
+//!
+//! ## Safety
+//!
+//! When in doubt, the unwrapper preserves the original structure (conservative behavior).
+//! This prevents accidentally merging rows that contain intentional multi-line formatting.
 
 /// Check if a table has wrapped cells that need unwrapping.
 ///
@@ -151,6 +166,16 @@ pub fn unwrap_table_rows(rows: &[&str]) -> Vec<String> {
         return rows.iter().map(|&s| s.to_string()).collect();
     }
 
+    // Check if rows contain list markers - if so, preserve all rows as-is
+    if rows_contain_list_markers(rows) {
+        return rows.iter().map(|&s| s.to_string()).collect();
+    }
+
+    // Check if rows contain blockquotes - if so, preserve all rows as-is
+    if rows_contain_blockquotes(rows) {
+        return rows.iter().map(|&s| s.to_string()).collect();
+    }
+
     // Check if rows contain incomplete links that would be broken by unwrapping
     if has_incomplete_link_across_rows(rows) {
         return rows.iter().map(|&s| s.to_string()).collect();
@@ -230,10 +255,52 @@ fn contains_code_fence(line: &str) -> bool {
     false
 }
 
+/// Check if a line contains list markers.
+/// Detects bullet lists (-, *, +) and numbered lists (1., 2., etc.).
+fn contains_list_marker(line: &str) -> bool {
+    let cells = split_table_cells(line);
+    cells.iter().any(|cell| {
+        let trimmed = cell.trim();
+        // Check for bullet list markers at start of cell
+        if trimmed.starts_with("- ") || trimmed.starts_with("* ") || trimmed.starts_with("+ ") {
+            return true;
+        }
+        // Check for numbered list markers (1. 2. etc.)
+        if let Some(rest) = trimmed.strip_prefix(|c: char| c.is_ascii_digit()) {
+            if !rest.is_empty() && rest.starts_with(". ") {
+                return true;
+            }
+        }
+        false
+    })
+}
+
+/// Check if a line contains blockquote markers.
+/// Detects lines starting with >.
+fn contains_blockquote(line: &str) -> bool {
+    let cells = split_table_cells(line);
+    cells.iter().any(|cell| {
+        let trimmed = cell.trim();
+        trimmed.starts_with("> ")
+    })
+}
+
 /// Check if a sequence of rows contains any code fences.
 /// Used to determine if wrapped rows should be preserved as multi-line content.
 fn rows_contain_code_fence(rows: &[&str]) -> bool {
     rows.iter().any(|row| contains_code_fence(row))
+}
+
+/// Check if a sequence of rows contains list markers.
+/// Used to preserve intentional multi-line list content in tables.
+fn rows_contain_list_markers(rows: &[&str]) -> bool {
+    rows.iter().any(|row| contains_list_marker(row))
+}
+
+/// Check if a sequence of rows contains blockquotes.
+/// Used to preserve intentional multi-line blockquote content in tables.
+fn rows_contain_blockquotes(rows: &[&str]) -> bool {
+    rows.iter().any(|row| contains_blockquote(row))
 }
 
 /// Check if rows contain an incomplete link that spans across the wrap boundary.
@@ -422,5 +489,67 @@ mod tests {
             "| [Link](http://x/path) |",
             "| more text |"
         ]));
+    }
+
+    #[test]
+    fn preserve_nested_list_in_table() {
+        // Table with nested list should NOT be unwrapped
+        let rows = vec![
+            "| Feature | Details |",
+            "| Items   | - Parent |",
+            "|         |   - Child 1 |",
+            "|         |   - Child 2 |",
+        ];
+        let unwrapped = unwrap_table_rows(&rows);
+        // Should preserve all rows since there are list markers
+        assert_eq!(unwrapped.len(), 4, "Should preserve nested list structure");
+        assert!(unwrapped[1].contains("- Parent"));
+        assert!(unwrapped[2].contains("- Child 1"));
+        assert!(unwrapped[3].contains("- Child 2"));
+    }
+
+    #[test]
+    fn preserve_blockquote_in_table() {
+        // Table with blockquote should NOT be unwrapped
+        let rows = vec![
+            "| Author | Quote |",
+            "| Alice  | > This is |",
+            "|        | > a quote |",
+        ];
+        let unwrapped = unwrap_table_rows(&rows);
+        // Should preserve all rows since there are blockquote markers
+        assert_eq!(unwrapped.len(), 3, "Should preserve blockquote structure");
+        assert!(unwrapped[1].contains("> This is"));
+        assert!(unwrapped[2].contains("> a quote"));
+    }
+
+    #[test]
+    fn preserve_numbered_list_in_table() {
+        // Table with numbered list should NOT be unwrapped
+        let rows = vec![
+            "| Steps | Description |",
+            "| Process | 1. First step |",
+            "|         | 2. Second step |",
+            "|         | 3. Third step |",
+        ];
+        let unwrapped = unwrap_table_rows(&rows);
+        // Should preserve all rows since there are numbered list markers
+        assert_eq!(
+            unwrapped.len(),
+            4,
+            "Should preserve numbered list structure"
+        );
+        assert!(unwrapped[1].contains("1. First"));
+        assert!(unwrapped[2].contains("2. Second"));
+        assert!(unwrapped[3].contains("3. Third"));
+    }
+
+    #[test]
+    fn unwrap_when_no_special_markers() {
+        // Regular wrapped text without special markers should be unwrapped
+        let rows = vec!["| Item | This is a long |", "|      | description text |"];
+        let unwrapped = unwrap_table_rows(&rows);
+        assert_eq!(unwrapped.len(), 1, "Should unwrap regular text");
+        assert_eq!(unwrapped[0], "| Item | This is a long description text |");
     }
 }
