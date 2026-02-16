@@ -8,7 +8,7 @@ pub fn process_check_mode(content: &str) -> String {
     // Check mode uses the same processing as diagram mode but doesn't write
     // The caller will compare input vs output
     let default_config = crate::config::Config::default();
-    super::process_diagram_mode(content, &default_config)
+    super::diagram::process_diagram_mode(content, &default_config)
 }
 
 #[cfg(test)]

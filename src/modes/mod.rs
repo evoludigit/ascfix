@@ -1,30 +1,12 @@
 //! Mode-specific processing implementations.
 
 mod check;
+mod diagram;
 mod table;
 
 use crate::cli::Mode;
-use crate::scanner::InlineCodeSpan;
 use crate::tables::{has_wrapped_cells, unwrap_table_rows};
 use table::{is_table_row, is_table_separator, normalize_table};
-
-/// Restore masked inline code content.
-fn restore_inline_code(masked_line: &str, spans: &[InlineCodeSpan]) -> String {
-    if spans.is_empty() {
-        return masked_line.to_string();
-    }
-    let mut restored_chars: Vec<char> = masked_line.chars().collect();
-    for span in spans {
-        let content_chars: Vec<char> = span.content.chars().collect();
-        for (i, ch) in content_chars.iter().enumerate() {
-            let pos = span.start_col + i;
-            if pos < restored_chars.len() {
-                restored_chars[pos] = *ch;
-            }
-        }
-    }
-    restored_chars.iter().collect::<String>()
-}
 
 /// Process content according to the specified mode.
 ///
@@ -55,7 +37,7 @@ pub fn process_by_mode(
 
     match mode {
         Mode::Safe => process_safe_mode(&content),
-        Mode::Diagram => process_diagram_mode(&content, effective_config),
+        Mode::Diagram => diagram::process_diagram_mode(&content, effective_config),
         Mode::Check => check::process_check_mode(&content),
     }
 }
@@ -133,80 +115,6 @@ fn process_safe_mode(content: &str) -> String {
     result.join("\n")
 }
 
-/// Diagram mode: Detect and normalize ASCII diagrams (full pipeline).
-fn process_diagram_mode(content: &str, _config: &crate::config::Config) -> String {
-    let blocks = crate::scanner::extract_diagram_blocks(content);
-
-    // If no diagram blocks found, return content unchanged
-    if blocks.is_empty() {
-        return content.to_string();
-    }
-
-    // Build result line by line, preserving structure
-    let mut lines: Vec<String> = content.lines().map(String::from).collect();
-
-    // Process each diagram block (in reverse to maintain indices)
-    for block in blocks.iter().rev() {
-        let diagram_content = block.lines.join("\n");
-
-        // Convert to grid
-        let block_lines: Vec<&str> = diagram_content.lines().collect();
-        let grid = crate::grid::Grid::from_lines(&block_lines);
-
-        // Detect primitives
-        let inventory = crate::detector::detect_all_primitives(&grid);
-
-        // Only process if we found actual diagram primitives (boxes or arrows)
-        if !inventory.boxes.is_empty()
-            || !inventory.horizontal_arrows.is_empty()
-            || !inventory.vertical_arrows.is_empty()
-        {
-            // Normalize
-            let normalized = crate::normalizer::normalize_box_widths(&inventory);
-            let normalized = crate::normalizer::normalize_nested_boxes(&normalized);
-            let normalized = crate::normalizer::align_horizontal_arrows(&normalized);
-            let normalized = crate::normalizer::align_vertical_arrows(&normalized);
-            let normalized = crate::normalizer::balance_horizontal_boxes(&normalized);
-            let normalized = crate::normalizer::normalize_padding(&normalized);
-
-            // Render onto a COPY of the original grid to preserve pass-through content
-            // This ensures lines without detected primitives are not lost
-            let rendered_grid = crate::renderer::render_onto_grid(&grid, &normalized);
-            let rendered = rendered_grid.render_trimmed();
-
-            // Restore inline code in the rendered output
-            let rendered_lines: Vec<String> = rendered
-                .lines()
-                .enumerate()
-                .map(|(i, line)| {
-                    if i < block.inline_code_spans.len() {
-                        restore_inline_code(line, &block.inline_code_spans[i])
-                    } else {
-                        line.to_string()
-                    }
-                })
-                .collect();
-
-            // Replace the block in the original content (in reverse to maintain indices)
-            let block_len = block.lines.len();
-
-            // Remove old lines and insert new ones
-            for _ in 0..block_len {
-                if block.start_line < lines.len() {
-                    lines.remove(block.start_line);
-                }
-            }
-            // Insert new lines
-            for (i, line) in rendered_lines.iter().enumerate() {
-                lines.insert(block.start_line + i, line.clone());
-            }
-        }
-        // If no primitives found, leave the block unchanged
-    }
-
-    lines.join("\n")
-}
-
 /// Compare original and processed content to determine if fixes are needed.
 ///
 /// Returns true if the content has been modified, false if identical.
@@ -229,14 +137,6 @@ mod tests {
         let content = "# Test\n\nSome content";
         let result = process_by_mode(&Mode::Safe, content, false, &default_config());
         // Safe mode should preserve content for now
-        assert_eq!(result, content);
-    }
-
-    #[test]
-    fn test_diagram_mode_preserves_content() {
-        let content = "# Test\n\nSome content";
-        let result = process_by_mode(&Mode::Diagram, content, false, &default_config());
-        // Diagram mode should preserve content when no diagrams exist
         assert_eq!(result, content);
     }
 
@@ -291,25 +191,6 @@ mod tests {
     }
 
     #[test]
-    fn test_diagram_mode_processes_boxes() {
-        let content = "┌─┐\n│ │\n└─┘";
-        let result = process_by_mode(&Mode::Diagram, content, false, &default_config());
-        // Should render the diagram (may change spacing but keep structure)
-        assert!(result.contains("┌"));
-        assert!(result.contains("└"));
-        assert!(result.contains("│"));
-    }
-
-    #[test]
-    fn test_diagram_mode_preserves_non_diagram_text() {
-        let content = "# Title\n\nSome text\n\nMore content";
-        let result = process_by_mode(&Mode::Diagram, content, false, &default_config());
-        // Non-diagram content should be preserved
-        assert!(result.contains("# Title"));
-        assert!(result.contains("Some text"));
-    }
-
-    #[test]
     fn test_content_needs_fixing_detects_differences() {
         let original = "┌──┐\n│Hi│\n└──┘";
         let processed = process_by_mode(&Mode::Diagram, original, false, &default_config());
@@ -347,14 +228,6 @@ mod tests {
         let original = "line1\nline2";
         let modified = "line1\nline2";
         assert!(!content_needs_fixing(original, modified));
-    }
-
-    #[test]
-    fn test_fence_repair_in_pipeline() {
-        let content = "```python\ncode\n`````";
-        let result = process_by_mode(&Mode::Diagram, content, true, &default_config());
-        // Fences should be normalized before diagram processing
-        assert!(result.contains('`'));
     }
 
     #[test]
