@@ -26,6 +26,9 @@ pub fn process_safe_mode(content: &str) -> String {
         if i + 1 < lines.len() && is_table_row(lines[i]) && is_table_separator(lines[i + 1]) {
             // Found a table, collect all rows
             let header = lines[i];
+            // Capture leading indentation so tables inside list items keep their position
+            let table_indent = header.len() - header.trim_start().len();
+            let indent_str = " ".repeat(table_indent);
             let separator = lines[i + 1];
             i += 2;
 
@@ -34,6 +37,18 @@ pub fn process_safe_mode(content: &str) -> String {
                 table_rows.push(lines[i]);
                 i += 1;
             }
+
+            // Helper: re-apply the captured indentation to each line of a normalized table
+            let reindent = |normalized: String| -> String {
+                if table_indent == 0 {
+                    return normalized;
+                }
+                normalized
+                    .lines()
+                    .map(|l| format!("{indent_str}{l}"))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            };
 
             // Check if table has wrapped cells and unwrap if needed
             let all_table_lines: Vec<&str> = std::iter::once(header)
@@ -50,7 +65,7 @@ pub fn process_safe_mode(content: &str) -> String {
                 let unwrapped_refs: Vec<&str> = unwrapped_rows.iter().map(String::as_str).collect();
 
                 if let Some(normalized) = normalize_table(header, separator, &unwrapped_refs) {
-                    result.push(normalized);
+                    result.push(reindent(normalized));
                 } else {
                     // If parsing fails, use unwrapped rows
                     result.push(header.to_string());
@@ -62,7 +77,7 @@ pub fn process_safe_mode(content: &str) -> String {
             } else {
                 // No wrapping - normalize normally
                 if let Some(normalized) = normalize_table(header, separator, &table_rows) {
-                    result.push(normalized);
+                    result.push(reindent(normalized));
                 } else {
                     // If parsing fails, keep original lines
                     result.push(header.to_string());
@@ -238,6 +253,43 @@ mod tests {
         assert!(
             result.contains("- [x] Done item"),
             "Checked task should be preserved. Result:\n{result}"
+        );
+    }
+
+    // Regression tests for issue #10
+
+    #[test]
+    fn test_safe_mode_preserves_ordered_list_child_indentation() {
+        // Sub-items of "1. " must stay at >=3 spaces after processing
+        let content = "1. **First item**\n   - sub-item a\n   - sub-item b";
+        let result = process_safe_mode(content);
+        assert!(
+            result.contains("   - sub-item a"),
+            "3-space indent under ordered list must be preserved. Got:\n{result}"
+        );
+        // No line must start with exactly 2 spaces before the bullet
+        assert!(
+            !result.contains("\n  - sub-item"),
+            "2-space indent must not appear under ordered list parent. Got:\n{result}"
+        );
+    }
+
+    #[test]
+    fn test_safe_mode_preserves_table_indentation_inside_ordered_list() {
+        // Tables inside ordered list items must keep their leading indentation
+        let content = "2. **Map endpoints**\n\n   | Column A | Column B |\n   |----------|----------|\n   | foo      | bar      |";
+        let result = process_safe_mode(content);
+        assert!(
+            result.contains("   | Column A"),
+            "Table inside ordered list must keep 3-space indent. Got:\n{result}"
+        );
+        assert!(
+            result.contains("   | foo"),
+            "Table data row must keep 3-space indent. Got:\n{result}"
+        );
+        assert!(
+            !result.contains("\n| Column A"),
+            "Table must not be moved to column 0. Got:\n{result}"
         );
     }
 

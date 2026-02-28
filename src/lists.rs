@@ -346,10 +346,34 @@ fn is_in_code_region(line_num: usize, regions: &[(usize, usize)]) -> bool {
     false
 }
 
-/// Normalize list indentation to standard 2-space increments.
+/// Compute the required indentation string for a given nesting level.
 ///
-/// Takes content with lists and normalizes the indentation of nested items
-/// to use consistent 2-space increments per nesting level.
+/// Each parent level contributes spaces based on its marker type:
+/// - Ordered markers (`1`, `10`, etc.): `marker.len() + 2` spaces (number + ". ")
+/// - Unordered markers (`-`, `*`, `+`): 2 spaces ("- ")
+///
+/// This ensures continuation content is indented correctly per the `CommonMark`
+/// spec, where `1. ` requires ≥3 spaces for child content and `- ` requires ≥2.
+fn required_indent_for_level(stack: &[(usize, String)], level: usize) -> String {
+    let mut total = 0;
+    for (_, marker) in stack.iter().take(level) {
+        if marker.parse::<i32>().is_ok() {
+            // Ordered: "N. " contributes marker.len() + 2 spaces
+            total += marker.len() + 2;
+        } else {
+            // Unordered: "- " contributes 2 spaces
+            total += 2;
+        }
+    }
+    " ".repeat(total)
+}
+
+/// Normalize list indentation to standard 2-space increments for unordered lists.
+///
+/// Takes content with lists and normalizes the indentation of nested items.
+/// For unordered list parents, uses 2-space increments per nesting level.
+/// For ordered list parents, uses the correct `CommonMark` continuation width
+/// (marker length + 2) to avoid breaking nested list parsing.
 ///
 /// # Examples
 ///
@@ -372,7 +396,8 @@ pub fn normalize_list_indentation(content: &str) -> String {
     let code_ranges = get_code_block_line_ranges(content);
 
     let mut result = Vec::new();
-    let mut list_stack: Vec<usize> = Vec::new(); // Stack of indentation levels for each list level
+    // Stack stores (original_indent, marker) for each nesting level
+    let mut list_stack: Vec<(usize, String)> = Vec::new();
 
     for (i, line) in lines.iter().enumerate() {
         // Skip lines inside code blocks
@@ -388,13 +413,13 @@ pub fn normalize_list_indentation(content: &str) -> String {
             // Determine the nesting level based on indentation
             let level = if list_stack.is_empty() {
                 // First item in a list
-                list_stack.push(current_indent);
+                list_stack.push((current_indent, item.marker.clone()));
                 0
             } else {
                 // Find the appropriate level based on indentation
                 let mut level = list_stack.len();
-                for (idx, &indent) in list_stack.iter().enumerate() {
-                    if current_indent <= indent {
+                for (idx, (indent, _)) in list_stack.iter().enumerate() {
+                    if current_indent <= *indent {
                         level = idx;
                         break;
                     }
@@ -405,14 +430,14 @@ pub fn normalize_list_indentation(content: &str) -> String {
 
                 // If this is a new nesting level, add it
                 if level == list_stack.len() {
-                    list_stack.push(current_indent);
+                    list_stack.push((current_indent, item.marker.clone()));
                 }
 
                 level
             };
 
-            // Calculate normalized indentation: 2 spaces per level
-            let normalized_indent = "  ".repeat(level);
+            // Calculate normalized indentation based on parent marker types
+            let normalized_indent = required_indent_for_level(&list_stack, level);
             let reconstructed = format!("{}{} {}", normalized_indent, item.marker, item.content);
             result.push(reconstructed);
         } else {
@@ -537,7 +562,8 @@ pub fn normalize_lists(content: &str) -> String {
     let code_ranges = get_code_block_line_ranges(content);
 
     let mut result = Vec::new();
-    let mut list_stack: Vec<usize> = Vec::new(); // Stack of indentation levels for each list level
+    // Stack stores (original_indent, marker) for each nesting level
+    let mut list_stack: Vec<(usize, String)> = Vec::new();
     let target_bullet = '-';
 
     for (i, line) in lines.iter().enumerate() {
@@ -556,13 +582,13 @@ pub fn normalize_lists(content: &str) -> String {
             // Determine the nesting level based on indentation
             let level = if list_stack.is_empty() {
                 // First item in a list
-                list_stack.push(current_indent);
+                list_stack.push((current_indent, item.marker.clone()));
                 0
             } else {
                 // Find the appropriate level based on indentation
                 let mut level = list_stack.len();
-                for (idx, &indent) in list_stack.iter().enumerate() {
-                    if current_indent <= indent {
+                for (idx, (indent, _)) in list_stack.iter().enumerate() {
+                    if current_indent <= *indent {
                         level = idx;
                         break;
                     }
@@ -573,14 +599,14 @@ pub fn normalize_lists(content: &str) -> String {
 
                 // If this is a new nesting level, add it
                 if level == list_stack.len() {
-                    list_stack.push(current_indent);
+                    list_stack.push((current_indent, item.marker.clone()));
                 }
 
                 level
             };
 
-            // Calculate normalized indentation: 2 spaces per level
-            let normalized_indent = "  ".repeat(level);
+            // Calculate normalized indentation based on parent marker types
+            let normalized_indent = required_indent_for_level(&list_stack, level);
 
             // Reconstruct with normalized bullet and indentation
             let reconstructed = if item.is_task && ["-", "*", "+"].contains(&item.marker.as_str()) {
@@ -997,5 +1023,97 @@ mod tests {
         let normalized = normalize_loose_lists(content);
         assert!(normalized.contains("# Header 1\n\n- Item A"));
         assert!(normalized.contains("# Header 2\n\n- Item B"));
+    }
+
+    // Regression tests for issue #10: ordered list continuation indentation
+
+    #[test]
+    fn ordered_list_child_bullet_preserves_three_space_indent() {
+        // Sub-items of "1. " must stay at >=3 spaces to remain `CommonMark`-valid
+        // continuations. ascfix must not reduce 3 spaces to 2.
+        let content = "1. **First item**\n   - sub-item a\n   - sub-item b";
+        let normalized = normalize_lists(content);
+        assert!(
+            normalized.contains("   - sub-item a"),
+            "Sub-item must keep 3-space indent under ordered parent. Got:\n{normalized}"
+        );
+        assert!(
+            normalized.contains("   - sub-item b"),
+            "Sub-item must keep 3-space indent under ordered parent. Got:\n{normalized}"
+        );
+        // Verify no line has exactly 2-space indent (i.e. "\n  - " not followed by a 3rd space)
+        assert!(
+            !normalized.contains("\n  - sub-item"),
+            "2-space indent must not appear under ordered parent. Got:\n{normalized}"
+        );
+    }
+
+    #[test]
+    fn ordered_list_multi_item_children_preserve_indent() {
+        // Full reproduction case from the bug report
+        let content = "1. **Assess Current Stack**\n   - What are you using now?\n   - How complex is your API?\n\n2. **Second item**\n   - sub-item c";
+        let normalized = normalize_lists(content);
+        assert!(
+            normalized.contains("   - What are you using now?"),
+            "3-space indent must be preserved. Got:\n{normalized}"
+        );
+        assert!(
+            normalized.contains("   - sub-item c"),
+            "3-space indent must be preserved. Got:\n{normalized}"
+        );
+    }
+
+    #[test]
+    fn unordered_list_children_still_use_two_spaces() {
+        // Bullet sub-lists must still normalize to 2 spaces (existing behavior)
+        let content = "- Item 1\n    - Nested with 4 spaces\n- Item 2";
+        let normalized = normalize_lists(content);
+        assert!(
+            normalized.contains("  - Nested with 4 spaces"),
+            "Bullet sub-item should normalize to 2 spaces. Got:\n{normalized}"
+        );
+        assert!(
+            !normalized.contains("    - Nested"),
+            "4-space indent should be reduced. Got:\n{normalized}"
+        );
+    }
+
+    #[test]
+    fn double_digit_ordered_list_child_uses_four_space_indent() {
+        // "10. " is 4 chars wide so continuation needs >=4 spaces
+        let content = "10. **Item ten**\n    - sub-item";
+        let normalized = normalize_lists(content);
+        assert!(
+            normalized.contains("    - sub-item"),
+            "Sub-item under '10.' must have 4-space indent. Got:\n{normalized}"
+        );
+    }
+
+    #[test]
+    fn required_indent_helper_unordered_parent() {
+        // Level 1 under a "-" parent = 2 spaces
+        let stack = vec![(0usize, "-".to_string())];
+        assert_eq!(required_indent_for_level(&stack, 1), "  ");
+    }
+
+    #[test]
+    fn required_indent_helper_ordered_parent() {
+        // Level 1 under a "1" parent = 3 spaces ("1" + ". " = 1+2)
+        let stack = vec![(0usize, "1".to_string())];
+        assert_eq!(required_indent_for_level(&stack, 1), "   ");
+    }
+
+    #[test]
+    fn required_indent_helper_double_digit_ordered() {
+        // Level 1 under a "10" parent = 4 spaces ("10" + ". " = 2+2)
+        let stack = vec![(0usize, "10".to_string())];
+        assert_eq!(required_indent_for_level(&stack, 1), "    ");
+    }
+
+    #[test]
+    fn required_indent_helper_nested_ordered_then_unordered() {
+        // Level 2: ordered "1" (3) then unordered "-" (2) = 5 spaces
+        let stack = vec![(0usize, "1".to_string()), (3usize, "-".to_string())];
+        assert_eq!(required_indent_for_level(&stack, 2), "     ");
     }
 }

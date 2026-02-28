@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-02-28
+
+### Fixed
+
+- **Ordered list child indentation** ([#10](https://github.com/evoludigit/ascfix/issues/10)):
+  `normalize_lists()` was normalising nested list items to a hardcoded 2-space
+  indent per level, regardless of parent marker width. Under a `1. ` ordered
+  list item, `CommonMark` requires ≥ 3 spaces for continuation content — so
+  sub-items were reduced from the valid 3 spaces to the invalid 2 spaces,
+  causing parsers (e.g. Starlight's `<Steps>`) to treat them as sibling
+  elements instead of children. The indentation is now computed per level
+  from the parent marker width: ordered markers contribute `marker.len() + 2`
+  spaces (`"1. "` → 3, `"10. "` → 4), unordered markers contribute 2 spaces.
+
+- **Table indentation inside ordered list items** ([#10](https://github.com/evoludigit/ascfix/issues/10)):
+  Tables nested inside ordered list items were losing their leading
+  indentation after normalisation, moving from inside the list item to column 0.
+  `process_safe_mode()` now captures the table's leading whitespace before
+  calling `normalize_table()` and re-applies it to every output line.
+
 ## [0.6.0] - 2026-02-16
 
 ### Dependency Reduction & Performance Release
