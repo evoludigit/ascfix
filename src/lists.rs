@@ -441,10 +441,11 @@ pub fn normalize_list_indentation(content: &str) -> String {
             let reconstructed = format!("{}{} {}", normalized_indent, item.marker, item.content);
             result.push(reconstructed);
         } else {
-            // Non-list line - reset the stack if it's not a continuation
-            if line.trim().is_empty() {
-                list_stack.clear();
-            }
+            // Non-list line — pass through unchanged.
+            // Do not clear the stack on blank lines: a blank line inside a
+            // loose list item (e.g. "1. item\n\n   - sub") is valid CommonMark
+            // continuation and must preserve the ordered-list context so that
+            // subsequent sub-items receive the correct indentation.
             result.push(line.to_string());
         }
     }
@@ -629,11 +630,9 @@ pub fn normalize_lists(content: &str) -> String {
             };
             result.push(reconstructed);
         } else {
-            // Non-list line
-            if line.trim().is_empty() {
-                // Blank line resets the list stack
-                list_stack.clear();
-            }
+            // Non-list line — pass through unchanged.
+            // Do not clear the stack on blank lines: the stack truncates
+            // naturally when the next list item appears at a lower indent.
             result.push(line.to_string());
         }
     }
@@ -1115,5 +1114,52 @@ mod tests {
         // Level 2: ordered "1" (3) then unordered "-" (2) = 5 spaces
         let stack = vec![(0usize, "1".to_string()), (3usize, "-".to_string())];
         assert_eq!(required_indent_for_level(&stack, 2), "     ");
+    }
+
+    #[test]
+    fn ordered_list_child_after_blank_line_preserves_indent() {
+        // Exact reproduction from issue #10 comment: blank line between ordered
+        // item and its sub-items must not strip the sub-items' indentation.
+        let content = "1. **Assess Current Stack**\n\n   - What are you using now?\n   - How complex is your API?";
+        let normalized = normalize_lists(content);
+        assert!(
+            normalized.contains("   - What are you using now?"),
+            "3-space indent must survive blank line before sub-item. Got:\n{normalized}"
+        );
+        assert!(
+            normalized.contains("   - How complex is your API?"),
+            "3-space indent must survive blank line before sub-item. Got:\n{normalized}"
+        );
+        assert!(
+            !normalized.contains("\n- What are you using now?"),
+            "Sub-item must not be at column 0 after blank line. Got:\n{normalized}"
+        );
+    }
+
+    #[test]
+    fn ordered_list_multiple_items_with_blank_line_children() {
+        // Full multi-item case from the issue report
+        let content = "1. **Assess Current Stack**\n\n   - What are you using now?\n   - How complex is your API?\n\n2. **Second item**\n\n   - sub-item c";
+        let normalized = normalize_lists(content);
+        assert!(
+            normalized.contains("   - What are you using now?"),
+            "Children of item 1 must keep 3-space indent. Got:\n{normalized}"
+        );
+        assert!(
+            normalized.contains("   - sub-item c"),
+            "Children of item 2 must keep 3-space indent. Got:\n{normalized}"
+        );
+    }
+
+    #[test]
+    fn unordered_lists_separated_by_blank_still_independent() {
+        // Two separate bullet lists separated by text must not bleed into each other
+        let content = "- List A item 1\n- List A item 2\n\nSome paragraph\n\n- List B item 1\n- List B item 2";
+        let normalized = normalize_lists(content);
+        // Both lists should be at column 0
+        assert!(normalized.contains("- List A item 1"));
+        assert!(normalized.contains("- List B item 1"));
+        // No stray indentation
+        assert!(!normalized.contains("  - List B item 1"));
     }
 }

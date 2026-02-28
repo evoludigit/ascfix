@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-02-28
+
+### Fixed
+
+- **Ordered list sub-items after a blank line collapsed to column 0** ([#10](https://github.com/evoludigit/ascfix/issues/10)):
+  v0.6.1 introduced a regression where sub-items separated from their ordered
+  list parent by a blank line (loose list syntax) lost all indentation and
+  appeared at column 0. The blank line was clearing the parent list context
+  stack, so subsequent sub-items were treated as fresh top-level items.
+  The blank-line stack-clear has been removed: the stack now truncates
+  naturally when a new list item appears at a lower indent, correctly
+  preserving ordered-list context across blank lines.
+
 ## [0.6.1] - 2026-02-28
 
 ### Fixed

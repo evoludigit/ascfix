@@ -1,6 +1,6 @@
 # Maintainer: evoludigit <your-email@example.com>
 pkgname=ascfix
-pkgver=0.6.1
+pkgver=0.6.2
 pkgrel=1
 pkgdesc="Automatic ASCII diagram repair tool for Markdown files"
 arch=('x86_64')
