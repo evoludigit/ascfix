@@ -60,7 +60,7 @@ fn test_language_tagged_fence_untouched() {
     assert_eq!(result, input, "Language-tagged fence content was modified");
 }
 
-/// Default config (`fenced_diagrams=false`) should not touch fence content.
+/// Default config (`fenced_diagrams=true`) should process bare fence content.
 #[test]
 fn test_fenced_diagrams_disabled_by_default() {
     let input = "\
@@ -72,9 +72,14 @@ fn test_fenced_diagrams_disabled_by_default() {
 ";
     let config = Config::default();
     let result = process_by_mode(&Mode::Diagram, input, false, &config);
-    assert_eq!(
-        result, input,
-        "Fence content was modified with default config"
+    // With default config (fenced_diagrams=true), diagrams should be processed
+    assert!(
+        result.contains("Hello"),
+        "Diagram content lost:\n{result}"
+    );
+    assert!(
+        result.contains("```"),
+        "Fence markers lost:\n{result}"
     );
 }
 

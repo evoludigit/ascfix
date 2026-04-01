@@ -128,22 +128,10 @@ pub fn render_onto_grid(
                     if col_idx < original_width {
                         let ch = original.get(row_idx, col_idx).unwrap_or(' ');
                         // Remove arrow characters - they'll be redrawn by the inventory at aligned positions
-                        // Support standard (↓ ↑ → ←), double (⇓ ⇑ ⇒ ⇐), filled (▼ ▲ ◄ ►), and extended (⟶ ⟹) arrows
+                        // Support standard (↓ ↑ → ←), double (⇓ ⇑ ⇒ ⇐), and extended (⟶ ⟹) arrows
                         if matches!(
                             ch,
-                            '↓' | '↑'
-                                | '→'
-                                | '←'
-                                | '⇓'
-                                | '⇑'
-                                | '⇒'
-                                | '⇐'
-                                | '▼'
-                                | '▲'
-                                | '◄'
-                                | '►'
-                                | '⟶'
-                                | '⟹'
+                            '↓' | '↑' | '→' | '←' | '⇓' | '⇑' | '⇒' | '⇐' | '⟶' | '⟹'
                         ) {
                             row.push(' ');
                         } else {

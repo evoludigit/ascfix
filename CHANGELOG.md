@@ -17,10 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Users no longer need `--all` to fix all diagrams in a file.
   This is safe because bare code fences are explicitly for ASCII art/diagrams, not code.
 
-- **Support for filled triangle arrow characters** (▼▲◄►):
-  Extended arrow detection and rendering to recognize filled triangle arrows in addition to standard (↓↑→←), double (⇓⇑⇒⇐), and extended (⟶⟹) arrows.
-  Diagrams using these arrow styles are now properly detected, normalized, and rendered without data loss.
-
 ### Fixed
 
 - **Diagrams in code fences not being processed**:

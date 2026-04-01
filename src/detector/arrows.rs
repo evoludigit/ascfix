@@ -13,8 +13,6 @@ const fn is_vertical_arrow(ch: char) -> bool {
         '↓' | '↑' |
         // Double arrows
         '⇓' | '⇑' |
-        // Filled triangles
-        '▼' | '▲' |
         // Box drawing
         '│' | '┃'
     )
@@ -30,8 +28,6 @@ const fn is_horizontal_arrow(ch: char) -> bool {
         '→' | '←' |
         // Double arrows
         '⇒' | '⇐' |
-        // Filled triangles
-        '►' | '◄' |
         // Extended arrows
         '⟶' | '⟹' |
         // Box drawing
@@ -43,28 +39,28 @@ const fn is_horizontal_arrow(ch: char) -> bool {
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
 const fn is_downward_arrow(ch: char) -> bool {
-    matches!(ch, '↓' | '⇓' | '▼')
+    matches!(ch, '↓' | '⇓')
 }
 
 /// Check if a character is an upward arrow
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
 const fn is_upward_arrow(ch: char) -> bool {
-    matches!(ch, '↑' | '⇑' | '▲')
+    matches!(ch, '↑' | '⇑')
 }
 
 /// Check if a character is a rightward arrow
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
 const fn is_rightward_arrow(ch: char) -> bool {
-    matches!(ch, '→' | '⇒' | '►' | '⟶')
+    matches!(ch, '→' | '⇒' | '⟶')
 }
 
 /// Check if a character is a leftward arrow
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
 const fn is_leftward_arrow(ch: char) -> bool {
-    matches!(ch, '←' | '⇐' | '◄' | '⟹')
+    matches!(ch, '←' | '⇐' | '⟹')
 }
 
 /// Detect vertical arrows in a grid.
