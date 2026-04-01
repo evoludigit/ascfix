@@ -432,12 +432,28 @@ fn draw_vertical_arrow(grid: &mut Grid, arrow: &crate::primitives::VerticalArrow
         return;
     }
 
-    // For multi-character arrows, preserve the arrow symbol for all rows
-    // This ensures arrows like ↓ are preserved instead of being converted to │
+    // For multi-character arrows with filled triangle markers (▼▲),
+    // place the filled triangle at a strategic point (2/3 of the way)
+    // and fill the rest with standard connector lines (│)
+    let is_filled_triangle = matches!(arrow_char, '▼' | '▲');
+    let connector_char = if is_filled_triangle { '│' } else { arrow_char };
+
+    // For filled triangles, place them at 2/3 point
+    let marker_row = if is_filled_triangle {
+        arrow.start_row + ((arrow.end_row - arrow.start_row) * 2 / 3)
+    } else {
+        arrow.start_row // For non-triangle arrows, place at start
+    };
+
+    // Fill all rows with connector, then replace marker position with arrow
     for row in arrow.start_row..=arrow.end_row {
         if let Some(cell) = grid.get_mut(row, arrow.col) {
             if *cell == ' ' {
-                *cell = arrow_char;
+                if row == marker_row && is_filled_triangle {
+                    *cell = arrow_char; // Place filled triangle at marker position
+                } else {
+                    *cell = connector_char; // Fill rest with connector (│)
+                }
             }
         }
     }

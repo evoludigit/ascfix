@@ -18,6 +18,13 @@ const fn is_vertical_arrow(ch: char) -> bool {
     )
 }
 
+/// Check if a character is a filled triangle arrow (used to mark connection points)
+#[inline]
+#[allow(dead_code)] // Reason: Used in arrow detection logic
+const fn is_filled_triangle_arrow(ch: char) -> bool {
+    matches!(ch, '▼' | '▲')
+}
+
 /// Check if a character is a horizontal arrow (Unicode or box-drawing)
 #[inline]
 #[allow(dead_code)] // Reason: Used in arrow detection logic
@@ -100,14 +107,27 @@ pub fn detect_vertical_arrows(grid: &Grid) -> Vec<crate::primitives::VerticalArr
                             .get(start_row, col)
                             .is_none_or(|start_char| !is_upward_arrow(start_char));
 
-                        // Capture the original arrow character
-                        let arrow_char = grid.get(start_row, col).and_then(|c| {
+                        // Capture the original arrow character (standard/double arrows)
+                        let mut arrow_char = grid.get(start_row, col).and_then(|c| {
                             if is_downward_arrow(c) || is_upward_arrow(c) {
                                 Some(c)
                             } else {
                                 None
                             }
                         });
+
+                        // Also check for filled triangle arrows in the sequence
+                        // (they might appear in the middle of a │ sequence)
+                        if arrow_char.is_none() {
+                            for scan_row in start_row..=end_row {
+                                if let Some(c) = grid.get(scan_row, col) {
+                                    if is_filled_triangle_arrow(c) {
+                                        arrow_char = Some(c);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
 
                         arrows.push(crate::primitives::VerticalArrow {
                             col,

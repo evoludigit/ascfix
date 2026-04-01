@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Users no longer need `--all` to fix all diagrams in a file.
   This is safe because bare code fences are explicitly for ASCII art/diagrams, not code.
 
+- **Support for filled triangle arrow markers** (▼▲):
+  LLM-generated diagrams often use filled triangles as arrow markers. ascfix now detects and preserves these in vertical arrow sequences,
+  placing them strategically (2/3 down the arrow) with proper connector lines for clean visual separation between boxes.
+  This provides better visual markers for arrow connections without extra blank lines.
+
 ### Fixed
 
 - **Diagrams in code fences not being processed**:
