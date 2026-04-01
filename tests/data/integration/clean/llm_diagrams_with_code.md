@@ -5,8 +5,8 @@
 
  Step 1: Initializ
 ┌───────────────┐
-│Initialization││
-└───────────────┘
+│Initialization │
+└────┬──────────┘
       ▼
 
 Code:
@@ -18,8 +18,8 @@ def init():
 
  Step 2: Proces
 ┌─────────────┐
-│  Processing││
-└─────────────┘
+│  Processing │
+└────┬────────┘
      ▼
 
 Logic:
@@ -31,7 +31,7 @@ async function process(data) {
 
  Step 3: Outpu
 ┌──────────┐
-│ Output  ││
+│ Output   │
 └──────────┘
 
 Results:

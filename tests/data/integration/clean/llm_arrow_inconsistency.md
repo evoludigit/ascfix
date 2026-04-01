@@ -16,7 +16,7 @@
 
  Side-by-side boxes with arrows
 ┌────────┐    ┌────────┐
-│  Input │─── ▶ Logic  │
+│ Input  │─── ▶ Logic  │
 └────────┘    └────────┘
     ↓             ↓
 ┌────────┐    ┌────────┐

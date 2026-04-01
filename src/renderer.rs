@@ -96,7 +96,11 @@ fn is_position_inside_any_box(boxes: &[crate::primitives::Box], row: usize, col:
 /// - Comments and annotations
 #[must_use]
 #[allow(dead_code)] // Reason: Used by main processing pipeline
-pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid {
+pub fn render_onto_grid(
+    original: &Grid,
+    original_inventory: &PrimitiveInventory,
+    inventory: &PrimitiveInventory,
+) -> Grid {
     // To handle arrow alignment, we need to remove old arrow positions before drawing new ones.
     // We detect repositioned arrows by checking for arrow characters in the original grid
     // at positions where we're about to draw arrows from the inventory.
@@ -168,6 +172,13 @@ pub fn render_onto_grid(original: &Grid, inventory: &PrimitiveInventory) -> Grid
         }
         Grid::from_rows(new_rows)
     };
+
+    // Clear borders of originally detected boxes. When normalization expands
+    // a box (e.g., to add padding), the old border chars from the cloned grid
+    // would remain, producing ││ artifacts. This mirrors the arrow-clearing above.
+    for b in &original_inventory.boxes {
+        clear_box_borders(&mut grid, b);
+    }
 
     // Draw boxes - borders overwrite original, which is correct
     for b in &inventory.boxes {
@@ -273,27 +284,85 @@ fn calculate_bounds(inventory: &PrimitiveInventory) -> (usize, usize) {
     (max_row, max_col)
 }
 
+/// Clear the border cells of a box, replacing them with spaces.
+/// Preserves junction characters (┬, ┴, etc.) since they connect to other elements.
+/// Also clears stray vertical border chars near the right edge for misaligned boxes.
+fn clear_box_borders(grid: &mut Grid, b: &crate::primitives::Box) {
+    // Top and bottom borders (full width, but preserve junctions)
+    for col in b.top_left.1..=b.bottom_right.1 {
+        if let Some(cell) = grid.get_mut(b.top_left.0, col) {
+            if !is_junction_char(*cell) {
+                *cell = ' ';
+            }
+        }
+        if let Some(cell) = grid.get_mut(b.bottom_right.0, col) {
+            if !is_junction_char(*cell) {
+                *cell = ' ';
+            }
+        }
+    }
+    // Left and right vertical borders.
+    // Also clear ±1 around right edge: when the box was expanded due to
+    // misaligned borders, some rows have │ one cell inside or outside.
+    for row in (b.top_left.0 + 1)..b.bottom_right.0 {
+        if let Some(cell) = grid.get_mut(row, b.top_left.1) {
+            if !is_junction_char(*cell) {
+                *cell = ' ';
+            }
+        }
+        // Clear right border and ±1 neighbors if they're plain vertical border chars
+        for col in [
+            b.bottom_right.1.saturating_sub(1),
+            b.bottom_right.1,
+            b.bottom_right.1 + 1,
+        ] {
+            if let Some(cell) = grid.get_mut(row, col) {
+                if matches!(*cell, '│' | '║' | '┃') {
+                    *cell = ' ';
+                }
+            }
+        }
+    }
+}
+
+/// Check if a character is a junction that should be preserved on box borders.
+/// These characters indicate connections to arrows or other boxes.
+const fn is_junction_char(ch: char) -> bool {
+    matches!(ch, '┬' | '┴' | '├' | '┤' | '┼' | '╦' | '╩' | '╠' | '╣' | '╬')
+}
+
 /// Draw a box on the grid.
+///
+/// Preserves existing junction characters (┬, ┴, ├, ┤, ┼) on borders,
+/// since these indicate connections to arrows or other diagram elements.
 fn draw_box(grid: &mut Grid, b: &crate::primitives::Box) {
     let chars = b.style.chars();
 
-    // Top and bottom borders
-    for col in b.top_left.1..=b.bottom_right.1 {
+    // Top and bottom borders (skip corners, they're drawn separately)
+    for col in (b.top_left.1 + 1)..b.bottom_right.1 {
         if let Some(cell) = grid.get_mut(b.top_left.0, col) {
-            *cell = chars.horizontal;
+            if !is_junction_char(*cell) {
+                *cell = chars.horizontal;
+            }
         }
         if let Some(cell) = grid.get_mut(b.bottom_right.0, col) {
-            *cell = chars.horizontal;
+            if !is_junction_char(*cell) {
+                *cell = chars.horizontal;
+            }
         }
     }
 
-    // Left and right borders
-    for row in b.top_left.0..=b.bottom_right.0 {
+    // Left and right borders (skip corners)
+    for row in (b.top_left.0 + 1)..b.bottom_right.0 {
         if let Some(cell) = grid.get_mut(row, b.top_left.1) {
-            *cell = chars.vertical;
+            if !is_junction_char(*cell) {
+                *cell = chars.vertical;
+            }
         }
         if let Some(cell) = grid.get_mut(row, b.bottom_right.1) {
-            *cell = chars.vertical;
+            if !is_junction_char(*cell) {
+                *cell = chars.vertical;
+            }
         }
     }
 

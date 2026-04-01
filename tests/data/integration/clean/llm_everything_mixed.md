@@ -20,16 +20,16 @@ Main components:
 
  System flow (misaligned):
 ┌──────────┐    ╔═══════════╗    ┌─────┐
-│ Client APP ── ▶  API Server ── ▶ DB  │
+│Client APP│─── ▶ API Server║─── ▶ DB  │
 └──────────┘    ╚═══════════╝    └─────┘
 
  Connection paths:
-┌─────────────┐
-│ Load Balance││─┐
-└─────────────┘ │
+┌──────────────┐
+│ Load Balancer│─┐
+└──────────────┘│
                  ▼
             ┌────────────┐
-            │  Cluster  ││
+            │  Cluster   │
             └────────────┘
 
 ## Configuration Table

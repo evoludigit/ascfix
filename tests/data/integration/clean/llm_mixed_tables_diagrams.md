@@ -12,11 +12,11 @@ System Configuration:
  Architecture flow:
 ┌─────────┐
 │ Request │
-└─────────┘
+└────┬────┘
       ▼
 ┌────────────┐    ┌──────────┐
-│   Router  │─── ▶ Handler  ││
-└────────────┘    └──────────┘
+│  Router    │── ▶  Handler │
+└────────────┘    └────┬─────┘
                         ▼
                   ┌─────────┐
                   │Database │

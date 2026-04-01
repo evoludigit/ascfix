@@ -7,14 +7,14 @@
 └─────────────┘
       ↓
 ╔═════════════╗
-║Backend API ║║
+║Backend API  ║
 ╚═════════════╝
       ↓
 ┌────────────┐
-│Database   ││
+│Database    │
 └────────────┘
 
  Workflow (box styles everywhere):
 ┌──────────────┐   ╔═══════════════╗   ┌─────────────┐
-│  Input Stage │── ▶  Process Stage ── ▶ utput Stage │
+│ Input Stage  │── ▶ Process Stage ║── ▶ utput Stage │
 └──────────────┘   ╚═══════════════╝   └─────────────┘

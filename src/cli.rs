@@ -89,7 +89,7 @@ impl Default for Args {
     fn default() -> Self {
         Self {
             paths: Vec::new(),
-            mode: Mode::Safe,
+            mode: Mode::Diagram,
             in_place: false,
             check: false,
             max_size: None,
@@ -116,23 +116,35 @@ fn print_help() {
     println!("    ascfix [OPTIONS] <PATHS>...");
     println!();
     println!("ARGS:");
-    println!("    <PATHS>...    Files or directories to process");
+    println!("    <PATHS>...                 Files or directories to process");
+    println!();
+    println!("MODES:");
+    println!("    --mode <MODE>              Processing mode [default: diagram]");
+    println!("        diagram                  Detect and repair ASCII boxes, arrows, and alignment");
+    println!("        safe                     Only normalize Markdown tables and lists (no diagram changes)");
     println!();
     println!("OPTIONS:");
-    println!("        --mode <MODE>          Processing mode [default: safe] [possible values: safe, diagram, check]");
-    println!("    -i, --in-place             Modify files in place (conflicts with --check)");
-    println!("        --check                Check mode only, no modifications (conflicts with --in-place)");
-    println!("        --max-size <SIZE>      Maximum file size to process (e.g., 10MB)");
-    println!("        --fences               Process code fences");
-    println!("        --all                  Enable all processing (equivalent to --mode diagram --fences)");
-    println!("    -e, --ext <EXT>            File extensions to process (comma-separated) [default: .md,.mdx,.txt]");
-    println!("        --summary              Show summary of changes");
-    println!("        --list-files           List files that would be processed");
+    println!("    --check                    Exit with code 1 if any file would change (for CI; conflicts with -i)");
+    println!("    --fences                   Repair mismatched code fence markers (length, unclosed)");
+    println!("    --all                      Enable all processing: diagram mode + fence repair");
+    println!();
+    println!("    -i, --in-place             Modify files in place (default: print to stdout)");
+    println!("        --max-size <SIZE>      Skip files larger than SIZE (e.g., 1MB, 500KB)");
+    println!("    -e, --ext <EXT>            File extensions to process [default: .md,.mdx,.txt]");
+    println!("        --diff                 Show unified diff of changes");
+    println!("        --summary              Show per-file change summary");
+    println!("        --list-files           List files that would be processed (dry run)");
     println!("    -v, --verbose              Verbose output");
     println!("        --json                 Output results as JSON");
-    println!("        --diff                 Show diff of changes");
-    println!("    -h, --help                 Print help");
+    println!("    -h, --help                 Print this help");
     println!("    -V, --version              Print version");
+    println!();
+    println!("EXAMPLES:");
+    println!("    ascfix README.md                       Fix diagrams, print to stdout");
+    println!("    ascfix -i docs/                        Fix all Markdown files in docs/ in place");
+    println!("    ascfix --check .                       CI check: exit 1 if anything needs fixing");
+    println!("    ascfix --all -i README.md              Fix diagrams + fences in place");
+    println!("    ascfix --mode safe -i docs/            Only fix tables and lists");
 }
 
 fn print_version() {
@@ -322,7 +334,7 @@ mod tests {
         let args = Args::parse_from(["ascfix", "test.md"]).unwrap();
 
         assert_eq!(args.paths, vec![PathBuf::from("test.md")]);
-        assert_eq!(args.mode, Mode::Safe);
+        assert_eq!(args.mode, Mode::Diagram);
         assert!(!args.in_place);
         assert!(!args.check);
         assert!(!args.fences);

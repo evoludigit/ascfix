@@ -3,7 +3,7 @@
 
  Workflow diagram (mixed Unicode):
 ┌──────────┐    ╔═════════════╗    ┌───────────┐
-│  Input   │─── ▶  Processing ─── ▶ Output → │ │
+│ Input ↓  │─── ▶ Processing  ║── ▶  Output  │
 └──────────┘    ╚═════════════╝    └───────────┘
 
 Legend table:

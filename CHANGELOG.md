@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-04-01
+
+### Changed
+
+- **Default mode is now `diagram`** instead of `safe`:
+  The corner-tracing box detection algorithm is now robust enough to be the default.
+  Users running `ascfix README.md` will now repair ASCII diagrams by default.
+  Users can still use `--mode safe` to process only tables and lists.
+
+- **Significantly improved CLI help output**:
+  - New **MODES** section with clear descriptions of `diagram` and `safe` modes
+  - Improved **OPTIONS** section with better wording and clarification:
+    - `--fences`: Now explains it repairs mismatched code fence markers
+    - `--check`: Clarifies it's for CI integration (exit 1 if changes needed)
+    - `--all`: Better description of enabling both diagram mode and fence repair
+  - New **EXAMPLES** section with practical usage patterns
+  - Better formatting and organization throughout
+
+### Fixed
+
+- **Box detection algorithm refinements**:
+  Improved corner-tracing algorithm to more reliably detect ASCII boxes in edge cases.
+  Enhanced handling of boxes with complex junction characters and arrows.
+
+- **Rendering improvements**:
+  Better preservation of alignment and spacing in diagram repair operations.
+
+### Tests
+
+- Updated integration test fixtures to reflect improved diagram handling.
+
 ## [0.6.2] - 2026-02-28
 
 ### Fixed

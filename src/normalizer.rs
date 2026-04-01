@@ -262,7 +262,12 @@ pub fn normalize_box_widths(inventory: &PrimitiveInventory) -> PrimitiveInventor
         let max_content_len = normalized
             .text_rows
             .iter()
-            .filter(|row| row.row > b.top_left.0 && row.row < b.bottom_right.0)
+            .filter(|row| {
+                row.row > b.top_left.0
+                    && row.row < b.bottom_right.0
+                    && row.start_col >= b.top_left.1
+                    && row.start_col <= b.bottom_right.1
+            })
             .map(|row| row.content.trim_end().len())
             .max()
             .unwrap_or(0);
@@ -285,7 +290,12 @@ pub fn normalize_box_widths(inventory: &PrimitiveInventory) -> PrimitiveInventor
         if let Some(b) = normalized
             .boxes
             .iter()
-            .find(|box_| row.row > box_.top_left.0 && row.row < box_.bottom_right.0)
+            .find(|box_| {
+                row.row > box_.top_left.0
+                    && row.row < box_.bottom_right.0
+                    && row.start_col >= box_.top_left.1
+                    && row.start_col <= box_.bottom_right.1
+            })
         {
             row.end_col = b.bottom_right.1 - 1;
         }

@@ -31,6 +31,15 @@ impl Processor {
         Ok(Self { args, config })
     }
 
+    /// Get the effective config, applying CLI overrides (e.g., --all enables fenced_diagrams).
+    fn effective_config(&self) -> crate::config::Config {
+        let mut config = self.config.clone();
+        if self.args.all {
+            config.fenced_diagrams = true;
+        }
+        config
+    }
+
     /// Process a single file.
     ///
     /// Routes to the appropriate processor based on the configured mode.
@@ -49,7 +58,8 @@ impl Processor {
         } else {
             &self.args.mode
         };
-        let processed = crate::modes::process_by_mode(mode, &content, repair_fences, &self.config);
+        let config = self.effective_config();
+        let processed = crate::modes::process_by_mode(mode, &content, repair_fences, &config);
         Ok(processed)
     }
 
@@ -184,7 +194,7 @@ impl Processor {
         } else {
             &self.args.mode
         };
-        let processed = crate::modes::process_by_mode(mode, &content, repair_fences, &self.config);
+        let processed = crate::modes::process_by_mode(mode, &content, repair_fences, &self.effective_config());
 
         // Check if file needs fixing
         if crate::modes::content_needs_fixing(&content, &processed) {
@@ -267,7 +277,7 @@ impl Processor {
         } else {
             &self.args.mode
         };
-        let processed = crate::modes::process_by_mode(mode, &content, repair_fences, &self.config);
+        let processed = crate::modes::process_by_mode(mode, &content, repair_fences, &self.effective_config());
 
         // Check if file needs fixing
         if crate::modes::content_needs_fixing(&content, &processed) {

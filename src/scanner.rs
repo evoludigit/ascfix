@@ -131,6 +131,56 @@ pub fn extract_diagram_blocks(text: &str) -> Vec<DiagramBlock> {
     blocks
 }
 
+/// Extract diagram blocks from inside bare code fences (no language specifier).
+///
+/// Uses `fences::detect_fence_markers()` and `pair_fences()` to find fence boundaries.
+/// Only processes fences with no language tag (bare ` ``` ` or ` ~~~ `), since
+/// language-tagged fences contain actual code that must not be modified.
+#[allow(dead_code)] // Reason: Used by diagram processing pipeline
+#[must_use]
+pub fn extract_fenced_diagram_blocks(text: &str) -> Vec<DiagramBlock> {
+    let markers = crate::fences::detect_fence_markers(text);
+    let code_blocks = crate::fences::pair_fences(markers);
+    let all_lines: Vec<&str> = text.lines().collect();
+    let mut blocks = Vec::new();
+
+    for block in &code_blocks {
+        // Only process bare fences (no language specifier)
+        if block.opening.language.is_some() {
+            continue;
+        }
+        let closing = match &block.closing {
+            Some(c) => c,
+            None => continue, // Skip unclosed fences
+        };
+
+        // Extract content lines between opening and closing markers
+        let start = block.opening.line_num + 1;
+        let end = closing.line_num;
+        if start >= end || start >= all_lines.len() {
+            continue; // Empty fence
+        }
+
+        let mut block_lines = Vec::new();
+        let mut inline_spans = Vec::new();
+        for line_num in start..end.min(all_lines.len()) {
+            let (masked_line, spans) = mask_inline_code(all_lines[line_num]);
+            block_lines.push(masked_line);
+            inline_spans.push(spans);
+        }
+
+        if !block_lines.is_empty() {
+            blocks.push(DiagramBlock {
+                start_line: start,
+                lines: block_lines,
+                inline_code_spans: inline_spans,
+            });
+        }
+    }
+
+    blocks
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

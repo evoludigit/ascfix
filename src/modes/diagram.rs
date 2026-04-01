@@ -29,8 +29,14 @@ fn restore_inline_code(masked_line: &str, spans: &[InlineCodeSpan]) -> String {
 }
 
 /// Diagram mode: Detect and normalize ASCII diagrams (full pipeline).
-pub fn process_diagram_mode(content: &str, _config: &crate::config::Config) -> String {
-    let blocks = crate::scanner::extract_diagram_blocks(content);
+pub fn process_diagram_mode(content: &str, config: &crate::config::Config) -> String {
+    let mut blocks = crate::scanner::extract_diagram_blocks(content);
+
+    // Optionally include diagrams inside bare code fences
+    if config.fenced_diagrams {
+        blocks.extend(crate::scanner::extract_fenced_diagram_blocks(content));
+        blocks.sort_by_key(|b| b.start_line);
+    }
 
     // If no diagram blocks found, return content unchanged
     if blocks.is_empty() {
@@ -66,7 +72,8 @@ pub fn process_diagram_mode(content: &str, _config: &crate::config::Config) -> S
 
             // Render onto a COPY of the original grid to preserve pass-through content
             // This ensures lines without detected primitives are not lost
-            let rendered_grid = crate::renderer::render_onto_grid(&grid, &normalized);
+            let rendered_grid =
+                crate::renderer::render_onto_grid(&grid, &inventory, &normalized);
             let rendered = rendered_grid.render_trimmed();
 
             // Restore inline code in the rendered output

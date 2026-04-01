@@ -42,6 +42,9 @@ pub struct Config {
     pub enable_flowcharts: bool,
     /// Whether to enable sequence diagrams
     pub enable_sequence_diagrams: bool,
+    /// Whether to process diagrams inside bare code fences (no language specifier)
+    #[serde(default)]
+    pub fenced_diagrams: bool,
 }
 
 impl Config {

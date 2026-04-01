@@ -1,7 +1,7 @@
 # LLM Generated: Connection Line Issues
 # Misaligned L-shaped paths and elbows
 
-Simple  path (misaligned)
+ Simple path (misaligned)
 ┌─────┐
 │Start│─┐
 └─────┘ │
@@ -10,13 +10,13 @@ Simple  path (misaligned)
     │  End   │
     └────────┘
 
-Complex  branches (inconsistent)
+ Complex branches (inconsistent)
             ┌────────┐
-            │  Server
+            │ Server │
             └───┬────┘
                 │
         ┌───────┼───────┐
         │       │       │
-    ┌────────┌───────┌────────┐
-    │ CPU  │ ││ Disk  │ Disk  │
-    └────────└───────└────────┘
+    ┌──────┐ ┌──────┐┌─ ▼ ───┐
+    │ CPU  │ │Memory│ │  Disk │
+    └──────┘ └──────┘ └───────┘
