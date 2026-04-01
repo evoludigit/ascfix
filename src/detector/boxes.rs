@@ -33,9 +33,21 @@ const fn is_bottom_right_corner(ch: char) -> bool {
 const fn is_horizontal_border(ch: char) -> bool {
     matches!(
         ch,
-        '─' | '┬' | '┴' | '┼' | '├' | '┤'
-            | '═' | '╦' | '╩' | '╬'
-            | '▼' | '▲' | '↓' | '↑' | '⇓' | '⇑'
+        '─' | '┬'
+            | '┴'
+            | '┼'
+            | '├'
+            | '┤'
+            | '═'
+            | '╦'
+            | '╩'
+            | '╬'
+            | '▼'
+            | '▲'
+            | '↓'
+            | '↑'
+            | '⇓'
+            | '⇑'
     )
 }
 
@@ -45,9 +57,21 @@ const fn is_horizontal_border(ch: char) -> bool {
 const fn is_vertical_border(ch: char) -> bool {
     matches!(
         ch,
-        '│' | '├' | '┤' | '┼' | '┬' | '┴'
-            | '║' | '╠' | '╣' | '╬'
-            | '►' | '◄' | '→' | '←' | '⇒' | '⇐'
+        '│' | '├'
+            | '┤'
+            | '┼'
+            | '┬'
+            | '┴'
+            | '║'
+            | '╠'
+            | '╣'
+            | '╬'
+            | '►'
+            | '◄'
+            | '→'
+            | '←'
+            | '⇒'
+            | '⇐'
     )
 }
 
@@ -117,12 +141,8 @@ impl<'a> BoxDetector<'a> {
 
         // Step 5: Verify right border connects top-right to bottom-right.
         // Also discovers the actual max right column (some rows may extend further).
-        let actual_right_col = self.find_right_border_extent(
-            right_col,
-            top_right_col,
-            top_row + 1,
-            bottom_row,
-        )?;
+        let actual_right_col =
+            self.find_right_border_extent(right_col, top_right_col, top_row + 1, bottom_row)?;
 
         Some(Box {
             top_left: (top_row, left_col),
@@ -219,7 +239,6 @@ impl<'a> BoxDetector<'a> {
         }
         Some(max_col)
     }
-
 }
 
 /// Convenience function to detect boxes in a grid.

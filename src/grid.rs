@@ -13,7 +13,11 @@ impl Grid {
     #[allow(dead_code)] // Reason: Used by main processing pipeline
     #[must_use]
     pub fn from_lines(lines: &[&str]) -> Self {
-        let max_width = lines.iter().map(|line| line.chars().count()).max().unwrap_or(0);
+        let max_width = lines
+            .iter()
+            .map(|line| line.chars().count())
+            .max()
+            .unwrap_or(0);
         let rows = lines
             .iter()
             .map(|line| {

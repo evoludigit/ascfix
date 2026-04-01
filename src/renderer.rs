@@ -131,7 +131,19 @@ pub fn render_onto_grid(
                         // Support standard (↓ ↑ → ←), double (⇓ ⇑ ⇒ ⇐), filled (▼ ▲ ◄ ►), and extended (⟶ ⟹) arrows
                         if matches!(
                             ch,
-                            '↓' | '↑' | '→' | '←' | '⇓' | '⇑' | '⇒' | '⇐' | '▼' | '▲' | '◄' | '►' | '⟶' | '⟹'
+                            '↓' | '↑'
+                                | '→'
+                                | '←'
+                                | '⇓'
+                                | '⇑'
+                                | '⇒'
+                                | '⇐'
+                                | '▼'
+                                | '▲'
+                                | '◄'
+                                | '►'
+                                | '⟶'
+                                | '⟹'
                         ) {
                             row.push(' ');
                         } else {
@@ -328,7 +340,10 @@ fn clear_box_borders(grid: &mut Grid, b: &crate::primitives::Box) {
 /// Check if a character is a junction that should be preserved on box borders.
 /// These characters indicate connections to arrows or other boxes.
 const fn is_junction_char(ch: char) -> bool {
-    matches!(ch, '┬' | '┴' | '├' | '┤' | '┼' | '╦' | '╩' | '╠' | '╣' | '╬')
+    matches!(
+        ch,
+        '┬' | '┴' | '├' | '┤' | '┼' | '╦' | '╩' | '╠' | '╣' | '╬'
+    )
 }
 
 /// Draw a box on the grid.

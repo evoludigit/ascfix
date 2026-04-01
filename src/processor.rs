@@ -194,7 +194,8 @@ impl Processor {
         } else {
             &self.args.mode
         };
-        let processed = crate::modes::process_by_mode(mode, &content, repair_fences, &self.effective_config());
+        let processed =
+            crate::modes::process_by_mode(mode, &content, repair_fences, &self.effective_config());
 
         // Check if file needs fixing
         if crate::modes::content_needs_fixing(&content, &processed) {
@@ -277,7 +278,8 @@ impl Processor {
         } else {
             &self.args.mode
         };
-        let processed = crate::modes::process_by_mode(mode, &content, repair_fences, &self.effective_config());
+        let processed =
+            crate::modes::process_by_mode(mode, &content, repair_fences, &self.effective_config());
 
         // Check if file needs fixing
         if crate::modes::content_needs_fixing(&content, &processed) {

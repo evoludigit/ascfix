@@ -287,16 +287,12 @@ pub fn normalize_box_widths(inventory: &PrimitiveInventory) -> PrimitiveInventor
 
     // Adjust text rows to match new box widths
     for row in &mut normalized.text_rows {
-        if let Some(b) = normalized
-            .boxes
-            .iter()
-            .find(|box_| {
-                row.row > box_.top_left.0
-                    && row.row < box_.bottom_right.0
-                    && row.start_col >= box_.top_left.1
-                    && row.start_col <= box_.bottom_right.1
-            })
-        {
+        if let Some(b) = normalized.boxes.iter().find(|box_| {
+            row.row > box_.top_left.0
+                && row.row < box_.bottom_right.0
+                && row.start_col >= box_.top_left.1
+                && row.start_col <= box_.bottom_right.1
+        }) {
             row.end_col = b.bottom_right.1 - 1;
         }
     }

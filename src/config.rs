@@ -47,7 +47,7 @@ pub struct Config {
     pub fenced_diagrams: bool,
 }
 
-fn default_true() -> bool {
+const fn default_true() -> bool {
     true
 }
 

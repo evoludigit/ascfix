@@ -72,8 +72,7 @@ pub fn process_diagram_mode(content: &str, config: &crate::config::Config) -> St
 
             // Render onto a COPY of the original grid to preserve pass-through content
             // This ensures lines without detected primitives are not lost
-            let rendered_grid =
-                crate::renderer::render_onto_grid(&grid, &inventory, &normalized);
+            let rendered_grid = crate::renderer::render_onto_grid(&grid, &inventory, &normalized);
             let rendered = rendered_grid.render_trimmed();
 
             // Restore inline code in the rendered output

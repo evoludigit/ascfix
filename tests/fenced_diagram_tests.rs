@@ -72,7 +72,10 @@ fn test_fenced_diagrams_disabled_by_default() {
 ";
     let config = Config::default();
     let result = process_by_mode(&Mode::Diagram, input, false, &config);
-    assert_eq!(result, input, "Fence content was modified with default config");
+    assert_eq!(
+        result, input,
+        "Fence content was modified with default config"
+    );
 }
 
 /// Mixed content: bare fence with diagram + language-tagged fence with code.

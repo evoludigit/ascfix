@@ -120,12 +120,16 @@ fn print_help() {
     println!();
     println!("MODES:");
     println!("    --mode <MODE>              Processing mode [default: diagram]");
-    println!("        diagram                  Detect and repair ASCII boxes, arrows, and alignment");
+    println!(
+        "        diagram                  Detect and repair ASCII boxes, arrows, and alignment"
+    );
     println!("        safe                     Only normalize Markdown tables and lists (no diagram changes)");
     println!();
     println!("OPTIONS:");
     println!("    --check                    Exit with code 1 if any file would change (for CI; conflicts with -i)");
-    println!("    --fences                   Repair mismatched code fence markers (length, unclosed)");
+    println!(
+        "    --fences                   Repair mismatched code fence markers (length, unclosed)"
+    );
     println!("    --all                      Enable all processing: diagram mode + fence repair");
     println!();
     println!("    -i, --in-place             Modify files in place (default: print to stdout)");
@@ -142,7 +146,9 @@ fn print_help() {
     println!("EXAMPLES:");
     println!("    ascfix README.md                       Fix diagrams, print to stdout");
     println!("    ascfix -i docs/                        Fix all Markdown files in docs/ in place");
-    println!("    ascfix --check .                       CI check: exit 1 if anything needs fixing");
+    println!(
+        "    ascfix --check .                       CI check: exit 1 if anything needs fixing"
+    );
     println!("    ascfix --all -i README.md              Fix diagrams + fences in place");
     println!("    ascfix --mode safe -i docs/            Only fix tables and lists");
 }

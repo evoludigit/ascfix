@@ -10,11 +10,7 @@ use ascfix::primitives::BoxStyle;
 /// Baseline: a single box with clean corners must be detected.
 #[test]
 fn test_detect_single_box() {
-    let grid = Grid::from_lines(&[
-        "┌─────┐",
-        "│ Box │",
-        "└─────┘",
-    ]);
+    let grid = Grid::from_lines(&["┌─────┐", "│ Box │", "└─────┘"]);
     let boxes = detect_boxes(&grid);
     assert_eq!(boxes.len(), 1);
     assert_eq!(boxes[0].top_left, (0, 0));
@@ -25,11 +21,7 @@ fn test_detect_single_box() {
 /// Two boxes side by side (not connected) must both be detected.
 #[test]
 fn test_detect_two_separate_boxes() {
-    let grid = Grid::from_lines(&[
-        "┌───┐   ┌───┐",
-        "│ A │   │ B │",
-        "└───┘   └───┘",
-    ]);
+    let grid = Grid::from_lines(&["┌───┐   ┌───┐", "│ A │   │ B │", "└───┘   └───┘"]);
     let boxes = detect_boxes(&grid);
     assert_eq!(boxes.len(), 2);
 }
@@ -86,7 +78,11 @@ fn test_detect_tree_shaped_connected_boxes() {
         "   └───────┘ └────────┘ ",
     ]);
     let boxes = detect_boxes(&grid);
-    assert_eq!(boxes.len(), 3, "Expected 3 boxes (Parent, Left, Right), got {boxes:?}");
+    assert_eq!(
+        boxes.len(),
+        3,
+        "Expected 3 boxes (Parent, Left, Right), got {boxes:?}"
+    );
 }
 
 /// Boxes with arrow symbols (▼) embedded in borders must still be detected.
