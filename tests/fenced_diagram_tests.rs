@@ -63,13 +63,7 @@ fn test_language_tagged_fence_untouched() {
 /// Default config (`fenced_diagrams=true`) should process bare fence content.
 #[test]
 fn test_fenced_diagrams_disabled_by_default() {
-    let input = "\
-```
-┌──────┐
-│Hello │
-└──────┘
-```
-";
+    let input = "```\n┌──────┐\n│Hello │\n└──────┘\n```\n";
     let config = Config::default();
     let result = process_by_mode(&Mode::Diagram, input, false, &config);
     // With default config (fenced_diagrams=true), diagrams should be processed
