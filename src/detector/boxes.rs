@@ -59,7 +59,7 @@ pub struct BoxDetector<'a> {
 impl<'a> BoxDetector<'a> {
     /// Create a new box detector for a grid.
     #[must_use]
-    pub fn new(grid: &'a Grid) -> Self {
+    pub const fn new(grid: &'a Grid) -> Self {
         BoxDetector { grid }
     }
 
@@ -133,7 +133,7 @@ impl<'a> BoxDetector<'a> {
         })
     }
 
-    /// Trace horizontally from (row, start_col) until finding a character
+    /// Trace horizontally from (row, `start_col`) until finding a character
     /// that satisfies the `is_target_corner` predicate.
     /// Returns the column of the target corner, or None if not found.
     fn trace_horizontal(
@@ -155,7 +155,7 @@ impl<'a> BoxDetector<'a> {
         }
     }
 
-    /// Trace vertically from (start_row, col) until finding a character
+    /// Trace vertically from (`start_row`, col) until finding a character
     /// that satisfies the `is_target_corner` predicate.
     /// Returns the row of the target corner, or None if not found.
     fn trace_vertical(
@@ -191,10 +191,10 @@ impl<'a> BoxDetector<'a> {
         // Columns to check: primary, alt, and ±1 from primary
         let candidates: [Option<usize>; 4] = [
             Some(primary_col),
-            if alt_col != primary_col {
-                Some(alt_col)
-            } else {
+            if alt_col == primary_col {
                 None
+            } else {
+                Some(alt_col)
             },
             primary_col.checked_sub(1),
             Some(primary_col + 1),

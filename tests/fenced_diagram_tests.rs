@@ -4,7 +4,7 @@ use ascfix::cli::Mode;
 use ascfix::config::Config;
 use ascfix::modes::process_by_mode;
 
-/// Diagram inside a bare code fence should be processed when fenced_diagrams is enabled.
+/// Diagram inside a bare code fence should be processed when `fenced_diagrams` is enabled.
 #[test]
 fn test_bare_fence_diagram_processed() {
     let input = "\
@@ -18,8 +18,10 @@ fn test_bare_fence_diagram_processed() {
 
 Some text.
 ";
-    let mut config = Config::default();
-    config.fenced_diagrams = true;
+    let config = Config {
+        fenced_diagrams: true,
+        ..Default::default()
+    };
     let result = process_by_mode(&Mode::Diagram, input, false, &config);
     // The box should be normalized (padding added)
     assert!(result.contains("Hello"), "Content lost:\n{result}");
@@ -49,14 +51,16 @@ fn test_language_tagged_fence_untouched() {
 └──────┘
 ```
 ";
-    let mut config = Config::default();
-    config.fenced_diagrams = true;
+    let config = Config {
+        fenced_diagrams: true,
+        ..Default::default()
+    };
     let result = process_by_mode(&Mode::Diagram, input, false, &config);
     // Content should be exactly preserved (language-tagged fences are code)
     assert_eq!(result, input, "Language-tagged fence content was modified");
 }
 
-/// Default config (fenced_diagrams=false) should not touch fence content.
+/// Default config (`fenced_diagrams=false`) should not touch fence content.
 #[test]
 fn test_fenced_diagrams_disabled_by_default() {
     let input = "\
@@ -88,8 +92,10 @@ fn test_mixed_fences_only_bare_processed() {
 echo 'hi'
 ```
 ";
-    let mut config = Config::default();
-    config.fenced_diagrams = true;
+    let config = Config {
+        fenced_diagrams: true,
+        ..Default::default()
+    };
     let result = process_by_mode(&Mode::Diagram, input, false, &config);
     // Bash code block must be untouched
     assert!(

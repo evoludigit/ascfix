@@ -82,7 +82,7 @@ pub fn process_safe_mode(content: &str) -> String {
                     // If parsing fails, keep original lines
                     result.push(header.to_string());
                     result.push(separator.to_string());
-                    for row in &table_rows {
+                    for &row in &table_rows {
                         result.push(row.to_string());
                     }
                     i -= table_rows.len();

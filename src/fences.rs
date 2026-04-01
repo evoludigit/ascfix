@@ -77,7 +77,7 @@ pub fn detect_fence_markers(content: &str) -> Vec<FenceMarker> {
                 let length = fence_end;
 
                 if length >= 3 {
-                    let rest = &fence_str[fence_end..].trim_start();
+                    let rest = fence_str[fence_end..].trim_start();
                     let language = if rest.is_empty() {
                         None
                     } else {
@@ -104,7 +104,7 @@ pub fn detect_fence_markers(content: &str) -> Vec<FenceMarker> {
                 let length = fence_end;
 
                 if length >= 3 {
-                    let rest = &fence_str[fence_end..].trim_start();
+                    let rest = fence_str[fence_end..].trim_start();
                     let language = if rest.is_empty() {
                         None
                     } else {

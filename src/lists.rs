@@ -146,7 +146,7 @@ fn get_code_block_line_ranges(content: &str) -> Vec<(usize, usize)> {
     let mut in_code_block = false;
     let mut block_start = 0;
 
-    for (i, line) in lines.iter().enumerate() {
+    for (i, &line) in lines.iter().enumerate() {
         let trimmed = line.trim();
 
         // Check for fence markers
@@ -399,7 +399,7 @@ pub fn normalize_list_indentation(content: &str) -> String {
     // Stack stores (original_indent, marker) for each nesting level
     let mut list_stack: Vec<(usize, String)> = Vec::new();
 
-    for (i, line) in lines.iter().enumerate() {
+    for (i, &line) in lines.iter().enumerate() {
         // Skip lines inside code blocks
         if is_in_code_region(i, &code_ranges) {
             result.push(line.to_string());
@@ -493,7 +493,7 @@ pub fn normalize_bullet_styles(content: &str, target_bullet: char) -> String {
 
     let mut result = Vec::new();
 
-    for (i, line) in lines.iter().enumerate() {
+    for (i, &line) in lines.iter().enumerate() {
         // Skip lines inside code blocks
         if is_in_code_region(i, &code_ranges) {
             result.push(line.to_string());
@@ -567,7 +567,7 @@ pub fn normalize_lists(content: &str) -> String {
     let mut list_stack: Vec<(usize, String)> = Vec::new();
     let target_bullet = '-';
 
-    for (i, line) in lines.iter().enumerate() {
+    for (i, &line) in lines.iter().enumerate() {
         // Skip lines inside code blocks
         if is_in_code_region(i, &code_ranges) {
             result.push(line.to_string());
@@ -671,7 +671,7 @@ pub fn normalize_loose_lists(content: &str) -> String {
 
     let mut result = Vec::new();
 
-    for (i, line) in lines.iter().enumerate() {
+    for (i, &line) in lines.iter().enumerate() {
         // Skip lines inside code blocks
         if is_in_code_region(i, &code_line_ranges) {
             result.push(line.to_string());

@@ -31,7 +31,7 @@ impl Processor {
         Ok(Self { args, config })
     }
 
-    /// Get the effective config, applying CLI overrides (e.g., --all enables fenced_diagrams).
+    /// Get the effective config, applying CLI overrides (e.g., --all enables `fenced_diagrams`).
     fn effective_config(&self) -> crate::config::Config {
         let mut config = self.config.clone();
         if self.args.all {

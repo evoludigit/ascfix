@@ -128,7 +128,7 @@ fn test_detect_nested_boxes_with_misaligned_borders() {
 }
 
 /// Connected boxes with uneven padding must not produce ││ artifacts.
-/// This is the exact pattern from example_readme: boxes connected by ┬/┴
+/// This is the exact pattern from `example_readme`: boxes connected by ┬/┴
 /// where content touches borders (no right padding).
 #[test]
 fn test_no_double_border_connected_boxes() {

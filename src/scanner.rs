@@ -149,9 +149,8 @@ pub fn extract_fenced_diagram_blocks(text: &str) -> Vec<DiagramBlock> {
         if block.opening.language.is_some() {
             continue;
         }
-        let closing = match &block.closing {
-            Some(c) => c,
-            None => continue, // Skip unclosed fences
+        let Some(closing) = &block.closing else {
+            continue; // Skip unclosed fences
         };
 
         // Extract content lines between opening and closing markers
@@ -163,8 +162,8 @@ pub fn extract_fenced_diagram_blocks(text: &str) -> Vec<DiagramBlock> {
 
         let mut block_lines = Vec::new();
         let mut inline_spans = Vec::new();
-        for line_num in start..end.min(all_lines.len()) {
-            let (masked_line, spans) = mask_inline_code(all_lines[line_num]);
+        for line in all_lines.iter().take(end.min(all_lines.len())).skip(start) {
+            let (masked_line, spans) = mask_inline_code(line);
             block_lines.push(masked_line);
             inline_spans.push(spans);
         }
