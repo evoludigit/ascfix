@@ -34,7 +34,7 @@ impl Default for FormattingConfig {
 }
 
 /// Main configuration structure
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Config {
     /// Formatting options
     pub formatting: FormattingConfig,
@@ -43,8 +43,23 @@ pub struct Config {
     /// Whether to enable sequence diagrams
     pub enable_sequence_diagrams: bool,
     /// Whether to process diagrams inside bare code fences (no language specifier)
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub fenced_diagrams: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            formatting: FormattingConfig::default(),
+            enable_flowcharts: false,
+            enable_sequence_diagrams: false,
+            fenced_diagrams: true,
+        }
+    }
 }
 
 impl Config {
@@ -108,6 +123,7 @@ mod tests {
         assert_eq!(config.formatting.box_padding, DEFAULT_BOX_PADDING);
         assert!(config.formatting.preserve_unicode);
         assert!(!config.enable_flowcharts);
+        assert!(config.fenced_diagrams);
     }
 
     #[test]
@@ -134,5 +150,6 @@ validate_diagrams = true
         assert!(config.formatting.validate_diagrams);
         assert!(config.enable_flowcharts);
         assert!(!config.enable_sequence_diagrams);
+        assert!(config.fenced_diagrams);
     }
 }
