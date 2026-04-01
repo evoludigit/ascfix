@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-04-01
+
+### Added
+
+- **Fenced diagram processing enabled by default**:
+  `fenced_diagrams` configuration now defaults to `true`.
+  Running `ascfix --mode=diagram` (the default) now processes ASCII diagrams inside bare code fences (no language specifier).
+  Users no longer need `--all` to fix all diagrams in a file.
+  This is safe because bare code fences are explicitly for ASCII art/diagrams, not code.
+
+- **Support for filled triangle arrow characters** (▼▲◄►):
+  Extended arrow detection and rendering to recognize filled triangle arrows in addition to standard (↓↑→←), double (⇓⇑⇒⇐), and extended (⟶⟹) arrows.
+  Diagrams using these arrow styles are now properly detected, normalized, and rendered without data loss.
+
+### Fixed
+
+- **Diagrams in code fences not being processed**:
+  The `--fences` flag now enables diagram processing inside bare code fences, not just fence repair.
+  Previously, only `--all` would process fenced diagrams. Now `--fences --mode=diagram` correctly handles diagrams in code fences.
+
 ## [0.7.0] - 2026-04-01
 
 ### Changed
