@@ -70,8 +70,8 @@ Ideal for:
 
 ### Processing Modes
 
-- **Safe mode** (default): Normalize Markdown tables only - safest for any file
-- **Diagram mode**: Repair ASCII boxes, arrows, and diagram structures
+- **Diagram mode** (default): Repair ASCII boxes, arrows, and diagram structures
+- **Safe mode**: Normalize Markdown tables only - safest for any file
 - **Check mode**: Validate without modifying (exit code 1 if changes needed - perfect for CI/CD)
 - **All mode**: Shorthand for `--fences --mode=diagram` to repair everything
 
@@ -118,13 +118,17 @@ Ideal for:
 
 ## Installation
 
-### From crates.io
+### Recommended: From crates.io
+
+The simplest way to install ascfix is via [crates.io](https://crates.io/crates/ascfix):
 
 ```bash
 cargo install ascfix
 ```
 
 ### From source
+
+To build from the latest development version:
 
 ```bash
 git clone https://github.com/evoludigit/ascfix.git
@@ -137,23 +141,23 @@ cargo install --path .
 ### Single Files
 
 ```bash
-# Check a file (default: safe mode, output to stdout)
+# Fix a file (default: diagram mode, output to stdout)
 ascfix README.md
 
-# Fix a file in place (default: safe mode)
+# Fix a file in place (default: diagram mode)
 ascfix README.md --in-place
+
+# Only normalize tables and lists (safe mode)
+ascfix README.md --in-place --mode safe
 
 # Repair code fence boundaries
 ascfix README.md --in-place --fences
 
-# Enable diagram mode for box/arrow repair
-ascfix README.md --in-place --mode=diagram
-
-# Repair everything (fences + diagrams)
+# Repair everything (diagram mode + fence repair)
 ascfix README.md --in-place --all
 
-# Validate without modifying (check mode, exit code 1 if changes needed)
-ascfix README.md -c --mode=diagram
+# Validate without modifying (exit code 1 if changes needed)
+ascfix README.md --check
 ```
 
 ### Directories
