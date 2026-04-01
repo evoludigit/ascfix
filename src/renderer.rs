@@ -436,7 +436,11 @@ fn draw_vertical_arrow(grid: &mut Grid, arrow: &crate::primitives::VerticalArrow
     // place the filled triangle at a strategic point (2/3 of the way)
     // and fill the rest with standard connector lines (│)
     let is_filled_triangle = matches!(arrow_char, '▼' | '▲');
-    let connector_char = if is_filled_triangle { '│' } else { arrow_char };
+    let connector_char = if is_filled_triangle {
+        '│'
+    } else {
+        arrow_char
+    };
 
     // For filled triangles, place them at 2/3 point
     let marker_row = if is_filled_triangle {
