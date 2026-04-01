@@ -136,6 +136,24 @@ cd ascfix
 cargo install --path .
 ```
 
+### Troubleshooting Installation
+
+**Permission denied when installing:**
+
+If you see `Permission denied (os error 13)` during installation, your system likely has `/tmp` mounted with `noexec` (a security configuration that prevents executing files from temporary directories). Set a build directory:
+
+```bash
+CARGO_TARGET_DIR=~/.cargo/build cargo install ascfix
+```
+
+Or build from source:
+
+```bash
+git clone https://github.com/evoludigit/ascfix.git
+cd ascfix
+cargo install --path .
+```
+
 ## Usage
 
 ### Single Files
